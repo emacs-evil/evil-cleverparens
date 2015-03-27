@@ -1,0 +1,109 @@
+* Evil-cleverparens
+** Installation
+The recommended way to install is through =elpa=, though in its current state,
+the package doesn't actually exist there yet, which means that you are here
+too early. I will get it on =elpa= as soon as I have used it myself long enough
+to make sure it works for the most part. 
+
+=M-x package-install evil-cleverparens=
+
+To enable =evil-cleverparens=, put:
+
+#+BEGIN_SRC emacs-lisp :results silent
+(add-hook 'smartparens-enabled-hook #'evil-cleverparens-mode)
+#+END_SRC
+
+into your =.emacs= or =init.el= file, which will turn on =evil-cleverparens= when
+=smartparens= is activated.
+
+If you use =smartparens= with non-lispy modes you may prefer to only activate
+=evil-cleverparens= with certain major modes. To do this, you can replace the
+former snippet with:
+
+#+BEGIN_SRC emacs-lisp :results silent
+(add-hook '<your-lispy-mode> #'evil-cleverparens-mode)
+#+END_SRC
+** Information
+=evil-cleverparens= relies on =smartparens= for most of its functionality, and
+it's recommended that you use them together. There's also a dependency on the
+good old =paredit=, for some of the functionality that I didn't want to
+re-write, but don't need it enabled.
+** Features
+*** Text Objects
+=evil-cleverparens= comes with the following text objects:
+**** /Form/ bound to =f=
+Form is either a sexpression or a string, as defined by =smartparens= for the
+mode in question. 
+**** /Comment/ bound to =c=
+Selecting an /outer/ comment means selecting both the comment delimiter and the
+comment text, whereas selecting an /inner/ comment means selecting only the text
+but not the comment delimiters. If you are using a language where the comment
+region is defined by distinct opening / closing delimiters then this will not
+work, though it probably wouldn't be hard to to do. Pull requests are welcome.
+**** /Defun/ bound to =d=
+Selects the top-level sexpression.
+**** /Symbol/ bound to =o=
+This is actually part of regular =evil=, but I didn't know about it before
+diving into this project. I now use =dio= to delete a symbol instead of =diW=.
+*** Editing
+**** Yanking
+**** Deleting
+***** dW
+***** dd
+***** vd
+***** D
+**** Changing
+**** Splicing
+*** Extra
+**** Slurping and Barfing
+**** Dragging
+**** Wrapping
+**** Raising
+**** Splitting
+**** Quick insert
+** See Also
+=evil-cleverparens= is not the first Emacs/evil mode that tries to make structural
+editing of lisp-like languages easier. You might enjoy checking out the
+following modes as well:
+*** [[https://github.com/abo-abo/lispy][abo-abo/lispy]]
+Very rich in features but doesn't attempt to conform to the =vim/evil= layout of bindings.
+*** [[https://github.com/roman/evil-paredit][roman/evil-paredit]]
+Prevents the user from messing up their parentheses by erroring
+out. =evil-cleverparens= originally started out as a fork of this project, with
+the goal of doing something useful instead of throwing an error in situations
+where it would make sense.
+*** [[https://github.com/syl20bnr/evil-lisp-state][syl20bnr/evil-lisp-state]]
+As the name suggests, this project creates an additional state for editing
+lisp in =evil=.
+*** [[https://github.com/expez/evil-smartparens][expez/evil-smartparens]]
+Had I known of this project when starting out I would have just contributed to
+it instead of writing a lot of the same functionality on my own, but by the
+time I discovered it I had already so much code in place that I decided to
+continue with my own version. Some of the code in =evil-cleverparens= is lifted
+directly from here, and the modes work roughly the same. As far as I am aware,
+the two projects are different in the following ways:
+  - Deleting by line is different. In =evil-smartparens= the region to delete is
+    determined in part by the location of the point, and the maximum safe
+    region that this can be expanded to. =evil-cleverparens= on the other hand
+    deletes everything except parentheses / string delimiters that would
+    unbalance the region, and joins the next line to where the last opening
+    parentheses of the deleted line existed.
+  - When yanking an unbalanced region, =evil-cleverparens= gives you the option
+    of choosing between ignoring (the =evil-smartparens= way) or supplementing
+    the offending parentheses in kill-ring via
+    =evil-cleverparens-balance-yanked-region=. 
+** Limitations and the Escape Hatch
+Ensuring that a region is safe can be expensive. Similar to =evil-smartparens=,
+=evil-cleverparens= provides a variable =evil-cleverparens-threshold= that
+controls how large the region should be before defaulting to the regular and
+unsafe =evil= functions. 
+
+Another feature stolen from =evil-smartparens= is an escape hatch,
+=evil-cp-override=, which is bound to =o= in =visual-state=. Pre-fixing another
+command with it will make =evil-cleverparens= default to using the regular =evil=
+alternatives. =r= and =R= are the same as in regular =evil= so those can be used to
+fix annoying situations as well.
+** Disclaimer
+This is my first Emacs Lisp project more than 100 lines long, so the code is
+likely ugly and likelihood of bugs is quite high. Bug reports/fixes are
+welcome. 
