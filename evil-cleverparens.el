@@ -23,13 +23,14 @@
 
 ;;; TODOS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; TODO: Add note about copying to the evil-sp funs
+;; TODO: Make an extension out of this
 ;; TODO: Single quotes are interpreted as opening parens in Emacs Lisp
+;; TODO: Ask Fuco about this.
+;; TODO: Modify `evil-surround-operator-alist' to add my operators
 
 ;;; Code:
 
 (require 'evil)
-(require 'evil-surround)
 (require 'paredit)
 (require 'paxedit)
 (require 'drag-stuff)
@@ -37,7 +38,8 @@
 
 ;;;###autoload
 (define-minor-mode evil-cleverparens-mode
-  "Minor mode for setting up Evil with smartparens in a single buffer"
+  "Minor mode for setting up evil with smartparens and paredit
+for an advanced modal structural editing experience."
   :keymap '()
   :lighter "ecp"
   :init-value nil
@@ -52,7 +54,7 @@
   "`evil-mode' for handling your parentheses with a mix of `smartparens' and `paredit'"
   :group 'smartparens)
 
-(defcustom evil-cleverparens-threshold 2500
+(defcustom evil-cleverparens-threshold 1500
   "If the region being operated on is larger than this we cop out.
 
 Quite a bit of work gets done to ensure the region being worked
@@ -80,36 +82,47 @@ This is a feature copied from `evil-smartparens'."
 ;;; Overriding ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun evil-cp--override ()
+  "Can be used as a predicate to determine if the next operation
+should default to using regular evil functions. Resets the
+`evil-cp--override' variable back to nil."
   (prog1 (or evil-cp--override
              (evil-cp--region-too-expensive-to-check))
     (setq evil-cp--override nil)))
 
 (defun evil-cp-override ()
+  "Calling this function will have evil-cleverparens default to
+the regular evil equivalent of the next command that gets called."
   (interactive)
   (setq evil-cp--override t))
 
 (defun evil-cp--region-too-expensive-to-check ()
-  "When it takes prohobitively long to check region we cop out."
+  "When it takes prohobitively long to check region we cop out.
+
+This is a feature copied from `evil-smartparens'."
   (when (region-active-p)
     (> (abs (- (region-beginning) (region-end)))
        evil-cleverparens-threshold)))
 
 ;;; Helper functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmacro evil-cp--if-balanced-yank (then else)
-  "Helper macro for doing different things depending on the value
-of `evil-cleverparens-balance-yanked-region'."
-  (assert (and (listp then) (listp else))
-          nil "Both `THEN' and `ELSE' must be lists.")
-  `(if evil-cleverparens-balance-yanked-region
-       (progn
-         ,then)
-     (progn
-       ,else)))
+(defun evil-cp--looking-at-string-delimiter-p ()
+  "Predicate for checking if the point is on a string delimiter."
+  (and (looking-at (sp--get-stringlike-regexp))
+       (not (paredit-in-string-escape-p))))
 
 (defun evil-cp--looking-at-opening-p (&optional pos)
   "Predicate that returns true if point is looking at an opening
-paren as defined by smartparens for the major mode in question."
+parentheses as defined by smartparens for the major mode in
+question. Ignores parentheses inside strings."
+  (save-excursion
+    (when pos (goto-char pos))
+    (and (sp--looking-at-p (sp--get-opening-regexp))
+         (not (evil-cp--inside-string-p)))))
+
+(defun evil-cp--looking-at-opening-p (&optional pos)
+  "Predicate that returns true if point is looking at an opening
+parentheses as defined by smartparens for the major mode in
+question. Ignores parentheses inside strings."
   (save-excursion
     (when pos (goto-char pos))
     (and (sp--looking-at-p (sp--get-opening-regexp))
@@ -117,40 +130,69 @@ paren as defined by smartparens for the major mode in question."
 
 (defun evil-cp--looking-at-closing-p (&optional pos)
   "Predicate that returns true if point is looking at an closing
-paren as defined by smartparens for the major mode in question."
+paren as defined by smartparens for the major mode in
+question. Ignores parentheses inside strings."
   (save-excursion
     (when pos (goto-char pos))
-    (sp--looking-at-p (sp--get-closing-regexp))))
+    (and (sp--looking-at-p (sp--get-closing-regexp))
+         (not (evil-cp--inside-string-p)))))
 
 (defun evil-cp--looking-at-paren-p (&optional pos)
-  "Predicate that returns true if point is looking at a paren
-paren as defined by smartparens for the major mode in question."
+  "Predicate that returns true if point is looking at a
+parentheses as defined by smartparens for the major mode in
+question. Ignores parentheses inside strings."
   (save-excursion
     (when pos (goto-char pos))
-    (sp--looking-at-p (sp--get-allowed-regexp))))
+    (and (sp--looking-at-p (sp--get-allowed-regexp))
+         (not (evil-cp--inside-string-p)))))
 
-(defun evil-cp--looking-at-opening-quote (&optional pos)
+(defun evil-cp--looking-at-any-delimiter (&optional pos)
+  "Predicate that returns true if point is on top of a
+  parentheses or a string delimiter as defined by smartparens for
+  the major mode in question."
+  (save-excursion
+    (when pos (goto-char pos))
+    (or (sp--looking-at-p (sp--get-stringlike-regexp))
+        (evil-cp--looking-at-paren-p))))
+
+(defun evil-cp--looking-at-opening-quote-p (&optional pos)
   "Predicate for checking if point is on a opening string delimiter."
   (save-excursion
     (when pos (goto-char pos))
-    (and (looking-at (sp--get-stringlike-regexp))
+    (and (evil-cp--looking-at-string-delimiter-p)
          (progn
            (forward-char)
            (nth 3 (syntax-ppss))))))
 
-(defun evil-cp--looking-at-closing-quote (&optional pos)
+(defun evil-cp--looking-at-closing-quote-p (&optional pos)
   "Predicate for checking if point is on a closing delimiter."
   (save-excursion
     (when pos (goto-char pos))
-    (and (looking-at (sp--get-stringlike-regexp))
+    (and (evil-cp--looking-at-string-delimiter-p)
          (not (paredit-in-string-escape-p))
          (progn
            (backward-char)
            (nth 3 (syntax-ppss))))))
 
+(defun evil-cp--looking-at-any-opening-p (&optional pos)
+  "Predicate to check if point (or `POS') is on an opening
+parentheses or a string delimiter."
+  (or (evil-cp--looking-at-opening-p pos)
+      (evil-cp--looking-at-opening-quote-p pos)))
+
+(defun evil-cp--looking-at-any-closing-p (&optional pos)
+  "Predicate to check if point (or `POS') is on an opening
+parentheses or a string delimiter."
+  (or (evil-cp--looking-at-closing-p pos)
+      (evil-cp--looking-at-closing-quote-p pos)))
+
 (defmacro evil-cp--guard-point (&rest body)
-  `(if (or (evil-cp--looking-at-opening-p)
-           (evil-cp--looking-at-opening-quote))
+  "Evil/Vim and Emacs have different opinions on where the point
+is with respect to the visible cursor. This macro is used to make
+sure that commands that are used to the Emacs view still work
+when the cursor in evil is on top of an opening parentheses or a
+string delimiter."
+  `(if (evil-cp--looking-at-any-opening-p)
        (save-excursion
          (forward-char 1)
          ,@body)
@@ -174,18 +216,14 @@ paren as defined by smartparens for the major mode in question."
             (nth 3 (syntax-ppss)))))))
 
 (defun evil-cp--inside-form-p (&optional pos)
+  "Predicate that returns true if point is either inside a sexp
+or a string."
   (or (evil-cp--inside-sexp-p pos)
       (evil-cp--inside-string-p pos)))
 
 (defun evil-cp--top-level-sexp-p ()
   "Predicate that returns true if point is inside a top-level sexp."
   (eq (nth 0 (syntax-ppss)) 1))
-
-(defun evil-cp--top-level-form-p ()
-  "Predicate that returns true if point is inside a top-level sexp."
-  (or (and (eq (nth 0 (syntax-ppss)) 1) (not (sp-point-in-string)))
-      (and (nth 3 (syntax-ppss))
-           (eq (nth 0 (syntax-ppss)) 0))))
 
 (defun evil-cp--string-bounds (&optional pos)
   "Returns the location of the beginning and ending positions for
@@ -259,12 +297,11 @@ balanced parentheses."
 
 (evil-define-text-object evil-cp-a-form (count &optional beg end type)
   "Smartparens sexp object."
-  (let ((range (evil-cp--get-form-range)))
-    (if (not range)
+  (let* ((bounds (evil-cp--get-form-range)))
+    (if (not bounds)
         (error "No surrounding form found.")
-      (progn
-        (apply 'evil-range
-               (append range '(:expanded t)))))))
+      ;; I'm not sure what difference 'inclusive / 'exclusive makes here
+      (evil-range (car bounds) (cadr bounds) 'inclusive :expanded t))))
 
 (evil-define-text-object evil-cp-inner-form (count &optional beg end type)
   "Smartparens inner sexp object."
@@ -273,17 +310,19 @@ balanced parentheses."
         (error "No surrounding form found.")
       (let ((beg (car range))
             (end (cadr range)))
-        (evil-range (1+ beg) (1- end) :expanded t)))))
+        (evil-range (1+ beg) (1- end) 'inclusive :expanded t)))))
 
 (evil-define-text-object evil-cp-a-comment (count &optional beg end type)
+  "An outer comment text object as defined by `sp-get-comment-bounds'."
   (let ((bounds (sp-get-comment-bounds)))
     (if (not bounds)
         (error "Not inside a comment.")
       (let ((beg (car bounds))
             (end (cdr bounds)))
-        (evil-range beg end :expanded t)))))
+        (evil-range beg end 'exclusive :expanded t)))))
 
 (evil-define-text-object evil-cp-inner-comment (count &optional beg end type)
+  "An inner comment text object as defined by `sp-get-comment-bounds'."
   (let ((bounds (sp-get-comment-bounds)))
     (if (not bounds)
         (error "Not inside a comment.")
@@ -296,26 +335,28 @@ balanced parentheses."
                    (goto-char (cdr bounds))
                    (evil-end-of-line)
                    (point))))
-        (evil-range beg end 'block :expanded t)))))
+        (evil-range beg end 'block 'inclusive :expanded t)))))
 
 
 (evil-define-text-object evil-cp-a-defun (count &optional beg end type)
+  "An outer text object for a top level sexp (defun)."
   (if (evil-cp--inside-sexp-p)
       (let ((bounds
              (save-excursion
                (beginning-of-defun)
                (sp-get (sp-get-sexp) (list :beg :end)))))
-        (evil-range (car bounds) (cadr bounds) :expanded t))
+        (evil-range (car bounds) (cadr bounds) 'inclusive :expanded t))
     (error "Not inside a sexp.")))
 
 (evil-define-text-object evil-cp-inner-defun (count &optional beg end type)
+  "An inner text object for a top level sexp (defun)."
   (if (evil-cp--inside-sexp-p)
       (let ((bounds
              (save-excursion
                (when (evil-cp--inside-sexp-p)
                  (beginning-of-defun)
                  (sp-get (sp-get-sexp) (list :beg :end-in))))))
-        (evil-range (1+ (car bounds)) (1- (cadr bounds)) :expanded t))
+        (evil-range (1+ (car bounds)) (cadr bounds) 'inclusive :expanded t))
     (error "Not inside a sexp.")))
 
 ;;; Evil Operators ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -350,9 +391,8 @@ contained within the region."
                  (evil-cp--splice-form)
                  (cl-decf chars-left))))
 
-            ((evil-cp--looking-at-opening-quote)
+            ((evil-cp--looking-at-opening-quote-p)
              (let ((other-quote (evil-cp--matching-paren-pos)))
-               (message "otherq: %d, end: %d" other-quote end)
                (if (< (point) other-quote end)
                    (let* ((range (sp-get (sp-get-string) (list :beg :end)))
                           (char-count (- (cadr range) (car range))))
@@ -365,7 +405,7 @@ contained within the region."
              (evil-cp--splice-form)
              (cl-decf chars-left))
 
-            ((looking-at (sp--get-stringlike-regexp))
+            ((evil-cp--looking-at-string-delimiter-p)
              (forward-char)
              (cl-decf chars-left))
 
@@ -398,6 +438,9 @@ and deleting other characters. Can be overriden by
 ;; Original from:
 ;; http://emacs.stackexchange.com/questions/777/closing-all-pending-parenthesis
 (defun evil-cp--insert-missing-parentheses (backp)
+  "Calling this function in a buffer with unbalanced parentheses
+will have the missing parentheses be inserted at the end of the
+buffer if `BACKP' is nil and at the beginning if it is true."
   (let ((closing nil))
     (save-excursion
       (while (condition-case nil
@@ -413,7 +456,7 @@ and deleting other characters. Can be overriden by
                      (cond
                       ((eq head (if backp 5 4))
                        (setq closing (cons (cdr syntax) closing)))
-                      ((memq head '(7 8)) ;; TODO: Not sure what this even does?
+                      ((member head '(7 8))
                        (setq closing (cons (char-after (point)) closing)))))
                    t)
                ((scan-error) nil))))
@@ -421,6 +464,10 @@ and deleting other characters. Can be overriden by
     (apply #'insert (nreverse closing))))
 
 (defun evil-cp--close-missing-parens (text)
+  "Takes a text object and inserts missing parentheses first at
+the end of the text, and then, if the expression is still
+unbalanced, will insert the rest of the missing parens at the
+beginning."
   (with-temp-buffer
     (insert text)
     (goto-char (point-max))
@@ -431,7 +478,8 @@ and deleting other characters. Can be overriden by
       (evil-cp--insert-missing-parentheses t))
     (buffer-string)))
 
-(defun evil-cp--region-has-unbalanced-string (beg end)
+(defun evil-cp--region-has-unbalanced-string-p (beg end)
+  "Predicate for checking if a region contains an unbalanced string."
   (not (evenp (count-matches (sp--get-stringlike-regexp) beg end))))
 
 (defun evil-cp--yank-characters
@@ -441,7 +489,7 @@ optional `ADD-PARENS-P' arg determines how to handle the missing
 parentheses: if nil, the non-balanced parens are
 ignored. Otherwise they are added to the start/beginning of the
 region."
-  (unless (evil-cp--region-has-unbalanced-string beg end)
+  (unless (evil-cp--region-has-unbalanced-string-p beg end)
     (let ((text (string-trim (filter-buffer-substring beg end))))
       (when (not (evil-cp--text-balanced-p text))
         (setq text (evil-cp--close-missing-parens text)))
@@ -487,6 +535,7 @@ list of (fn args) to pass to `apply''"
     (point)))
 
 (defun evil-cp--safe-yank (beg end &optional type yank-handler)
+  "This is a version of parentheses safe yank copied from `evil-smartparens'."
   (condition-case nil
       (let ((new-beg (evil-cp--new-beginning beg end))
             (new-end (evil-cp--new-ending beg end)))
@@ -648,8 +697,6 @@ respecting parentheses."
                                        (point)))
                                 register)))))))
 
-;; smartparens, but should only be active inside strings.
-;; TODO: Ask Fuco about this.
 (defun evil-cp--delete-characters (beg end)
   "Deletes everything except unbalanced parentheses / string
 delimiters in the region defined by `BEG' and `END'."
@@ -657,8 +704,7 @@ delimiters in the region defined by `BEG' and `END'."
   (while (< (point) end)
     (cond
      ;; opening
-     ((or (evil-cp--looking-at-opening-p)
-          (evil-cp--looking-at-opening-quote))
+     ((evil-cp--looking-at-any-opening-p)
       (let ((matching-pos (evil-cp--matching-paren-pos)))
         (if (<= (point) matching-pos end)
             (progn
@@ -668,7 +714,7 @@ delimiters in the region defined by `BEG' and `END'."
 
      ;; closing that has survived
      ((or (evil-cp--looking-at-closing-p)
-          (evil-cp--looking-at-closing-quote))
+          (evil-cp--looking-at-closing-quote-p))
       (forward-char 1))
 
      ;; character
@@ -685,6 +731,10 @@ delimiters in the region defined by `BEG' and `END'."
     (forward-char)))
 
 (evil-define-operator evil-cp-delete (beg end type register yank-handler)
+  "A version of `evil-delete' that attempts to leave the region
+its acting on with balanced parentheses. The behavior of
+kill-ring is determined by the
+`evil-cleverparens-balance-yanked-region' variable."
   :move-point nil
   (interactive "<R><x><y>")
   (let ((safep (sp-region-ok-p beg end)))
@@ -700,13 +750,14 @@ delimiters in the region defined by `BEG' and `END'."
              (evil-cp--delete-characters
               (+ beg (sp-forward-whitespace t)) (1- end)))
            (when (not (or (evil-cp--looking-at-closing-p)
-                          (evil-cp--looking-at-closing-quote)))
+                          (evil-cp--looking-at-closing-quote-p)))
              (evil-join (point-at-bol) (point-at-bol 2)))
            (evil-cp--first-non-blank-non-paren))
 
           (t (evil-cp--delete-characters beg end)))))
 
 (evil-define-operator evil-cp-delete-line (beg end type register yank-handler)
+  "Kills the balanced expressions on the line until the eol."
   :motion nil
   :keep-visual t
   :move-point nil
@@ -766,8 +817,7 @@ delimiters in the region defined by `BEG' and `END'."
                (evil-yank-characters beg end register)
                (delete-region beg end)))))))
 
-(evil-define-operator evil-cp-change
-  (beg end type register yank-handler delete-func)
+(evil-define-operator evil-cp-change (beg end type register yank-handler delete-func)
   "Call `evil-change' while keeping parentheses balanced."
   :move-point nil
   (interactive "<R><x><y>")
@@ -808,8 +858,7 @@ delimiters in the region defined by `BEG' and `END'."
   ;; :motion evil-line
   (interactive "<R><x>")
   (evil-first-non-blank)
-  (while (or (evil-cp--looking-at-opening-p)
-             (evil-cp--looking-at-opening-quote))
+  (while (evil-cp--looking-at-any-opening-p)
     (evil-forward-char 1 nil t))
   (evil-cp-change-line beg (1- end) type register yank-handler #'evil-cp-delete-line))
 
@@ -817,24 +866,29 @@ delimiters in the region defined by `BEG' and `END'."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (evil-define-motion evil-cp-forward-sexp (count)
+  "Motion for moving forward by a sexp via `sp-forward-sexp'."
   :type exclusive
   (let ((count (or count 1)))
     (evil-signal-at-bob-or-eob count)
     (sp-forward-sexp count)))
 
 (evil-define-motion evil-cp-backward-sexp (count)
+  "Motion for moving backwward by a sexp via `sp-backward-sexp'."
   :type exclusive
   (let ((count (or count 1)))
     (evil-signal-at-bob-or-eob count)
     (sp-backward-sexp count)))
 
 (evil-define-motion evil-cp-beginning-of-defun (count)
-  :type exclusive
+  "Motion for moving to the beginning of a defun (i.e. a top
+level sexp)."
+  :type inclusive
   (let ((count (or count 1)))
     (beginning-of-defun count)))
 
 (evil-define-motion evil-cp-end-of-defun (count)
-  :type exclusive
+  "Motion for moving to the end of a defun (i.e. a top level sexp)."
+  :type inclusive
   (let ((count (or count 1)))
     (if (save-excursion
           (evil-cp--looking-at-closing-p))
@@ -843,6 +897,7 @@ delimiters in the region defined by `BEG' and `END'."
     (backward-char 2)))
 
 (evil-define-motion evil-cp-next-opening (count)
+  "Motion for moving to the next open parentheses."
   :move-point nil
   :type inclusive
   (let ((count (or count 1)))
@@ -852,12 +907,14 @@ delimiters in the region defined by `BEG' and `END'."
     (backward-char)))
 
 (evil-define-motion evil-cp-previous-opening (count)
+  "Motion for moving to the previous open parentheses."
   :type inclusive
   (let ((count (or count 1)))
     (evil-signal-at-bob-or-eob count)
     (re-search-backward (sp--get-opening-regexp) nil t count)))
 
 (evil-define-motion evil-cp-next-closing (count)
+  "Motion for moving to the next closing parentheses."
   :move-point nil
   :type inclusive
   (let ((count (or count 1)))
@@ -867,6 +924,7 @@ delimiters in the region defined by `BEG' and `END'."
     (backward-char)))
 
 (evil-define-motion evil-cp-previous-closing (count)
+  "Motion for moving to the previous closing parentheses."
   :move-point nil
   :type inclusive
   (let ((count (or count 1)))
@@ -930,56 +988,101 @@ movement."
     (evil-signal-at-bob-or-eob (- (or count 1)))
     (evil-backward-end thing count)))
 
-(defun evil-cp-left-paren (&optional n)
-  (interactive "p")
-  (re-search-backward (sp--get-opening-regexp) nil t n))
-
-(defun evil-cp-right-paren (&optional n)
-  (interactive "p")
-  (when (evil-cp--looking-at-closing-p)
-    (forward-char))
-  (re-search-forward (sp--get-closing-regexp) nil t n)
-  (backward-char))
-
-
-;; TODO: Insert space automatically when slurping
 (defun evil-cp-< (n)
+  "Slurping/barfing operation that acts differently based on the points
+location in the form.
+
+When point is on the opening delimiter of the form boundary, it will
+slurp the next element backwards while maintaining the location of the
+point in the original delimiter.
+
+  foo [(]bar baz) -> [(]foo bar baz)
+
+When point is on the closing delimiter, it will barf the rightmost
+element of the form forward, again maintaining the location of the point
+in the original delimiter.
+
+  (bar baz foo[)] -> (bar baz[)] foo
+
+When point is in the middle of a form, it will act as a regular
+forward-barf."
   (interactive "p")
-  (let ((at (char-after)))
-    (cond ((eq at ?\()
-           (dotimes (_ n)
-             (forward-char)
-             (paredit-backward-slurp-sexp)
-             (paredit-backward)
-             (evil-cp-left-paren)))
+  (cond
 
-          ((eq at ?\))
-           (dotimes (_ n)
-             (paredit-forward-barf-sexp)
-             (paredit-backward)
-             (re-search-backward (sp--get-closing-regexp))))
+   ((not (evil-cp--inside-form-p))
+    nil)
 
-          (t (paredit-forward-barf-sexp n)))))
+   ((evil-cp--looking-at-any-opening-p)
+    (condition-case nil
+        (dotimes (_ n)
+          (evil-cp--guard-point (sp-backward-slurp-sexp))
+          (sp-backward-sexp)
+          (evil-cp-previous-opening))
+      (error nil)))
+
+   ((and (evil-cp--looking-at-closing-p)
+         (sp-point-in-empty-sexp))
+    nil)
+
+   ((evil-cp--looking-at-any-closing-p)
+    (condition-case nil
+        (dotimes (_ n)
+          (sp-forward-barf-sexp)
+          (sp-backward-sexp)
+          (evil-cp-previous-closing))
+      (error nil)))
+
+   (t (sp-forward-barf-sexp n))))
 
 (defun evil-cp-> (n)
+  "Slurping/barfing operation that acts differently based on the points
+location in the form.
+
+When point is on the opening delimiter of the form boundary, it will
+bafr the first element of the sexp out while maintaining the location of the
+point in the delimiter where the command was called from.
+
+  [(]foo bar baz) -> foo [(]bar baz)
+
+When point is on the closing delimiter, it will slurp the next element
+forward while maintaining the location of point in the original delimiter.
+
+  (bar baz[)] foo -> (bar baz foo[)]
+
+When point is in the middle of a form, it will act as a regular
+forward-slurp."
   (interactive "p")
-  (let ((at (char-after)))
-    (cond ((eq at ?\()
-           (dotimes (_ n)
-             (forward-char)
-             (paredit-backward-barf-sexp)
-             (paredit-forward)
-             (re-search-forward (sp--get-opening-regexp))
-             (backward-char)))
+  (cond
+   ((not (evil-cp--inside-form-p))
+    nil)
 
-          ((eq at ?\))
-           (dotimes (_ n)
-             (paredit-forward-slurp-sexp)
-             (paredit-forward)))
+   ((and (evil-cp--looking-at-any-opening-p)
+         (evil-cp--guard-point (sp-point-in-empty-sexp)))
+    nil)
 
-          (t (paredit-forward-slurp-sexp n)))))
+   ((evil-cp--looking-at-any-opening-p)
+    (condition-case nil
+        (dotimes (_ n)
+          (evil-cp--guard-point (sp-backward-barf-sexp))
+          (sp-forward-sexp)
+          ;; in case we end up with empty sexp
+          (when (not (evil-cp--guard-point (sp-point-in-empty-sexp)))
+            (evil-cp-next-opening)))
+      (error nil)))
+
+   ((evil-cp--looking-at-any-closing-p)
+    (condition-case nil
+        (dotimes (_ n)
+          ;; TODO: this fails on new-lines
+          (sp-forward-slurp-sexp)
+          (sp-forward-sexp))
+      (error nil)))
+
+   (t (sp-forward-slurp-sexp n))))
 
 (defun evil-cp--line-safe-p (&optional move-fn)
+  "Predicate that checks if the line as defined by `MOVE-FN' is
+safe for transposing."
   (save-excursion
     (when move-fn (funcall move-fn))
     (let* ((beg (line-beginning-position))
@@ -989,25 +1092,29 @@ movement."
            (in-string-p (nth 3 parsed)))
       (and sexps-ok-p (not in-string-p)))))
 
+;; TODO: Transpposing isn't working right now
 (defun evil-cp--transpose (this-fn)
+  "Transposes a sexp either forward or backward as defined by `THIS-FN'."
   (save-excursion
-    (when ((evil-cp--looking-at-opening-p))
+    (when (evil-cp--looking-at-opening-p)
       (forward-char))
     (sp-end-of-sexp)
     (funcall this-fn)))
 
-(defun evil-cp-transpose-sexp-backward (&optional n)
+(defun evil-cp-transpose-sexp-backward ()
+  "Transposes the sexp under point backward."
   (interactive "p")
   (evil-cp--transpose 'paxedit-transpose-backward))
 
-(defun evil-cp-transpose-sexp-forward (&optional n)
+(defun evil-cp-transpose-sexp-forward ()
+  "Transposes the sexp under point forward."
   (interactive "p")
   (evil-cp--transpose 'paxedit-transpose-forward))
 
 (defun evil-cp--drag-stuff-up-or-down (dir &optional n)
   (assert (member dir '(:up :down)) t "`dir' has to be :up or :down")
   (let ((n (or n 1))
-        (drag-fn (if (eq dir :up) 'drag-stuff-up 'drag-stuff-down)))
+        (drag-fn (if (eq dir :up) #'drag-stuff-up #'drag-stuff-down)))
     (catch 'stop
       (dotimes (_ n)
         (let ((in-sexp-p (evil-cp--inside-sexp-p))
@@ -1026,57 +1133,41 @@ movement."
            (t (throw 'stop nil))))))))
 
 (defun evil-cp-drag-up (&optional n)
+  "If both the line where point is, and the line above it are
+balanced, this operation acts the same as `drag-stuff-up',
+i.e. it will swap the two lines with each other.
+
+If the point is on a top level sexp, it will be tranposed with
+the top level sexp above it.
+
+If the point is inside a nested sexp then
+`paxedit-transpose-backward' is called."
   (interactive "p")
   (evil-cp--drag-stuff-up-or-down :up n))
 
 (defun evil-cp-drag-down (&optional n)
+  "If both the line where point is, and the line below it are
+balanced, this operation acts the same as `drag-stuff-down',
+i.e. it will swap the two lines with each other.
+
+If the point is on a top level sexp, it will be tranposed with
+the top level sexp below it.
+
+If the point is inside a nested sexp then
+`paxedit-transpose-forward' is called."
   (interactive "p")
   (evil-cp--drag-stuff-up-or-down :down n))
 
-(defun evil--parens-drag-sideways (dir-fn check-oob n)
-  (catch 'stop
-    (dotimes (_ n))
-    (if (or (looking-at " ")
-            (looking-at "\"")
-            (evil-cp--looking-at-paren-p))
-        (throw 'stop (message "Can only drag elements."))
-      (if (and (evil-cp--top-level-sexp-p)
-               (string-equal (thing-at-point 'symbol t)
-                             (save-excursion (funcall check-oob))))
-          (throw 'stop (message "Can't move element outside a top-level sexp."))
-        (funcall dir-fn 1)))))
-
-(defun evil-cp-drag-right (&optional n)
-  (interactive "p")
-  (let ((n (or n 1)))
-    (drag-stuff-symbol-right n)
-    ;; (evil--parens-drag-sideways
-    ;;  'drag-stuff-symbol-right
-    ;;  (lambda ()
-    ;;    (end-of-defun)
-    ;;    (backward-char 2)
-    ;;    (while (not (thing-at-point 'symbol)) (backward-char))
-    ;;    (thing-at-point 'symbol t))
-    ;;  n)
-    ))
-
-(defun evil-cp-drag-left (&optional n)
-  (interactive "p")
-  (let ((n (or n 1)))
-    (drag-stuff-symbol-left n)
-    ;; (evil--parens-drag-sideways
-    ;;  'drag-stuff-symbol-left
-    ;;  (lambda ()
-    ;;    (beginning-of-defun)
-    ;;    (forward-char)
-    ;;    (while (not (thing-at-point 'symbol)) (forward-char))
-    ;;    (thing-at-point 'symbol t))
-    ;;  n)
-    ))
-
-;; (evil-define-operator evil-cp-substitute-or-change-surround (beg end type register)
-;;   (if (evil-cp--looking-at-paren-p)
-;;       (evil-surround-change )))
+(evil-define-operator evil-cp-substitute (beg end type register)
+  "Parentheses safe version of `evil-substitute'."
+  :motion evil-forward-char
+  (interactive "<R><x>")
+  (cond
+   ((evil-cp--looking-at-any-opening-p)
+    (evil-append 1))
+   ((evil-cp--looking-at-any-closing-p)
+    (evil-insert 1))
+   (t (evil-substitute beg end type register))))
 
 (evil-define-key 'normal evil-cleverparens-mode-map
   (kbd "H")   #'sp-backward-sexp
@@ -1098,30 +1189,22 @@ movement."
   (kbd "y")   #'evil-cp-yank
   (kbd "D")   #'evil-cp-delete-line
   (kbd "C")   #'evil-cp-change-line
-  (kbd "s")   #'evil-cp-substitute-or-change-surround
+  (kbd "s")   #'evil-cp-substitute
   (kbd "S")   #'evil-cp-change-whole-line
   (kbd "Y")   #'evil-cp-yank-line
   (kbd "x")   #'evil-cp-delete-char-or-splice
-  (kbd "X")   #'evil-cp-delete-or-splice
   (kbd ">")   #'evil-cp->
   (kbd "<")   #'evil-cp-<
   (kbd "M-k") #'evil-cp-drag-up
   (kbd "M-j") #'evil-cp-drag-down
-  (kbd "M-h") #'evil-cp-drag-left
-  (kbd "M-l") #'evil-cp-drag-right
-  (kbd "M-J") #'paredit-join-sexps
-  (kbd "M-d") #'paxedit-kill
-  (kbd "M-y") #'paxedit-copy
-  (kbd "M-s") #'paredit-split-sexp
-  (kbd "M-S") #'paredit-splice-sexp
-  (kbd "M-r") #'paxedit-sexp-raise
-  ;; TODO: evil-cp-raise-sexp that's guarded
-  ;; TODO: raise-some
+  (kbd "M-J") #'sp-join-sexp ;; a bit unfortunate that M-j is taken
+  (kbd "M-s") #'sp-split-sexp
+  (kbd "M-S") #'sp-splice-sexp ;; same thing
+  (kbd "M-r") #'sp-raise-sexp
   ;; TODO: insert at start of sexp
   ;; TODO: insert at the end of sexp
-  ;; TODO: insert start of parent sexp
-  ;; TODO: insert at the end of parent sexp
-  ;; TODO: paxedit-sexp-raise acts weird
+  ;; TODO: copy-sexp-below
+  ;; TODO: bind sp-indent-defun
   )
 
 (evil-define-key 'visual evil-cleverparens-mode-map
@@ -1132,6 +1215,8 @@ movement."
   (kbd "]")   #'evil-cp-next-closing
   (kbd "{")   #'evil-cp-previous-closing
   (kbd "}")   #'evil-cp-next-opening
+  (kbd "(")   #'evil-cp-beginning-of-defun
+  (kbd ")")   #'evil-cp-end-of-defun
   (kbd "L")   #'evil-cp-forward-sexp
   (kbd "H")   #'evil-cp-backward-sexp)
 
