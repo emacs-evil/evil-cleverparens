@@ -479,7 +479,6 @@ beginning."
     (insert text)
     (goto-char (point-max))
     (evil-cp--insert-missing-parentheses nil)
-    ;; TODO: This is far from optimal
     (when (not (sp-region-ok-p (point-min) (point-max)))
       (goto-char (point-min))
       (evil-cp--insert-missing-parentheses t))
