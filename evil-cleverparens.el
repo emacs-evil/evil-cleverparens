@@ -26,6 +26,7 @@
 ;; TODO: Make an extension out of this
 ;; TODO: Single quotes are interpreted as opening parens in Emacs Lisp
 ;; TODO: Ask Fuco about this.
+;; TODO: joining new-lines still seems a bit shaky with dd
 
 ;;; Code:
 
@@ -1175,6 +1176,31 @@ If the point is inside a nested sexp then
     (evil-insert 1))
    (t (evil-substitute beg end type register))))
 
+(evil-define-command evil-cp-insert-at-end-of-form (count)
+  "Move point `COUNT' times with `sp-forward-sexp' and enter
+insert mode at the end of form. Using an arbitrarily large
+`COUNT' is guaranteened to take the point to the beginning of the top level form."
+  (interactive "<c>")
+  (let ((defun-end (save-excursion (end-of-defun) (point)))
+        target)
+    (when (not (sp-up-sexp count))
+      (goto-char defun-end))
+    (backward-char)
+    (evil-insert 1)))
+
+(evil-define-command evil-cp-insert-at-beginning-of-form (count)
+  "Move point `COUNT' times with `sp-backward-up-sexp' and enter
+insert mode at the beginning of the form. Using an arbitrarily
+large `COUNT' is guaranteened to take the point to the beginning
+of the top level form."
+  (interactive "<c>")
+  (let ((defun-beginning (save-excursion (beginning-of-defun) (point)))
+        target)
+    (when (not (sp-backward-up-sexp count))
+      (goto-char defun-beginning))
+    (forward-char)
+    (evil-insert 1)))
+
 (evil-define-key 'normal evil-cleverparens-mode-map
   (kbd "H")   #'sp-backward-sexp
   (kbd "L")   #'sp-forward-sexp
@@ -1207,8 +1233,8 @@ If the point is inside a nested sexp then
   (kbd "M-s") #'sp-split-sexp
   (kbd "M-S") #'sp-splice-sexp ;; same thing
   (kbd "M-r") #'sp-raise-sexp
-  ;; TODO: insert at start of sexp
-  ;; TODO: insert at the end of sexp
+  (kbd "M-a") #'evil-cp-insert-at-end-of-form
+  (kbd "M-i") #'evil-cp-insert-at-beginning-of-form
   ;; TODO: copy-sexp-below
   ;; TODO: bind sp-indent-defun
   )
