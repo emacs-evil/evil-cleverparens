@@ -1201,6 +1201,38 @@ of the top level form."
     (forward-char)
     (evil-insert 1)))
 
+(evil-define-command evil-cp-copy-paste-form ()
+  "Copies the surrounding form to kill-ring and inserts it after
+the current form."
+  (let* ((form (cond
+                ((evil-cp--inside-string-p)
+                 (sp-get-string))
+                ((evil-cp--inside-sexp-p)
+                 (evil-cp--guard-point
+                  (sp-get-enclosing-sexp)))
+                (t (error "Not inside a form."))))
+         (bounds (sp-get form (list :beg :end)))
+         (beg    (car bounds))
+         (end    (cadr bounds))
+         (offset (- end (point))))
+    (when (and beg end)
+      (evil-yank beg end)
+      (cond
+       ((evil-cp--top-level-sexp-p)
+        (end-of-defun)
+        (insert "\n")
+        (yank))
+       ((> 80 (+ end (- end beg)))
+        (sp-up-sexp)
+        (insert " ")
+        (yank))
+       (t
+        (sp-up-sexp)
+        (insert "\n")
+        (indent-according-to-mode)
+        (yank)))
+      (backward-char offset))))
+
 (evil-define-key 'normal evil-cleverparens-mode-map
   (kbd "H")   #'sp-backward-sexp
   (kbd "L")   #'sp-forward-sexp
@@ -1235,9 +1267,14 @@ of the top level form."
   (kbd "M-r") #'sp-raise-sexp
   (kbd "M-a") #'evil-cp-insert-at-end-of-form
   (kbd "M-i") #'evil-cp-insert-at-beginning-of-form
+  (kbd "M-c") #'evil-cp-copy-paste-form
+  (kbd "M-q") #'sp-indent-defun
+  ;; TODO: evil-cp-open-below/above
   ;; TODO: copy-sexp-below
   ;; TODO: bind sp-indent-defun
   )
+
+
 
 (evil-define-key 'visual evil-cleverparens-mode-map
   (kbd "o") #'evil-cp-override)
