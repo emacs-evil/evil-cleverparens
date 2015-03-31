@@ -1079,9 +1079,11 @@ forward-slurp."
    ((evil-cp--looking-at-any-closing-p)
     (condition-case nil
         (dotimes (_ n)
-          ;; TODO: this fails on new-lines
           (sp-forward-slurp-sexp)
-          (sp-forward-sexp))
+          (sp-forward-sexp)
+          (when (not (evil-cp--looking-at-any-closing-p))
+            (sp-forward-whitespace)
+            (sp-forward-sexp)))
       (error nil)))
 
    (t (sp-forward-slurp-sexp n))))
