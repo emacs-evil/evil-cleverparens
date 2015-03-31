@@ -26,7 +26,6 @@
 ;; TODO: Make an extension out of this
 ;; TODO: Single quotes are interpreted as opening parens in Emacs Lisp
 ;; TODO: Ask Fuco about this.
-;; TODO: Modify `evil-surround-operator-alist' to add my operators
 
 ;;; Code:
 
@@ -47,6 +46,14 @@ for an advanced modal structural editing experience."
     (evil-normal-state)
     (evil-change-state prev-state)
     (setq drag-stuff-by-symbol-p t)))
+
+(defun evil-cp--enable-surround-operators ()
+  "Enables the use of `evil-cp-delete' and `evil-cp-change' with
+`evil-surround-mode'"
+  (add-to-list 'evil-surround-operator-alist '(evil-cp-delete . delete))
+  (add-to-list 'evil-surround-operator-alist '(evil-cp-change . change)))
+
+(add-hook evil-surround-mode-hook 'evil-cp--enable-surround-operators)
 
 ;;; Variables ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
