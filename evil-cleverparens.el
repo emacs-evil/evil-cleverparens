@@ -1285,8 +1285,11 @@ the current form."
 
 (defun evil-cp-open-above-form ()
   (interactive)
-  ;; TODO
-  )
+  (sp-backward-up-sexp)
+  (save-excursion
+    (insert "\n")
+    (indent-according-to-mode)
+    (evil-insert 1)))
 
 (evil-define-key 'visual evil-cleverparens-mode-map
   (kbd "o") #'evil-cp-override)
