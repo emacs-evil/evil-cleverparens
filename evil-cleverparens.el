@@ -1269,12 +1269,24 @@ the current form."
   (kbd "M-i") #'evil-cp-insert-at-beginning-of-form
   (kbd "M-c") #'evil-cp-copy-paste-form
   (kbd "M-q") #'sp-indent-defun
+  (kbd "M-o") #'evil-cp-open-below-form
+  (kbd "M-O") #'evil-cp-open-above-form
   ;; TODO: evil-cp-open-below/above
   ;; TODO: copy-sexp-below
   ;; TODO: bind sp-indent-defun
   )
 
+(defun evil-cp-open-below-form ()
+  (interactive)
+  (sp-up-sexp)
+  (insert "\n")
+  (indent-according-to-mode)
+  (evil-insert 1))
 
+(defun evil-cp-open-above-form ()
+  (interactive)
+  ;; TODO
+  )
 
 (evil-define-key 'visual evil-cleverparens-mode-map
   (kbd "o") #'evil-cp-override)
