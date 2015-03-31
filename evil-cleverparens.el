@@ -1100,7 +1100,6 @@ safe for transposing."
            (in-string-p (nth 3 parsed)))
       (and sexps-ok-p (not in-string-p)))))
 
-;; TODO: Transpposing isn't working right now
 (defun evil-cp--transpose (this-fn)
   "Transposes a sexp either forward or backward as defined by `THIS-FN'."
   (save-excursion
@@ -1135,9 +1134,8 @@ safe for transposing."
            (in-sexp-p
             (funcall (if (eq dir :up)
                          'evil-cp-transpose-sexp-backward
-                       'evil-cp-transpose-sexp-forward)
-                     1))
-           (line-safe-p (funcall drag-fn 1))
+                       'evil-cp-transpose-sexp-forward)))
+           (line-safe-p (funcall drag-fn))
            (t (throw 'stop nil))))))))
 
 (defun evil-cp-drag-up (&optional n)
