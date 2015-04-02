@@ -23,69 +23,14 @@
 
 ;;; TODOS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; TODO: Make an extension out of this
-;; TODO: Single quotes are interpreted as opening parens in Emacs Lisp
-;; TODO: Ask Fuco about this.
-;; TODO: joining new-lines still seems a bit shaky with dd
-
 ;;; Code:
 
+(require 'dash)
 (require 'evil)
 (require 'paredit)
 (require 'paxedit)
 (require 'drag-stuff)
 (require 'smartparens)
-
-;;;###autoload
-(define-minor-mode evil-cleverparens-mode
-  "Minor mode for setting up evil with smartparens and paredit
-for an advanced modal structural editing experience."
-  :keymap '()
-  :lighter "ecp"
-  :init-value nil
-  (let ((prev-state evil-state))
-    (evil-normal-state)
-    (evil-change-state prev-state)
-    (setq drag-stuff-by-symbol-p t)))
-
-(defun evil-cp--enable-surround-operators ()
-  "Enables the use of `evil-cp-delete' and `evil-cp-change' with
-`evil-surround-mode'"
-  (add-to-list 'evil-surround-operator-alist '(evil-cp-delete . delete))
-  (add-to-list 'evil-surround-operator-alist '(evil-cp-change . change)))
-
-(add-hook evil-surround-mode-hook 'evil-cp--enable-surround-operators)
-
-;;; Variables ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defgroup evil-cleverparens nil
-  "`evil-mode' for handling your parentheses with a mix of `smartparens' and `paredit'"
-  :group 'smartparens)
-
-(defcustom evil-cleverparens-threshold 1500
-  "If the region being operated on is larger than this we cop out.
-
-Quite a bit of work gets done to ensure the region being worked
-is in an safe state, so this lets us sarifice safety for a snappy
-editor on slower computers.
-
-Even on a large computer you shouldn't set this too high or your
-computer will freeze when copying large files out of Emacs.
-
-This is a feature copied from `evil-smartparens'."
-  :group 'evil-smartparens
-  :type 'string)
-
-(defcustom evil-cleverparens-balance-yanked-region t
-  "Determines how to handle yanking a region containing
-  unbalanced expressions. If this value is non-nil, a yanked
-  region containing missing parentheses will include the missing
-  parens appended to the end."
- :group 'evil-cleverparens
- :type 'boolean)
-
-(defvar evil-cp--override nil
-  "Should the next command skip region checks?")
 
 ;;; Overriding ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -640,11 +585,13 @@ respecting parentheses."
       (evil-yank beg end type register yank-handler))
 
      (evil-cleverparens-balance-yanked-region
-      (when (= (char-after end) 32) (setq end (1- end)))
+      (when (or (= (char-after end) 10)
+                (= end (point-max)))
+        (setq end (1- end)))
       (evil-cp--yank-characters beg end register yank-handler))
 
      (t
-      (evil-cp--safe-yank beg end type yank-handler)))))
+      (evil-cp--safe-yank beg end type register yank-handler)))))
 
 (evil-define-operator evil-cp-yank-line (beg end type register)
   "Acts like `paredit-copy-sexp-as-kill'."
@@ -755,7 +702,9 @@ kill-ring is determined by the
           ((eq type 'line)
            (save-excursion
              (evil-cp--delete-characters
+              ;; delete whitespace until eol
               (+ beg (sp-forward-whitespace t)) (1- end)))
+           ;; TODO: joining new-lines still seems a bit shaky with dd
            (when (not (or (evil-cp--looking-at-closing-p)
                           (evil-cp--looking-at-closing-quote-p)))
              (evil-join (point-at-bol) (point-at-bol 2)))
@@ -1119,6 +1068,8 @@ safe for transposing."
   (interactive "p")
   (evil-cp--transpose 'paxedit-transpose-forward))
 
+;; TODO: this feels like kind of a mess
+;; TODO: dragging by safe line doesn't work atm
 (defun evil-cp--drag-stuff-up-or-down (dir &optional n)
   (assert (member dir '(:up :down)) t "`dir' has to be :up or :down")
   (let ((n (or n 1))
@@ -1139,6 +1090,7 @@ safe for transposing."
            (line-safe-p (funcall drag-fn))
            (t (throw 'stop nil))))))))
 
+;; TODO: C-u should force sexp transpose?
 (defun evil-cp-drag-up (&optional n)
   "If both the line where point is, and the line above it are
 balanced, this operation acts the same as `drag-stuff-up',
@@ -1233,50 +1185,9 @@ the current form."
         (yank)))
       (backward-char offset))))
 
-(evil-define-key 'normal evil-cleverparens-mode-map
-  (kbd "H")   #'sp-backward-sexp
-  (kbd "L")   #'sp-forward-sexp
-  (kbd "W")   #'evil-cp-forward-symbol-begin
-  (kbd "E")   #'evil-cp-forward-symbol-end
-  (kbd "B")   #'evil-cp-backward-symbol-begin
-  (kbd "gE")  #'evil-cp-backward-symbol-end
-  (kbd "L")   #'evil-cp-forward-sexp
-  (kbd "H")   #'evil-cp-backward-sexp
-  (kbd "[")   #'evil-cp-previous-opening
-  (kbd "]")   #'evil-cp-next-closing
-  (kbd "{")   #'evil-cp-previous-closing
-  (kbd "}")   #'evil-cp-next-opening
-  (kbd "(")   #'evil-cp-beginning-of-defun
-  (kbd ")")   #'evil-cp-end-of-defun
-  (kbd "d")   #'evil-cp-delete
-  (kbd "c")   #'evil-cp-change
-  (kbd "y")   #'evil-cp-yank
-  (kbd "D")   #'evil-cp-delete-line
-  (kbd "C")   #'evil-cp-change-line
-  (kbd "s")   #'evil-cp-substitute
-  (kbd "S")   #'evil-cp-change-whole-line
-  (kbd "Y")   #'evil-cp-yank-line
-  (kbd "x")   #'evil-cp-delete-char-or-splice
-  (kbd ">")   #'evil-cp->
-  (kbd "<")   #'evil-cp-<
-  (kbd "M-k") #'evil-cp-drag-up
-  (kbd "M-j") #'evil-cp-drag-down
-  (kbd "M-J") #'sp-join-sexp ;; a bit unfortunate that M-j is taken
-  (kbd "M-s") #'sp-split-sexp
-  (kbd "M-S") #'sp-splice-sexp ;; same thing
-  (kbd "M-r") #'sp-raise-sexp
-  (kbd "M-a") #'evil-cp-insert-at-end-of-form
-  (kbd "M-i") #'evil-cp-insert-at-beginning-of-form
-  (kbd "M-c") #'evil-cp-copy-paste-form
-  (kbd "M-q") #'sp-indent-defun
-  (kbd "M-o") #'evil-cp-open-below-form
-  (kbd "M-O") #'evil-cp-open-above-form
-  ;; TODO: evil-cp-open-below/above
-  ;; TODO: copy-sexp-below
-  ;; TODO: bind sp-indent-defun
-  )
-
 (defun evil-cp-open-below-form ()
+  "Enters insert mode after entering a newline at the end of the
+current form."
   (interactive)
   (sp-up-sexp)
   (insert "\n")
@@ -1284,6 +1195,8 @@ the current form."
   (evil-insert 1))
 
 (defun evil-cp-open-above-form ()
+  "Enters insert mode after entering a newline at the begnning of
+the current form."
   (interactive)
   (sp-backward-up-sexp)
   (save-excursion
@@ -1291,27 +1204,222 @@ the current form."
     (indent-according-to-mode)
     (evil-insert 1)))
 
-(evil-define-key 'visual evil-cleverparens-mode-map
-  (kbd "o") #'evil-cp-override)
+;; TODO: balanced yanking appears to have a bug when there's an extra paren at the end
 
-(evil-define-key 'motion evil-cleverparens-mode-map
-  (kbd "[")   #'evil-cp-previous-opening
-  (kbd "]")   #'evil-cp-next-closing
-  (kbd "{")   #'evil-cp-previous-closing
-  (kbd "}")   #'evil-cp-next-opening
-  (kbd "(")   #'evil-cp-beginning-of-defun
-  (kbd ")")   #'evil-cp-end-of-defun
-  (kbd "L")   #'evil-cp-forward-sexp
-  (kbd "H")   #'evil-cp-backward-sexp)
+;;; Variables ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun evil-cp-toggle-balanced-yank (&optional forcep)
+  "Toggles the setting `evil-cleverparens-balance-yanked-region',
+which determines whether or not an incomplete yanked region
+should be supplemented with the missing parentheses at the end
+and/or beginning."
+  (interactive)
+  (cond
+   (forcep
+    (message "Turned yank auto-balancing ON.")
+    (setq evil-cleverparens-balance-yanked-region t))
+   ((not evil-cleverparens-balance-yanked-region)
+    (message "Turned yank auto-balancing ON.")
+    (setq evil-cleverparens-balance-yanked-region t))
+   (t
+    (message "Turned yank auto-balancing OFF.")
+    (setq evil-cleverparens-balance-yanked-region nil))))
+
+(defgroup evil-cleverparens nil
+  "`evil-mode' for handling your parentheses with a mix of `smartparens' and `paredit'"
+  :group 'smartparens)
+
+(defcustom evil-cleverparens-threshold 1500
+  "If the region being operated on is larger than this we cop out.
+
+Quite a bit of work gets done to ensure the region being worked
+is in an safe state, so this lets us sarifice safety for a snappy
+editor on slower computers.
+
+Even on a large computer you shouldn't set this too high or your
+computer will freeze when copying large files out of Emacs.
+
+This is a feature copied from `evil-smartparens'."
+  :group 'evil-smartparens
+  :type 'string)
+
+(defcustom evil-cleverparens-balance-yanked-region nil
+  "Determines how to handle yanking a region containing
+  unbalanced expressions. If this value is non-nil, a yanked
+  region containing missing parentheses will include the missing
+  parens appended to the end."
+ :group 'evil-cleverparens
+ :type 'boolean)
+
+(defcustom evil-cleverparens-use-special-bindings t
+  "If true, enable special bindings defined in `evil-cp-special-bindings-alist'"
+  :group 'evil-cleverparens
+  :type 'boolean)
+
+(defvar evil-cp--override nil
+  "Should the next command skip region checks?")
+
+(defcustom evil-cleverparens-use-additional-bindings t
+  "Should additional bindings be enabled."
+  :type 'boolean
+  :group 'evil-cleverparens)
+
+(defcustom evil-cleverparens-enabled-hook nil
+  "Called after `evil-cleverparens-mode' is turned on."
+  :type 'hook
+  :group 'evil-cleverparens)
+
+(defcustom evil-cleverparens-disabled-hook nil
+  "Called after `evil-cleverparens-mode' is turned off."
+  :type 'hook
+  :group 'evil-cleverparens)
+
+;;; Keys ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defvar evil-cp-regular-bindings
+  '(("H"  . sp-backward-sexp)
+    ("L"  . sp-forward-sexp)
+    ("W"  . evil-cp-forward-symbol-begin)
+    ("E"  . evil-cp-forward-symbol-end)
+    ("B"  . evil-cp-backward-symbol-begin)
+    ("gE" . evil-cp-backward-symbol-end)
+    ("L"  . evil-cp-forward-sexp)
+    ("H"  . evil-cp-backward-sexp)
+    ("["  . evil-cp-previous-opening)
+    ("]"  . evil-cp-next-closing)
+    ("{"  . evil-cp-previous-closing)
+    ("}"  . evil-cp-next-opening)
+    ("("  . evil-cp-beginning-of-defun)
+    (")"  . evil-cp-end-of-defun)
+    ("d"  . evil-cp-delete)
+    ("c"  . evil-cp-change)
+    ("y"  . evil-cp-yank)
+    ("D"  . evil-cp-delete-line)
+    ("C"  . evil-cp-change-line)
+    ("s"  . evil-cp-substitute)
+    ("S"  . evil-cp-change-whole-line)
+    ("Y"  . evil-cp-yank-line)
+    ("x"  . evil-cp-delete-char-or-splice)
+    (">"  . evil-cp->)
+    ("<"  . evil-cp-<)
+    ("M-T" . evil-cp-toggle-balanced-yank))
+  "Alist containing the regular evil-cleverparens bindings that
+  override evil's bindings in normal mode.")
+
+(defvar evil-cp-additional-bindings
+  '(("M-k" . evil-cp-drag-up)
+    ("M-t" . sp-transpose-sexp)
+    ("M-j" . evil-cp-drag-down)
+    ("M-J" . sp-join-sexp)
+    ("M-s" . sp-splice-sexp)
+    ("M-S" . sp-split-sexp)
+    ("M-r" . sp-raise-sexp)
+    ("M-a" . evil-cp-insert-at-end-of-form)
+    ("M-i" . evil-cp-insert-at-beginning-of-form)
+    ("M-c" . evil-cp-copy-paste-form)
+    ("M-q" . sp-indent-defun)
+    ("M-o" . evil-cp-open-below-form)
+    ("M-O" . evil-cp-open-above-form))
+  "Alist containing additional functionality for
+  evil-cleverparens via a modifier key (using the meta-key by
+  default). Only enabled in evil's normal mode.")
+
+(defvar evil-cp-paredit-bindings
+  '(("C-M-f"       . sp-forward-sexp)
+    ("C-M-b"       . sp-backward-sexp)
+    ("C-M-u"       . sp-backward-up-sexp)
+    ("C-M-d"       . sp-down-sexp)
+    ("C-M-p"       . sp-backward-down-sexp)
+    ("C-M-n"       . sp-up-sexp)
+    ("M-s"         . sp-splice-sexp)
+    ("M-S"         . sp-split-sexp)
+    ("M-<up>"      . sp-splice-sexp-killing-backward)
+    ("M-<down>"    . sp-splice-sexp-killing-forward)
+    ;; different from paredit, but kept for consistency with normal-mode
+    ("M-r"         . sp-splice-sexp)
+    ("C-)"         . sp-forward-slurp-sexp)
+    ("C-<right>"   . sp-forward-slurp-sexp)
+    ("C-}"         . sp-forward-barf-sexp)
+    ("C-<left>"    . sp-forward-barf-sexp)
+    ("C-("         . sp-backward-slurp-sexp)
+    ("C-M-<left>"  . sp-backward-slurp-sexp)
+    ("C-{"         . sp-backward-barf-sexp)
+    ("C-M-<right>" . sp-backward-barf-sexp))
+  "Alist containing the default paredit bindings to corresponding
+smartparens functions.")
+
+(defun evil-cp--populate-normal-mode-bindings (bindings state)
+  (--each bindings
+    (evil-define-key state evil-cleverparens-mode-map
+      (read-kbd-macro (car it))
+      (cdr it))))
+
+(defun evil-cp-use-regular-bindings ()
+  (interactive)
+  (evil-cp--populate-normal-mode-bindings evil-cp-regular-bindings 'normal))
+
+(defun evil-cp-use-additional-bindings ()
+  (interactive)
+  (evil-cp--populate-normal-mode-bindings evil-cp-additional-bindings 'normal))
+
+(defun evil-cp-use-paredit-like-bindings ()
+  (interactive)
+  (evil-cp--populate-normal-mode-bindings sp-paredit-bindings 'insert))
+
+(defun evil-cp-use-smartparens-like-bindings ()
+  (interactive)
+  (evil-cp--populate-normal-mode-bindings sp-smartparens-bindings 'insert))
+
+(defun evil-cp--enable-insert-bindings ()
+  (cond
+   ((eq sp-base-key-bindings 'sp)
+    (evil-cp-use-smartparens-like-bindings))
+   ((eq sp-base-key-bindings 'paredit)
+    (evil-cp-use-paredit-like-bindings))))
+
+(defun evil-cp--enable-text-objects ()
+  "Enables text-objects defined in evil-cleverparens."
+  (define-key evil-outer-text-objects-map "f" #'evil-cp-a-form)
+  (define-key evil-inner-text-objects-map "f" #'evil-cp-inner-form)
+  (define-key evil-outer-text-objects-map "c" #'evil-cp-a-comment)
+  (define-key evil-inner-text-objects-map "c" #'evil-cp-inner-comment)
+  (define-key evil-outer-text-objects-map "d" #'evil-cp-a-defun)
+  (define-key evil-inner-text-objects-map "d" #'evil-cp-inner-defun))
+
+(defun evil-cp--enable-surround-operators ()
+  "Enables the use of `evil-cp-delete' and `evil-cp-change' with
+`evil-surround-mode'"
+  (add-to-list 'evil-surround-operator-alist '(evil-cp-delete . delete))
+  (add-to-list 'evil-surround-operator-alist '(evil-cp-change . change)))
+
+;;;###autoload
+(define-minor-mode evil-cleverparens-mode
+  "Minor mode for setting up evil with smartparens and paredit
+for an advanced modal structural editing experience."
+  :group 'evil-cleverparens
+  :keymap '()
+  :lighter (" ecp" (:eval (if evil-cleverparens-balance-yanked-region "/b" "")))
+  :init-value nil
+  (let ((prev-state evil-state))
+    (evil-normal-state)
+    (evil-change-state prev-state)
+    (if evil-cleverparens-mode
+        (progn
+          (unless smartparens-mode (smartparens-mode t))
+          (unless smartparens-strict-mode (smartparens-strict-mode t))
+          (evil-cp-use-regular-bindings)
+          (evil-cp--enable-text-objects)
+          (evil-cp--enable-insert-bindings)
+          (when evil-cleverparens-use-additional-bindings
+            (evil-cp-use-additional-bindings))
+          (if (bound-and-true-p evil-surround-mode)
+              (evil-cp--enable-surround-operators)
+            (add-hook 'evil-surround-mode-hook
+                      'evil-cp--enable-surround-operators))
+          (run-hooks 'evil-cleverparens-enabled-hook))
+      (run-hooks 'evil-cleverparens-disabled-hook))))
 
 ;; Text objects
-
-(define-key evil-outer-text-objects-map "f" #'evil-cp-a-form)
-(define-key evil-inner-text-objects-map "f" #'evil-cp-inner-form)
-(define-key evil-outer-text-objects-map "c" #'evil-cp-a-comment)
-(define-key evil-inner-text-objects-map "c" #'evil-cp-inner-comment)
-(define-key evil-outer-text-objects-map "d" #'evil-cp-a-defun)
-(define-key evil-inner-text-objects-map "d" #'evil-cp-inner-defun)
 
 (provide 'evil-cleverparens)
 
