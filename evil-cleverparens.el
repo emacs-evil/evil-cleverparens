@@ -557,6 +557,8 @@ Copied from `evil-smartparens'."
                   (end (evil-cp--new-ending beg end)))
              ((evil-yank beg end type register yank-handler))))))
 
+;; TODO: balanced yanking appears to have a bug when there
+;; TODO: balanced yanking appears to have a bug when there's an extra paren at the end
 (evil-define-operator evil-cp-yank (beg end type register yank-handler)
   "Saves the characters in motion into the kill-ring while
 respecting parentheses."
@@ -684,6 +686,7 @@ delimiters in the region defined by `BEG' and `END'."
              (>= (point) (point-at-eol)))
     (forward-char)))
 
+;; TODO: overriding not working?
 (evil-define-operator evil-cp-delete (beg end type register yank-handler)
   "A version of `evil-delete' that attempts to leave the region
 its acting on with balanced parentheses. The behavior of
@@ -1070,6 +1073,7 @@ safe for transposing."
 
 ;; TODO: this feels like kind of a mess
 ;; TODO: dragging by safe line doesn't work atm
+;; TODO: C-u should force sexp transpose?
 (defun evil-cp--drag-stuff-up-or-down (dir &optional n)
   (assert (member dir '(:up :down)) t "`dir' has to be :up or :down")
   (let ((n (or n 1))
@@ -1090,7 +1094,6 @@ safe for transposing."
            (line-safe-p (funcall drag-fn))
            (t (throw 'stop nil))))))))
 
-;; TODO: C-u should force sexp transpose?
 (defun evil-cp-drag-up (&optional n)
   "If both the line where point is, and the line above it are
 balanced, this operation acts the same as `drag-stuff-up',
@@ -1204,7 +1207,7 @@ the current form."
     (indent-according-to-mode)
     (evil-insert 1)))
 
-;; TODO: balanced yanking appears to have a bug when there's an extra paren at the end
+
 
 ;;; Variables ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
