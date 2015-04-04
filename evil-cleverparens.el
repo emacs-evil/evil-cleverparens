@@ -489,7 +489,10 @@ list of (fn args) to pass to `apply''"
     (point)))
 
 (defun evil-cp--safe-yank (beg end &optional type yank-handler)
-  "This is a version of parentheses safe yank copied from `evil-smartparens'."
+  "This is a version of yank ignores unbalanced parentheses to
+keep the region safe.
+
+Copied from `evil-smartparens'."
   (condition-case nil
       (let ((new-beg (evil-cp--new-beginning beg end))
             (new-end (evil-cp--new-ending beg end)))
