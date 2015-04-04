@@ -598,7 +598,7 @@ respecting parentheses."
       (evil-cp--yank-characters beg end register yank-handler))
 
      (t
-      (evil-cp--safe-yank beg end type register yank-handler)))))
+      (evil-cp--safe-yank beg end type yank-handler)))))
 
 (evil-define-operator evil-cp-yank-line (beg end type register)
   "Acts like `paredit-copy-sexp-as-kill'."
