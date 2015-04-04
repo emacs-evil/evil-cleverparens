@@ -1355,7 +1355,7 @@ smartparens functions.")
       (read-kbd-macro (car it))
       (cdr it))))
 
-(defun evil-cp-use-regular-bindings ()
+(defun evil-cp--use-regular-bindings ()
   (interactive)
   (evil-cp--populate-normal-mode-bindings evil-cp-regular-bindings 'normal))
 
@@ -1408,7 +1408,7 @@ for an advanced modal structural editing experience."
         (progn
           (unless smartparens-mode (smartparens-mode t))
           (unless smartparens-strict-mode (smartparens-strict-mode t))
-          (evil-cp-use-regular-bindings)
+          (evil-cp--use-regular-bindings)
           (evil-cp--enable-text-objects)
           (evil-cp--enable-insert-bindings)
           (when evil-cleverparens-use-additional-bindings
