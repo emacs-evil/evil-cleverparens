@@ -176,7 +176,11 @@ or a string."
 
 (defun evil-cp--top-level-sexp-p ()
   "Predicate that returns true if point is inside a top-level sexp."
-  (eq (nth 0 (syntax-ppss)) 1))
+  (let* ((ppss (syntax-ppss))
+         (n0   (nth 0 ppss))
+         (n3   (nth 3 ppss)))
+    (or (and (eq n0 1) (not n3)) ; top-level sexp
+        (and (eq n0 0) n3))))    ; top-level string
 
 (defun evil-cp--string-bounds (&optional pos)
   "Returns the location of the beginning and ending positions for
