@@ -658,31 +658,36 @@ respecting parentheses."
                                        (point)))
                                 register)))))))
 
+;; TODO: something really weird going on with `sp-point-in-comment' it behaves
+;; differently inside my loop compared to when I call it via M-:.  I tried
+;; fixing it by calling `syntax-ppss-flush-cache' but it didn't work
 (defun evil-cp--delete-characters (beg end)
   "Deletes everything except unbalanced parentheses / string
 delimiters in the region defined by `BEG' and `END'."
-  (goto-char beg)
-  (while (< (point) end)
-    (cond
-     ;; opening
-     ((evil-cp--looking-at-any-opening-p)
-      (let ((matching-pos (evil-cp--matching-paren-pos)))
-        (if (<= (point) matching-pos end)
-            (progn
-              (evil-cp--splice-form)
-              (setq end (- end 2)))
-          (forward-char 1))))
-
-     ;; closing that has survived
-     ((or (evil-cp--looking-at-closing-p)
-          (evil-cp--looking-at-closing-quote-p))
-      (forward-char 1))
-
-     ;; character
-     (t
-      (delete-char 1)
-      (setq end (1- end)))))
-  (backward-char))
+  (let ((chars-left (- end beg)))
+    (message "beg: %d, end: %d" beg end)
+    (goto-char beg)
+    (while (> chars-left 0)
+      (cond
+       ((evil-cp--looking-at-any-opening-p)
+        (let ((other-end (evil-cp--matching-paren-pos)))
+          ;; matching paren is in the range of the command
+          (if (<= (point) other-end end)
+              (let ((char-count
+                     (evil-cp--guard-point
+                      (sp-get (sp-get-enclosing-sexp)
+                        (- :end :beg)))))
+                (message "%d" char-count)
+                (delete-char char-count)
+                (setq chars-left (- chars-left char-count)))
+            (forward-char)
+            (cl-decf chars-left))))
+       ((evil-cp--looking-at-any-closing-p)
+        (forward-char 1)
+        (cl-decf chars-left))
+       (t
+        (delete-char 1)
+        (cl-decf chars-left))))))
 
 (defun evil-cp--first-non-blank-non-paren ()
   "Like `evil-first-non-blank' but also skips opening parentheses."
@@ -691,13 +696,12 @@ delimiters in the region defined by `BEG' and `END'."
              (>= (point) (point-at-eol)))
     (forward-char)))
 
-;; TODO: overriding not working?
 (evil-define-operator evil-cp-delete (beg end type register yank-handler)
   "A version of `evil-delete' that attempts to leave the region
 its acting on with balanced parentheses. The behavior of
 kill-ring is determined by the
 `evil-cleverparens-balance-yanked-region' variable."
-  :move-point nil
+  ;; :move-point nil
   (interactive "<R><x><y>")
   (let ((safep (sp-region-ok-p beg end)))
     (evil-cp-yank beg end type register yank-handler)
@@ -714,7 +718,7 @@ kill-ring is determined by the
               (+ beg (sp-forward-whitespace t)) (1- end)))
            ;; TODO: joining new-lines still seems a bit shaky with dd
            (when (not (or (evil-cp--looking-at-closing-p)
-                          (evil-cp--looking-at-closing-quote-p)))
+                          (evil-cp--looking-at-string-closing-p)))
              (evil-join (point-at-bol) (point-at-bol 2)))
            (evil-cp--first-non-blank-non-paren))
 
