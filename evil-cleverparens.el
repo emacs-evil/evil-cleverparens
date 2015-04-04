@@ -108,7 +108,7 @@ question. Ignores parentheses inside strings."
     (or (sp--looking-at-p (sp--get-stringlike-regexp))
         (evil-cp--looking-at-paren-p))))
 
-(defun evil-cp--looking-at-opening-quote-p (&optional pos)
+(defun evil-cp--looking-at-string-opening-p (&optional pos)
   "Predicate for checking if point is on a opening string delimiter."
   (save-excursion
     (when pos (goto-char pos))
@@ -117,7 +117,7 @@ question. Ignores parentheses inside strings."
            (forward-char)
            (nth 3 (syntax-ppss))))))
 
-(defun evil-cp--looking-at-closing-quote-p (&optional pos)
+(defun evil-cp--looking-at-string-closing-p (&optional pos)
   "Predicate for checking if point is on a closing delimiter."
   (save-excursion
     (when pos (goto-char pos))
@@ -131,13 +131,13 @@ question. Ignores parentheses inside strings."
   "Predicate to check if point (or `POS') is on an opening
 parentheses or a string delimiter."
   (or (evil-cp--looking-at-opening-p pos)
-      (evil-cp--looking-at-opening-quote-p pos)))
+      (evil-cp--looking-at-string-opening-p pos)))
 
 (defun evil-cp--looking-at-any-closing-p (&optional pos)
   "Predicate to check if point (or `POS') is on an opening
 parentheses or a string delimiter."
   (or (evil-cp--looking-at-closing-p pos)
-      (evil-cp--looking-at-closing-quote-p pos)))
+      (evil-cp--looking-at-string-closing-p pos)))
 
 (defmacro evil-cp--guard-point (&rest body)
   "Evil/Vim and Emacs have different opinions on where the point
