@@ -1188,26 +1188,24 @@ the current form."
         (yank)))
       (backward-char offset))))
 
-(defun evil-cp-open-below-form ()
+(evil-define-command evil-cp-open-below-form (count)
   "Enters insert mode after entering a newline at the end of the
 current form."
-  (interactive)
-  (sp-up-sexp)
+  (interactive "<c>")
+  (sp-up-sexp count)
   (insert "\n")
   (indent-according-to-mode)
   (evil-insert 1))
 
-(defun evil-cp-open-above-form ()
+(evil-define-command evil-cp-open-above-form (count)
   "Enters insert mode after entering a newline at the begnning of
 the current form."
-  (interactive)
+  (interactive "<c>")
   (sp-backward-up-sexp)
   (save-excursion
     (insert "\n")
     (indent-according-to-mode)
     (evil-insert 1)))
-
-
 
 ;;; Variables ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
