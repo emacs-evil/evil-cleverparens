@@ -388,22 +388,23 @@ and deleting other characters. Can be overriden by
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Original from:
+;; Originally from:
 ;; http://emacs.stackexchange.com/questions/777/closing-all-pending-parenthesis
 (defun evil-cp--insert-missing-parentheses (backp)
   "Calling this function in a buffer with unbalanced parentheses
 will have the missing parentheses be inserted at the end of the
 buffer if `BACKP' is nil and at the beginning if it is true."
   (let ((closing nil))
+    ;; fix for the degenerate case of nothing but closing parens
+    (when backp (save-excursion (insert " ")))
     (save-excursion
       (while (condition-case nil
                  (progn
                    (if (not backp)
                        (backward-up-list)
-                     (progn
-                       (forward-char)
-                       (up-list)
-                       (backward-char)))
+                     (forward-char)
+                     (up-list)
+                     (backward-char))
                    (let* ((syntax (syntax-after (point)))
                           (head   (car syntax)))
                      (cond
@@ -414,7 +415,9 @@ buffer if `BACKP' is nil and at the beginning if it is true."
                    t)
                ((scan-error) nil))))
     (when backp (beginning-of-buffer))
-    (apply #'insert (nreverse closing))))
+    (apply #'insert (nreverse closing))
+    ;; see above
+    (when backp (delete-char 1))))
 
 (defun evil-cp--close-missing-parens (text)
   "Takes a text object and inserts missing parentheses first at
@@ -557,8 +560,6 @@ Copied from `evil-smartparens'."
                   (end (evil-cp--new-ending beg end)))
              ((evil-yank beg end type register yank-handler))))))
 
-;; TODO: balanced yanking appears to have a bug when there
-;; TODO: balanced yanking appears to have a bug when there's an extra paren at the end
 (evil-define-operator evil-cp-yank (beg end type register yank-handler)
   "Saves the characters in motion into the kill-ring while
 respecting parentheses."
@@ -582,14 +583,19 @@ respecting parentheses."
      ((eq type 'block)
       (evil-cp--yank-rectangle beg end register yank-handler))
 
-     ;; safe region
+     ;; balanced region, or override
      ((or safep (evil-cp--override))
       (evil-yank beg end type register yank-handler))
 
-     (evil-cleverparens-balance-yanked-region
-      (when (or (= (char-after end) 10)
-                (= end (point-max)))
+     ;; unbalanced line, remove ending new-line
+     ((eq type 'line)
+      (when (or (= end (point-max))
+                (= (char-after end) 10))
         (setq end (1- end)))
+      (evil-cp--yank-characters beg end register yank-handler))
+
+     ;; unbalanced, add parens
+     (evil-cleverparens-balance-yanked-region
       (evil-cp--yank-characters beg end register yank-handler))
 
      (t
