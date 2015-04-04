@@ -70,16 +70,9 @@ question. Ignores parentheses inside strings."
   (save-excursion
     (when pos (goto-char pos))
     (and (sp--looking-at-p (sp--get-opening-regexp))
-         (not (evil-cp--inside-string-p)))))
-
-(defun evil-cp--looking-at-opening-p (&optional pos)
-  "Predicate that returns true if point is looking at an opening
-parentheses as defined by smartparens for the major mode in
-question. Ignores parentheses inside strings."
-  (save-excursion
-    (when pos (goto-char pos))
-    (and (sp--looking-at-p (sp--get-opening-regexp))
-         (not (evil-cp--inside-string-p)))))
+         (not (evil-cp--inside-string-p))
+         (not (sp-point-in-comment)) ;; not working for some reason
+         )))
 
 (defun evil-cp--looking-at-closing-p (&optional pos)
   "Predicate that returns true if point is looking at an closing
@@ -88,7 +81,9 @@ question. Ignores parentheses inside strings."
   (save-excursion
     (when pos (goto-char pos))
     (and (sp--looking-at-p (sp--get-closing-regexp))
-         (not (evil-cp--inside-string-p)))))
+         (not (evil-cp--inside-string-p))
+         (not (sp-point-in-comment))
+         )))
 
 (defun evil-cp--looking-at-paren-p (&optional pos)
   "Predicate that returns true if point is looking at a
@@ -97,7 +92,9 @@ question. Ignores parentheses inside strings."
   (save-excursion
     (when pos (goto-char pos))
     (and (sp--looking-at-p (sp--get-allowed-regexp))
-         (not (evil-cp--inside-string-p)))))
+         (not (evil-cp--inside-string-p))
+         (not (sp-point-in-comment))
+         )))
 
 (defun evil-cp--looking-at-any-delimiter (&optional pos)
   "Predicate that returns true if point is on top of a
