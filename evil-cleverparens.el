@@ -1249,6 +1249,7 @@ the current form."
   "Enters insert mode after entering a newline at the end of the
 current form."
   (interactive "<c>")
+  (setq count (or count 1))
   (sp-up-sexp count)
   (insert "\n")
   (indent-according-to-mode)
@@ -1258,6 +1259,7 @@ current form."
   "Enters insert mode after entering a newline at the begnning of
 the current form."
   (interactive "<c>")
+  (setq count (or count 1))
   (sp-backward-up-sexp)
   (save-excursion
     (insert "\n")
