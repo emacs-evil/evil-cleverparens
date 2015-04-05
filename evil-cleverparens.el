@@ -291,14 +291,14 @@ balanced parentheses."
                    (point))))
         (evil-range beg end 'block 'inclusive :expanded t)))))
 
-
 (evil-define-text-object evil-cp-a-defun (count &optional beg end type)
   "An outer text object for a top level sexp (defun)."
   (if (evil-cp--inside-sexp-p)
       (let ((bounds
              (save-excursion
-               (beginning-of-defun)
-               (sp-get (sp-get-sexp) (list :beg :end)))))
+               (evil-cp--guard-point
+                (beginning-of-defun)
+                (sp-get (sp-get-sexp) (list :beg :end))))))
         (evil-range (car bounds) (cadr bounds) 'inclusive :expanded t))
     (error "Not inside a sexp.")))
 
