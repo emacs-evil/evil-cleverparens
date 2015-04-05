@@ -1083,30 +1083,9 @@ safe for transposing."
   (interactive "p")
   (evil-cp--transpose 'paxedit-transpose-forward))
 
-;; TODO: this feels like kind of a mess
 ;; TODO: dragging by safe line doesn't work atm
-;; TODO: C-u should force sexp transpose?
-(defun evil-cp--drag-stuff-up-or-down (dir &optional n)
-  (assert (member dir '(:up :down)) t "`dir' has to be :up or :down")
-  (let ((n (or n 1))
-        (drag-fn (if (eq dir :up) #'drag-stuff-up #'drag-stuff-down)))
-    (catch 'stop
-      (dotimes (_ n)
-        (let ((in-sexp-p (evil-cp--inside-sexp-p))
-              (line-safe-p (evil-cp--line-safe-p
-                            (lambda ()
-                              (if (eq dir :up)
-                                  (forward-line -1)
-                                (forward-line 1))))))
-          (cond
-           (in-sexp-p
-            (funcall (if (eq dir :up)
-                         'evil-cp-transpose-sexp-backward
-                       'evil-cp-transpose-sexp-forward)))
-           (line-safe-p (funcall drag-fn))
-           (t (throw 'stop nil))))))))
-
-(defun evil-cp-drag-up (&optional n)
+;; TODO: test test test
+(evil-define-command evil-cp-drag-up (count)
   "If both the line where point is, and the line above it are
 balanced, this operation acts the same as `drag-stuff-up',
 i.e. it will swap the two lines with each other.
@@ -1116,10 +1095,43 @@ the top level sexp above it.
 
 If the point is inside a nested sexp then
 `paxedit-transpose-backward' is called."
-  (interactive "p")
-  (evil-cp--drag-stuff-up-or-down :up n))
+  (interactive "<c>")
+  (setq count (or count 1))
+  (if (equal current-prefix-arg '(4))
+      ;; transpose top-level sexp
+      (save-excursion
+        (beginning-of-defun)
+        (sp-forward-sexp)
+        (backward-char)
+        (paxedit-transpose-backward))
+    (catch 'stop
+      (dotimes (_ count)
+        (let* ((beg (point-at-bol))
+               (end (point-at-eol))
+               (here-safe-p (sp-region-ok-p beg end))
+               (next-safe-p (save-excursion
+                              (forward-line -1)
+                              (sp-region-ok-p (point-at-bol)
+                                              (point-at-eol)))))
+          (cond
+           ;; swap lines
+           ((and here-safe-p next-safe-p)
+            (drag-stuff-up 1))
+           ;; transpose sexp
+           ((evil-cp--inside-sexp-p)
+            (evil-cp-transpose-sexp-backward))
+           ;; teleport line to the end of the top level sexp
+           (t
+            (let ((pos (column-number-at-pos (point)))
+                  (text (buffer-substring beg end)))
+              (delete-region beg (1+ end))
+              (sp-backward-sexp)
+              (insert text "\n")
+              (forward-line -1)
+              (beginning-of-line)
+              (forward-char pos)))))))))
 
-(defun evil-cp-drag-down (&optional n)
+(evil-define-command evil-cp-drag-down (count)
   "If both the line where point is, and the line below it are
 balanced, this operation acts the same as `drag-stuff-down',
 i.e. it will swap the two lines with each other.
@@ -1129,8 +1141,41 @@ the top level sexp below it.
 
 If the point is inside a nested sexp then
 `paxedit-transpose-forward' is called."
-  (interactive "p")
-  (evil-cp--drag-stuff-up-or-down :down n))
+  (interactive "<c>")
+  (setq count (or count 1))
+  (if (equal current-prefix-arg '(4))
+      ;; transpose top-level sexp
+      (save-excursion
+        ;; go to the last parent
+        (beginning-of-defun)
+        (sp-forward-sexp)
+        (backward-char)
+        (paxedit-transpose-forward))
+    (catch 'stop
+      (dotimes (_ count)
+        (let* ((beg (point-at-bol))
+               (end (point-at-eol))
+               (here-safe-p (sp-region-ok-p beg end))
+               (next-safe-p (save-excursion
+                              (forward-line 1)
+                              (sp-region-ok-p (point-at-bol)
+                                              (point-at-eol)))))
+          (cond
+           ;; swap lines
+           ((and here-safe-p next-safe-p)
+            (drag-stuff-down 1))
+           ;; transpose sexp
+           ((evil-cp--inside-sexp-p)
+            (evil-cp-transpose-sexp-forward))
+           ;; teleport line to the end of the top level sexp
+           (t
+            (let ((pos (column-number-at-pos (point)))
+                  (text (buffer-substring beg end)))
+              (delete-region beg (1+ end))
+              (sp-forward-sexp)
+              (insert "\n" text)
+              (beginning-of-line)
+              (forward-char pos)))))))))
 
 (evil-define-operator evil-cp-substitute (beg end type register)
   "Parentheses safe version of `evil-substitute'."
