@@ -546,11 +546,11 @@ Copied from `evil-smartparens'."
             (new-end (evil-cp--new-ending beg end)))
         (if (and (= new-end end)
                  (= new-beg beg))
-            ((evil-yank beg end type register yank-handler))
+            (evil-yank beg end type register yank-handler)
           (evil-yank new-beg new-end 'inclusive yank-handler)))
     (error (let* ((beg (evil-cp--new-beginning beg end :shrink))
                   (end (evil-cp--new-ending beg end)))
-             ((evil-yank beg end type register yank-handler))))))
+             (evil-yank beg end type register yank-handler)))))
 
 (evil-define-operator evil-cp-yank (beg end type register yank-handler)
   "Saves the characters in motion into the kill-ring while
