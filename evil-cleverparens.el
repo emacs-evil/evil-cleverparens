@@ -804,7 +804,13 @@ kill-ring is determined by the
       (cond ((eq type 'line)
              (save-excursion
                (evil-cp--delete-characters
-                (+ beg (sp-forward-whitespace t)) (1- end)))
+                (+ beg
+                   (save-excursion
+                     (beginning-of-line)
+                     (sp-forward-whitespace t)))
+                (1- end)))
+             (evil-cp--move-point-after-linewise)
+             (indent-according-to-mode)
              (evil-insert 1))
 
             ((eq type 'block)
