@@ -1329,6 +1329,15 @@ This is a feature copied from `evil-smartparens'."
  :group 'evil-cleverparens
  :type 'boolean)
 
+(defcustom evil-cleverparens-swap-move-by-word-and-symbol nil
+  "If true, the keys w, e, b, and ge will be bound to the
+  evil-cleverparens movement by symbol commands, and the regular
+  evil move by word commands will be bound to W, E, B and gE respectively."
+  :group 'evil-cleverparens
+  :type 'boolean)
+
+;; TODO: paredit-like insert behavior
+
 (defcustom evil-cleverparens-use-special-bindings t
   "If true, enable special bindings defined in `evil-cp-special-bindings-alist'"
   :group 'evil-cleverparens
@@ -1354,33 +1363,44 @@ This is a feature copied from `evil-smartparens'."
 
 ;;; Keys ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defvar evil-cp-regular-bindings
-  '(("H"  . sp-backward-sexp)
-    ("L"  . sp-forward-sexp)
-    ("W"  . evil-cp-forward-symbol-begin)
+(defvar evil-cp-regular-movement-keys
+  '(("W"  . evil-cp-forward-symbol-begin)
     ("E"  . evil-cp-forward-symbol-end)
     ("B"  . evil-cp-backward-symbol-begin)
-    ("gE" . evil-cp-backward-symbol-end)
-    ("L"  . evil-cp-forward-sexp)
-    ("H"  . evil-cp-backward-sexp)
-    ("["  . evil-cp-previous-opening)
-    ("]"  . evil-cp-next-closing)
-    ("{"  . evil-cp-previous-closing)
-    ("}"  . evil-cp-next-opening)
-    ("("  . evil-cp-beginning-of-defun)
-    (")"  . evil-cp-end-of-defun)
-    ("d"  . evil-cp-delete)
-    ("c"  . evil-cp-change)
-    ("y"  . evil-cp-yank)
-    ("D"  . evil-cp-delete-line)
-    ("C"  . evil-cp-change-line)
-    ("s"  . evil-cp-substitute)
-    ("S"  . evil-cp-change-whole-line)
-    ("Y"  . evil-cp-yank-line)
-    ("x"  . evil-cp-delete-char-or-splice)
-    (">"  . evil-cp->)
-    ("<"  . evil-cp-<)
-    ("M-T" . evil-cp-toggle-balanced-yank))
+    ("gE" . evil-cp-backward-symbol-end)))
+
+(defvar evil-cp-swapped-movement-keys
+  '(("w"  . evil-cp-forward-symbol-begin)
+    ("e"  . evil-cp-forward-symbol-end)
+    ("b"  . evil-cp-backward-symbol-begin)
+    ("ge" . evil-cp-backward-symbol-end)
+    ("W"  . evil-forward-word-begin)
+    ("E"  . evil-forward-word-end)
+    ("B"  . evil-backward-word-begin)
+    ("gE" . evil-backward-word-end)))
+
+(defvar evil-cp-regular-bindings
+  '(("L"   . evil-cp-forward-sexp)
+    ("H"   . evil-cp-backward-sexp)
+    ("["   . evil-cp-previous-opening)
+    ("]"   . evil-cp-next-closing)
+    ("{"   . evil-cp-previous-closing)
+    ("}"   . evil-cp-next-opening)
+    ("("   . evil-cp-beginning-of-defun)
+    (")"   . evil-cp-end-of-defun)
+    ("d"   . evil-cp-delete)
+    ("c"   . evil-cp-change)
+    ("y"   . evil-cp-yank)
+    ("D"   . evil-cp-delete-line)
+    ("C"   . evil-cp-change-line)
+    ("s"   . evil-cp-substitute)
+    ("S"   . evil-cp-change-whole-line)
+    ("Y"   . evil-cp-yank-line)
+    ("x"   . evil-cp-delete-char-or-splice)
+    (">"   . evil-cp->)
+    ("<"   . evil-cp-<)
+    ("M-T" . evil-cp-toggle-balanced-yank)
+    ("M-z" . evil-cp-override)) ;; not super happy about the key binding
   "Alist containing the regular evil-cleverparens bindings that
   override evil's bindings in normal mode.")
 
@@ -1423,31 +1443,43 @@ This is a feature copied from `evil-smartparens'."
     ("C-("         . sp-backward-slurp-sexp)
     ("C-M-<left>"  . sp-backward-slurp-sexp)
     ("C-{"         . sp-backward-barf-sexp)
-    ("C-M-<right>" . sp-backward-barf-sexp))
+    ("C-M-<right>" . sp-backward-barf-sexp)
+    ;; TODO: check smartparens wiki for how special insert commands are handled
+    ;; TODO: ( ) [ ] ;
+    )
   "Alist containing the default paredit bindings to corresponding
 smartparens functions.")
 
-(defun evil-cp--populate-normal-mode-bindings (bindings state)
+;; TODO: inserting comment should push ending parentheses on new lines
+
+(defun evil-cp--populate-mode-bindings-for-state (bindings state)
   (--each bindings
     (evil-define-key state evil-cleverparens-mode-map
       (read-kbd-macro (car it))
       (cdr it))))
 
+(defun evil-cp--enable-movement-keys ()
+  (evil-cp--populate-mode-bindings-for-state
+   (if evil-cleverparens-swap-move-by-word-and-symbol
+              evil-cp-swapped-movement-keys
+            evil-cp-regular-movement-keys)
+   'normal))
+
 (defun evil-cp--use-regular-bindings ()
   (interactive)
-  (evil-cp--populate-normal-mode-bindings evil-cp-regular-bindings 'normal))
+  (evil-cp--populate-mode-bindings-for-state evil-cp-regular-bindings 'normal))
 
 (defun evil-cp-use-additional-bindings ()
   (interactive)
-  (evil-cp--populate-normal-mode-bindings evil-cp-additional-bindings 'normal))
+  (evil-cp--populate-mode-bindings-for-state evil-cp-additional-bindings 'normal))
 
 (defun evil-cp-use-paredit-like-bindings ()
   (interactive)
-  (evil-cp--populate-normal-mode-bindings sp-paredit-bindings 'insert))
+  (evil-cp--populate-mode-bindings-for-state sp-paredit-bindings 'insert))
 
 (defun evil-cp-use-smartparens-like-bindings ()
   (interactive)
-  (evil-cp--populate-normal-mode-bindings sp-smartparens-bindings 'insert))
+  (evil-cp--populate-mode-bindings-for-state sp-smartparens-bindings 'insert))
 
 (defun evil-cp--enable-insert-bindings ()
   (cond
@@ -1486,6 +1518,7 @@ for an advanced modal structural editing experience."
         (progn
           (unless smartparens-mode (smartparens-mode t))
           (unless smartparens-strict-mode (smartparens-strict-mode t))
+          (evil-cp--enable-movement-keys)
           (evil-cp--use-regular-bindings)
           (evil-cp--enable-text-objects)
           (evil-cp--enable-insert-bindings)
