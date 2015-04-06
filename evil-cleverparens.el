@@ -668,7 +668,6 @@ respecting parentheses."
   "Deletes everything except unbalanced parentheses / string
 delimiters in the region defined by `BEG' and `END'."
   (let ((chars-left (- end beg)))
-    (message "beg: %d, end: %d" beg end)
     (goto-char beg)
     (while (> chars-left 0)
       (cond
@@ -680,7 +679,6 @@ delimiters in the region defined by `BEG' and `END'."
                      (evil-cp--guard-point
                       (sp-get (sp-get-enclosing-sexp)
                         (- :end :beg)))))
-                (message "%d" char-count)
                 (delete-char char-count)
                 (setq chars-left (- chars-left char-count)))
             (forward-char)
