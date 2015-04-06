@@ -1342,7 +1342,15 @@ This is a feature copied from `evil-smartparens'."
   :group 'evil-cleverparens
   :type 'boolean)
 
-;; TODO: paredit-like insert behavior
+(defcustom evil-cleverparens-paredit-like-insert-behavior t
+  "Determines if insert behavior should follow paredit's
+conventions in matters such as auto-inserting extra spaces when
+typing an opening parentheses at the end of a symbol, or if
+inserting a comment before closing parentheses should
+automatically insert a newline to prevent the closing from being
+swallowed by the comment."
+  :group 'evil-cleverparens
+  :type 'boolean)
 
 (defcustom evil-cleverparens-use-special-bindings t
   "If true, enable special bindings defined in `evil-cp-special-bindings-alist'"
@@ -1450,13 +1458,26 @@ This is a feature copied from `evil-smartparens'."
     ("C-M-<left>"  . sp-backward-slurp-sexp)
     ("C-{"         . sp-backward-barf-sexp)
     ("C-M-<right>" . sp-backward-barf-sexp)
-    ;; TODO: check smartparens wiki for how special insert commands are handled
-    ;; TODO: ( ) [ ] ;
-    )
+    ("("           . paredit-open-round)
+    (")"           . paredit-close-round)
+    ("["           . paredit-open-bracket)
+    ("]"           . paredit-close-bracket)
+    ("{"           . paredit-open-curly)
+    ("}"           . paredit-close-curly)
+    (";"           . paredit-semicolon))
   "Alist containing the default paredit bindings to corresponding
 smartparens functions.")
 
-;; TODO: inserting comment should push ending parentheses on new lines
+(defvar evil-cp-paredit-insert-bindings
+  '(("("  . paredit-open-round)
+    (")"  . paredit-close-round)
+    ("["  . paredit-open-bracket)
+    ("]"  . paredit-close-bracket)
+    ("{"  . paredit-open-curly)
+    ("}"  . paredit-close-curly)
+    (";"  . paredit-semicolon))
+  "Alist containing keys for following paredit's insert commands
+  behavior.")
 
 (defun evil-cp--populate-mode-bindings-for-state (bindings state)
   (--each bindings
@@ -1482,6 +1503,10 @@ smartparens functions.")
 (defun evil-cp-use-paredit-like-bindings ()
   (interactive)
   (evil-cp--populate-mode-bindings-for-state sp-paredit-bindings 'insert))
+
+(defun evil-cp-use-paredit-like-insert-bindings ()
+  (interactive)
+  (evil-cp--populate-mode-bindings-for-state evil-cp-paredit-insert-bindings 'insert))
 
 (defun evil-cp-use-smartparens-like-bindings ()
   (interactive)
@@ -1528,6 +1553,8 @@ for an advanced modal structural editing experience."
           (evil-cp--use-regular-bindings)
           (evil-cp--enable-text-objects)
           (evil-cp--enable-insert-bindings)
+          (when evil-cleverparens-paredit-like-insert-behavior
+            (evil-cp-use-paredit-like-insert-bindings))
           (when evil-cleverparens-use-additional-bindings
             (evil-cp-use-additional-bindings))
           (if (bound-and-true-p evil-surround-mode)
