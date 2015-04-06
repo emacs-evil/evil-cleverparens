@@ -690,11 +690,11 @@ delimiters in the region defined by `BEG' and `END'."
         (delete-char 1)
         (cl-decf chars-left))))))
 
-(defun evil-cp--first-non-blank-non-paren ()
+(defun evil-cp--first-non-blank-non-opening ()
   "Like `evil-first-non-blank' but also skips opening parentheses."
   (evil-first-non-blank)
-  (while (or (evil-cp--looking-at-opening-p)
-             (>= (point) (point-at-eol)))
+  (while (and (evil-cp--looking-at-opening-p)
+             (<= (point) (point-at-eol)))
     (forward-char)))
 
 (evil-define-operator evil-cp-delete (beg end type register yank-handler)
@@ -702,7 +702,7 @@ delimiters in the region defined by `BEG' and `END'."
 its acting on with balanced parentheses. The behavior of
 kill-ring is determined by the
 `evil-cleverparens-balance-yanked-region' variable."
-  ;; :move-point nil
+  :move-point nil
   (interactive "<R><x><y>")
   (let ((safep (sp-region-ok-p beg end)))
     (evil-cp-yank beg end type register yank-handler)
@@ -715,13 +715,13 @@ kill-ring is determined by the
           ((eq type 'line)
            (save-excursion
              (evil-cp--delete-characters
-              ;; delete whitespace until eol
-              (+ beg (sp-forward-whitespace t)) (1- end)))
-           ;; TODO: joining new-lines still seems a bit shaky with dd
-           (when (not (or (evil-cp--looking-at-closing-p)
-                          (evil-cp--looking-at-string-closing-p)))
-             (evil-join (point-at-bol) (point-at-bol 2)))
-           (evil-cp--first-non-blank-non-paren))
+              (+ beg
+                 (save-excursion ; skip preceding whitespace
+                   (beginning-of-line)
+                   (sp-forward-whitespace t)))
+              (1- end)))
+           (evil-cp--first-non-blank-non-opening)
+           (join-line 1))
 
           (t (evil-cp--delete-characters beg end)))))
 
