@@ -1266,6 +1266,16 @@ the current form."
     (indent-according-to-mode)
     (evil-insert 1)))
 
+(defun evil-cp-raise-form ()
+  "Raises the form under point."
+  (interactive)
+  (when (evil-cp--inside-form-p)
+    (save-excursion
+      (evil-cp--guard-point
+       (sp-beginning-of-sexp))
+      (backward-char)
+      (sp-raise-sexp))))
+
 ;;; Variables ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun evil-cp-toggle-balanced-yank (&optional forcep)
@@ -1373,6 +1383,7 @@ This is a feature copied from `evil-smartparens'."
     ("M-J" . sp-join-sexp)
     ("M-s" . sp-splice-sexp)
     ("M-S" . sp-split-sexp)
+    ("M-R" . evil-cp-raise-form)
     ("M-r" . sp-raise-sexp)
     ("M-a" . evil-cp-insert-at-end-of-form)
     ("M-i" . evil-cp-insert-at-beginning-of-form)
