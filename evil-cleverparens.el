@@ -713,15 +713,21 @@ kill-ring is determined by the
            (evil-delete beg end type register yank-handler))
 
           ((eq type 'line)
+           (goto-char beg)
            (save-excursion
              (evil-cp--delete-characters
               (+ beg
-                 (save-excursion ; skip preceding whitespace
+                 (save-excursion  ; skip preceding whitespace
                    (beginning-of-line)
                    (sp-forward-whitespace t)))
               (1- end)))
            (evil-cp--first-non-blank-non-opening)
-           (join-line 1))
+           (if (evil-cp--looking-at-any-closing-p)
+               (progn
+                 (forward-line -1)
+                 (join-line 1)
+                 (forward-line 1))
+             (join-line 1)))
 
           (t (evil-cp--delete-characters beg end)))))
 
