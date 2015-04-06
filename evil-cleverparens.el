@@ -1215,27 +1215,33 @@ of the top level form."
     (forward-char)
     (evil-insert 1)))
 
+(defun evil-cp--defun-bounds ()
+  (save-excursion
+    (beginning-of-defun)
+    (forward-char)
+    (sp-get (sp-get-enclosing-sexp) (list :beg :end))))
+
 (evil-define-command evil-cp-copy-paste-form ()
   "Copies the surrounding form to kill-ring and inserts it after
 the current form."
-  (let* ((form (cond
-                ((evil-cp--inside-string-p)
-                 (sp-get-string))
-                ((evil-cp--inside-sexp-p)
-                 (evil-cp--guard-point
-                  (sp-get-enclosing-sexp)))
-                (t (error "Not inside a form."))))
-         (bounds (sp-get form (list :beg :end)))
-         (beg    (car bounds))
-         (end    (cadr bounds))
+  (let* ((prefixp (equal current-prefix-arg '(4)))
+         (bounds
+          (if prefixp
+              (evil-cp--defun-bounds)
+            (evil-cp--guard-point
+             (sp-get (sp-get-enclosing-sexp)
+               (list :beg :end)))))
+         (beg (car bounds))
+         (end (cadr bounds))
          (offset (- end (point))))
     (when (and beg end)
       (evil-yank beg end)
       (cond
-       ((evil-cp--top-level-sexp-p)
+       ((or prefixp (evil-cp--top-level-sexp-p))
         (end-of-defun)
         (insert "\n")
-        (yank))
+        (yank)
+        (insert "\n"))
        ((> 80 (+ end (- end beg)))
         (sp-up-sexp)
         (insert " ")
