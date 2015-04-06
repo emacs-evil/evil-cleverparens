@@ -1087,8 +1087,6 @@ safe for transposing."
   (interactive "p")
   (evil-cp--transpose 'paxedit-transpose-forward))
 
-;; TODO: dragging by safe line doesn't work atm
-;; TODO: test test test
 (evil-define-command evil-cp-drag-up (count)
   "If both the line where point is, and the line above it are
 balanced, this operation acts the same as `drag-stuff-up',
