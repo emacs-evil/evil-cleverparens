@@ -1404,7 +1404,7 @@ swallowed by the comment."
     (">"   . evil-cp->)
     ("<"   . evil-cp-<)
     ("M-T" . evil-cp-toggle-balanced-yank)
-    ("M-z" . evil-cp-override)) ;; not super happy about the key binding
+    ("M-z" . evil-cp-override))
   "Alist containing the regular evil-cleverparens bindings that
   override evil's bindings in normal mode.")
 
