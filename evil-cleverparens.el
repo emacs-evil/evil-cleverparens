@@ -1482,23 +1482,34 @@ smartparens functions.")
             evil-cp-regular-movement-keys)
    'normal))
 
-(defun evil-cp--use-regular-bindings ()
+(defun evil-cp-use-regular-bindings ()
   (interactive)
   (evil-cp--populate-mode-bindings-for-state evil-cp-regular-bindings 'normal))
 
+;;;###autoload
 (defun evil-cp-use-additional-bindings ()
+  "Loads up additional key bindings prefixed with the Meta key."
   (interactive)
   (evil-cp--populate-mode-bindings-for-state evil-cp-additional-bindings 'normal))
 
+;;;###autoload
 (defun evil-cp-use-paredit-like-bindings ()
+  "Loads up paredit like bindings for insert mode. These are a
+superset of `evil-cp-use-paredit-like-insert-bindings'."
   (interactive)
   (evil-cp--populate-mode-bindings-for-state sp-paredit-bindings 'insert))
 
+;;;###autoload
 (defun evil-cp-use-paredit-like-insert-bindings ()
+  "Loads up paredit like behavior in insert mode for inserting
+parentheses and comments. These keys are a subset of what
+`evil-cp-use-paredit-like-bindings'."
   (interactive)
   (evil-cp--populate-mode-bindings-for-state evil-cp-paredit-insert-bindings 'insert))
 
+;;;###autoload
 (defun evil-cp-use-smartparens-like-bindings ()
+  "Loads up the default smartparens bindings in insert mode."
   (interactive)
   (evil-cp--populate-mode-bindings-for-state sp-smartparens-bindings 'insert))
 
@@ -1540,7 +1551,7 @@ for an advanced modal structural editing experience."
           (unless smartparens-mode (smartparens-mode t))
           (unless smartparens-strict-mode (smartparens-strict-mode t))
           (evil-cp--enable-movement-keys)
-          (evil-cp--use-regular-bindings)
+          (evil-cp-use-regular-bindings)
           (evil-cp--enable-text-objects)
           (evil-cp--enable-insert-bindings)
           (when evil-cleverparens-paredit-like-insert-behavior
