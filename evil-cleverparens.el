@@ -110,9 +110,7 @@ question. Ignores parentheses inside strings."
     (when pos (goto-char pos))
     (and (evil-cp--looking-at-string-delimiter-p)
          (not (paredit-in-string-escape-p))
-         (progn
-           (backward-char)
-           (nth 3 (syntax-ppss))))))
+         (nth 3 (syntax-ppss)))))
 
 (defun evil-cp--looking-at-any-opening-p (&optional pos)
   "Predicate to check if point (or `POS') is on an opening
@@ -137,6 +135,11 @@ string delimiter."
          (forward-char 1)
          ,@body)
      ,@body))
+
+(defun evil-cp--looking-at-empty-form ()
+  "A predicate for checking if the point is currently looking at
+an empty form."
+  (evil-cp--looking-at-empty-form))
 
 (defun evil-cp--inside-sexp-p (&optional pos)
   "Predicate for checking if point is inside a sexp."
@@ -370,7 +373,7 @@ and deleting other characters. Can be overriden by
          (evil-apply-on-block #'evil-cp-delete-or-splice-region beg end nil))
 
         (t
-         (if evil-cleverparens-balance-yanked-region
+         (if evil-cleverparens-complete-parens-in-yanked-region
              (evil-cp-yank beg end type register yank-handler)
            (evil-yank beg end type register yank-handler))
          (evil-cp-delete-or-splice-region beg end))))
@@ -1005,6 +1008,7 @@ forward-barf."
 
    (t (sp-forward-barf-sexp n))))
 
+;; TODO: I should perhaps use only smartparens or paredit for consistencys sake?
 (defun evil-cp-> (n)
   "Slurping/barfing operation that acts differently based on the points
 location in the form.
@@ -1028,7 +1032,7 @@ forward-slurp."
     nil)
 
    ((and (evil-cp--looking-at-any-opening-p)
-         (evil-cp--guard-point (sp-point-in-empty-sexp)))
+         (evil-cp--looking-at-empty-form))
     nil)
 
    ((evil-cp--looking-at-any-opening-p)
@@ -1037,21 +1041,23 @@ forward-slurp."
           (evil-cp--guard-point (sp-backward-barf-sexp))
           (sp-forward-sexp)
           ;; in case we end up with empty sexp
-          (when (not (evil-cp--guard-point (sp-point-in-empty-sexp)))
+          (when (not (evil-cp--looking-at-empty-form))
             (evil-cp-next-opening)))
       (error nil)))
 
    ((evil-cp--looking-at-any-closing-p)
     (condition-case nil
         (dotimes (_ n)
-          (sp-forward-slurp-sexp)
+          ;; paredit's version doesn't leave an empty space at the beginning of
+          ;; an empty sexp
+          (paredit-forward-slurp-sexp)
           (sp-forward-sexp)
           (when (not (evil-cp--looking-at-any-closing-p))
             (sp-forward-whitespace)
             (sp-forward-sexp)))
       (error nil)))
 
-   (t (sp-forward-slurp-sexp n))))
+   (t (paredit-forward-slurp-sexp n))))
 
 (defun evil-cp--line-safe-p (&optional move-fn)
   "Predicate that checks if the line as defined by `MOVE-FN' is
