@@ -151,10 +151,10 @@ slightly different things depending on the location of the point inside the form
 
 | Location of point | Command   | Effect         |
 |-------------------+-----------+----------------|
-| Opening delimiter | evil-cp-> | Backward barf  |
-| Opening delimiter | evil-cp-< | Backward slurp |
-| Else              | evil-cp-> | Forward slurp  |
-| Else              | evil-cp-< | Forward barf   |
+| Opening delimiter | =evil-cp->= | Backward barf  |
+| Opening delimiter | =evil-cp-<= | Backward slurp |
+| Else              | =evil-cp->= | Forward slurp  |
+| Else              | =evil-cp-<= | Forward barf   |
 
 If the command was when the point was on top of either opening or a closing
 delimiter, the point will perform its action and retain its position at the
@@ -231,10 +231,10 @@ in a position relative to the location of point inside a form:
 
 | Command | Destination                                    |
 |---------+------------------------------------------------|
-| M-a     | End of the current form                        |
-| M-i     | Beginning of the current form                  |
-| M-o     | Below the current form, but inside its parent  |
-| M-O     | Before the current form, but inside its parent |
+| =M-a=   | End of the current form                        |
+| =M-i=   | Beginning of the current form                  |
+| =M-o=   | Below the current form, but inside its parent  |
+| =M-O=   | Before the current form, but inside its parent |
 
 These keys give the behavior of the regular =a=, =i=, =o= and =O= keys of =evil= a lispy
 feel.
