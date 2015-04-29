@@ -1409,15 +1409,18 @@ swallowed by the comment."
     ("B"  . evil-backward-word-begin)
     ("gE" . evil-backward-word-end)))
 
+;; TODO: Create evil-cp- versions of up-sexp commands
 (defvar evil-cp-regular-bindings
   '(("L"   . evil-cp-forward-sexp)
     ("H"   . evil-cp-backward-sexp)
+    ("M-l" . evil-cp-end-of-defun)
+    ("M-h" . evil-cp-beginning-of-defun)
     ("["   . evil-cp-previous-opening)
     ("]"   . evil-cp-next-closing)
     ("{"   . evil-cp-next-opening)
     ("}"   . evil-cp-previous-closing)
-    ("("   . evil-cp-beginning-of-defun)
-    (")"   . evil-cp-end-of-defun)
+    ("("   . sp-backward-up-sexp)
+    (")"   . sp-up-sexp)
     ("d"   . evil-cp-delete)
     ("c"   . evil-cp-change)
     ("y"   . evil-cp-yank)
