@@ -130,6 +130,28 @@ would end up with:
 
 If you can't be bothered moving to the end of a form to splice its contents, you
 can also call =M-s= to execute =sp-splice-sexp=.
+
+*** Movement
+**** By word / symbol
+The regular movement keys, i.e. =w=, =e=, =b=, =ge=, =W=, =E=, =B= and =gE= ignore parentheses
+and string delimiters. I find that when I edit lisp, it's more common for me to
+want to move by symbol rather than by word, so I have provided a customizable
+variable, =evil-cleverparens-swap-move-by-word-and-symbol=, which reverses the
+behavior of =w=, =e=, =b= and =ge= with those of =W=, =E=, =B= and =gE=.
+**** Structurally
+| Key | Behavior                                  |
+|-----+-------------------------------------------|
+| =H=   | Move backward by sexp / form              |
+| =L=   | Move forward by sexp / form               |
+| =M-h= | Move to the beginning of a top level form |
+| =M-l= | Move to the end of the top level form     |
+| =[=   | Move to the previous opening parentheses  |
+| =]=   | Move to the next closing parentheses      |
+| ={=   | Move to the next opening parentheses      |
+| =}=   | Move to the previous closing parentheses  |
+| =(=   | Move backward up a sexp.                  |
+| =)=   | Move forward up a sexp.                   |
+
 *** Text Objects
 =evil-cleverparens= adds the following text objects:
 **** /Form/ bound to =f=
@@ -220,7 +242,7 @@ being unaffected.
 In addition to the dragging behavior, you can also use traditional transposing
 with =sp-transpose-sexp= bound to =M-t=.
 **** Wrapping
-=evil-cleverparens= works well with [[https://github.com/timcharper/evil-surround][evil-surround]].
+=evil-cleverparens= and its text objects work well with [[https://github.com/timcharper/evil-surround][evil-surround]].
 **** Raising
 =sp-raise-sexp= is bound to =M-r=.
 **** Splitting
