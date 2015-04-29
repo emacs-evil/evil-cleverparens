@@ -20,10 +20,6 @@
 ;;                    (drag-stuff "0.1.0")
 ;;                    (smartparens "1.6.1"))
 
-;;; TODOS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; TODO: Finish writing the README
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (require 'dash)
@@ -314,8 +310,7 @@ balanced parentheses."
     (error "Not inside a sexp.")))
 
 ;;; Evil Operators ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; TODO: this shouldn't reindent by default
+'
 (defun evil-cp--splice-form ()
   "Evil friendly version of splice that takes care of the
 location of point, which also works for strings. Unlike
@@ -674,6 +669,11 @@ delimiters in the region defined by `BEG' and `END'."
     (goto-char beg)
     (while (> chars-left 0)
       (cond
+       ((sp-point-in-comment)
+        (let* ((comment-end (cdr (sp-get-comment-bounds)))
+               (diff (- (min end comment-end) (point))))
+          (delete-char diff)
+          (setq chars-left (- chars-left diff))))
        ((evil-cp--looking-at-any-opening-p)
         (let ((other-end (evil-cp--matching-paren-pos)))
           ;; matching paren is in the range of the command
@@ -700,7 +700,6 @@ delimiters in the region defined by `BEG' and `END'."
              (<= (point) (point-at-eol)))
     (forward-char)))
 
-;; TODO: dd fails when comment contains parens
 ;; TODO: dW on ((foo)) leaves the point outside the parens
 ;; TODO: dW should always use ignoring mode
 (evil-define-operator evil-cp-delete (beg end type register yank-handler)
