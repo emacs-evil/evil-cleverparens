@@ -708,7 +708,6 @@ delimiters in the region defined by `BEG' and `END'."
     (forward-char)))
 
 ;; TODO: dW on ((foo)) leaves the point outside the parens
-;; TODO: dW should always use ignoring mode
 (evil-define-operator evil-cp-delete (beg end type register yank-handler)
   "A version of `evil-delete' that attempts to leave the region
 its acting on with balanced parentheses. The behavior of
@@ -859,19 +858,18 @@ kill-ring is determined by the
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; HMM: is there any point to these wrappers now?
+
 (evil-define-motion evil-cp-forward-sexp (count)
   "Motion for moving forward by a sexp via `sp-forward-sexp'."
   :type exclusive
   (let ((count (or count 1)))
-    (evil-signal-at-bob-or-eob count)
     (sp-forward-sexp count)))
 
-;; TODO: fails when used at the end of the buffer
 (evil-define-motion evil-cp-backward-sexp (count)
   "Motion for moving backwward by a sexp via `sp-backward-sexp'."
   :type exclusive
   (let ((count (or count 1)))
-    (evil-signal-at-bob-or-eob count)
     (sp-backward-sexp count)))
 
 (evil-define-motion evil-cp-beginning-of-defun (count)
@@ -896,7 +894,6 @@ level sexp)."
   :move-point nil
   :type inclusive
   (let ((count (or count 1)))
-    (evil-signal-at-bob-or-eob count)
     (when (evil-cp--looking-at-opening-p) (forward-char))
     (re-search-forward (sp--get-opening-regexp) nil t count)
     (backward-char)))
@@ -906,7 +903,6 @@ level sexp)."
   "Motion for moving to the previous open parentheses."
   :type inclusive
   (let ((count (or count 1)))
-    (evil-signal-at-bob-or-eob count)
     (re-search-backward (sp--get-opening-regexp) nil t count)))
 
 (evil-define-motion evil-cp-next-closing (count)
@@ -914,7 +910,6 @@ level sexp)."
   :move-point nil
   :type inclusive
   (let ((count (or count 1)))
-    (evil-signal-at-bob-or-eob count)
     (when (evil-cp--looking-at-closing-p) (forward-char))
     (re-search-forward (sp--get-closing-regexp) nil t count)
     (backward-char)))
@@ -924,7 +919,6 @@ level sexp)."
   :move-point nil
   :type inclusive
   (let ((count (or count 1)))
-    (evil-signal-at-bob-or-eob count)
     (re-search-backward (sp--get-closing-regexp) nil t count)))
 
 (evil-define-motion evil-cp-forward-symbol-begin (count)
