@@ -40,7 +40,7 @@ There are three solutions to this problem:
   delimiters.
 
 =evil-cleverparens= supports the latter two approaches. You can toggle the
-behavior between balancing and ignoring behavior via =M-z=, or by binding
+behavior between balancing and ignoring behavior via =M-T=, or by binding
 =evil-cp-override= to the key of your choice. If you are a user of the =diminish=
 mode, you can see the current behavior from the mode-line indicated by =/i= or =/b=
 for /ignoring/ or /balancing/ behavior. 
