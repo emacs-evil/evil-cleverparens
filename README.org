@@ -110,7 +110,26 @@ So with point at marked by =|=, pressing =D= would leave you with:
   (map (fn [x]) stuff)
 #+END_SRC
 **** Changing
+Given the behavior of =evil-cp-delete=, changing, i.e. =c= and =C= should work as you
+would expect.
 **** Splicing
+The =x= key works as it would in regular =evil=, but if called on top of a closing
+or an opening delimiter, then both that delimiter and its matching counterpart
+get removed.
+
+#+BEGIN_SRC emacs-lisp :results silent
+((foobar))
+#+END_SRC
+
+I.e. if you were to use =x= on any of the parentheses in the above expression, you
+would end up with:
+
+#+BEGIN_SRC emacs-lisp :results silent
+(foobar)
+#+END_SRC
+
+If you can't be bothered moving to the end of a form to splice its contents, you
+can also call =M-s= to execute =sp-splice-sexp=.
 *** Text Objects
 =evil-cleverparens= adds the following text objects:
 **** /Form/ bound to =f=
@@ -127,11 +146,98 @@ This is actually part of regular =evil=, but I didn't know about it before divin
 into this project. I now use =dio= to delete a symbol instead of =diW=.
 *** Extra
 **** Slurping and Barfing
-**** Dragging
+Slurping and barfing in =normal-state= is done with the keys =<= and =>= keys. They do
+slightly different things depending on the location of the point inside the form:
+
+| Location of point | Command   | Effect         |
+|-------------------+-----------+----------------|
+| Opening delimiter | evil-cp-> | Backward barf  |
+| Opening delimiter | evil-cp-< | Backward slurp |
+| Else              | evil-cp-> | Forward slurp  |
+| Else              | evil-cp-< | Forward barf   |
+
+If the command was when the point was on top of either opening or a closing
+delimiter, the point will perform its action and retain its position at the
+delimiter it started from. If the command was called from within the form then
+point doesn't get moved.
+**** Dragging / Transposing
+=evil-cleverparens= incorporates the [[https://github.com/rejeep/drag-stuff.el][drag-stuff.el]] mode via =M-j= and =M-k=. If the
+two lines they are acting on are both clear of obstructions, then
+=evil-cleverparens= will act the same as =drag-stuff= by swapping the two lines in
+question, i.e.:
+
+#+BEGIN_SRC emacs-lisp :results silent
+  ;; This is a comment |
+  (this-is-a-form)
+#+END_SRC
+
+with point represented by |, will turn into this:
+
+#+BEGIN_SRC emacs-lisp :results silent
+  (this-is-a-form)
+  ;; This is a comment |
+#+END_SRC
+
+If one of the lines is safe, but swapping it with another would disturb the
+balance of the following expression, then the command teleports the safe line to
+the other side of the unbalanced form:
+
+#+BEGIN_SRC emacs-lisp :results silent
+  ;; This is a comment |
+  (defun im-a-function ()
+    (foobar))
+#+END_SRC
+
+->
+
+#+BEGIN_SRC emacs-lisp :results silent
+  (defun im-a-function ()
+    (foobar))
+  ;; This is a comment |
+#+END_SRC
+
+If both lines are part of unbalanced expressions, then the =M-j= and =M-k= keys will
+transpose the forms the point is located in forwards or backwards. 
+
+#+BEGIN_SRC emacs-lisp :results silent
+  (when (region-active-p|)
+      (> (abs (- (region-beginning) (region-end)))
+         evil-cleverparens-threshold))
+#+END_SRC
+
+->
+
+#+BEGIN_SRC emacs-lisp :results silent
+  (when (> (abs (- (region-beginning) (region-end)))
+         evil-cleverparens-threshold)
+      (region-active-p|))
+#+END_SRC
+
+If the point is inside a top-level form expression, then that form gets
+transposed with the following top-level form, with the safe lines in between
+being unaffected.
+
+In addition to the dragging behavior, you can also use traditional transposing
+with =sp-transpose-sexp= bound to =M-t=.
 **** Wrapping
+=evil-cleverparens= works well with [[https://github.com/timcharper/evil-surround][evil-surround]].
 **** Raising
+=sp-raise-sexp= is bound to =M-r=.
 **** Splitting
+=sp-split-sexp= is bound to =M-S=.
 **** Quick insert
+The following keys can be used to quickly move and enter the =insert-state=
+in a position relative to the location of point inside a form:
+
+| Command | Destination                                    |
+|---------+------------------------------------------------|
+| M-a     | End of the current form                        |
+| M-i     | Beginning of the current form                  |
+| M-o     | Below the current form, but inside its parent  |
+| M-O     | Before the current form, but inside its parent |
+
+These keys give the behavior of the regular =a=, =i=, =o= and =O= keys of =evil= a lispy
+feel.
 ** See Also
 =evil-cleverparens= is not the first Emacs/evil mode that tries to make structural
 editing of lisp-like languages easier. You might enjoy checking out the
