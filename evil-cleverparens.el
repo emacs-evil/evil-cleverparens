@@ -144,7 +144,9 @@ string delimiter."
 (defun evil-cp--looking-at-empty-form ()
   "A predicate for checking if the point is currently looking at
 an empty form."
-  (evil-cp--looking-at-empty-form))
+  (evil-cp--guard-point
+   (or (sp-point-in-empty-sexp)
+       (sp-point-in-empty-string))))
 
 (defun evil-cp--inside-sexp-p (&optional pos)
   "Predicate for checking if point is inside a sexp."
