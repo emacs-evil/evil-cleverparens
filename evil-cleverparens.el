@@ -20,6 +20,11 @@
 ;;                    (drag-stuff "0.1.0")
 ;;                    (smartparens "1.6.1"))
 
+;;; TODOS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; TODO: Finish writing the README
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (require 'dash)
 (require 'evil)
@@ -308,6 +313,7 @@ balanced parentheses."
 
 ;;; Evil Operators ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; TODO: this shouldn't reindent by default
 (defun evil-cp--splice-form ()
   "Evil friendly version of splice that takes care of the
 location of point, which also works for strings. Unlike
@@ -481,21 +487,17 @@ list of (fn args) to pass to `apply''"
         (apply f args)))
     (point)))
 
-(defun evil-cp--safe-yank (beg end &optional type yank-handler)
-  "This is a version of yank ignores unbalanced parentheses to
-keep the region safe.
+(defun evil-cp--point-after (&rest actions)
+  "Return POINT after performing ACTIONS.
 
-Copied from `evil-smartparens'."
-  (condition-case nil
-      (let ((new-beg (evil-cp--new-beginning beg end))
-            (new-end (evil-cp--new-ending beg end)))
-        (if (and (= new-end end)
-                 (= new-beg beg))
-            (evil-yank beg end type yank-handler)
-          (evil-yank new-beg new-end 'inclusive yank-handler)))
-    (error (let* ((beg (evil-cp--new-beginning beg end :shrink))
-                  (end (evil-cp--new-ending beg end)))
-             (evil-yank beg end type yank-handler)))))
+An action is either the symbol of a function or a two element
+list of (fn args) to pass to `apply''"
+  (save-excursion
+    (dolist (fn-and-args actions)
+      (let ((f (if (listp fn-and-args) (car fn-and-args) fn-and-args))
+            (args (if (listp fn-and-args) (cdr fn-and-args) nil)))
+        (apply f args)))
+    (point)))
 
 (defun evil-cp--new-beginning (beg end &optional shrink)
   "Return a new value for BEG if POINT is inside an empty sexp.
@@ -507,7 +509,7 @@ Copied from `evil-smartparens'."
   (if (not shrink)
       (min beg
            (if (sp-point-in-empty-sexp)
-               (evil-sp--point-after 'sp-backward-up-sexp)
+               (evil-cp--point-after 'sp-backward-up-sexp)
              (point-max)))
 
     (let ((region (string-trim (buffer-substring-no-properties beg end))))
@@ -521,7 +523,7 @@ Copied from `evil-smartparens'."
                                  (= beg end)))
                    (cl-incf beg)))))
       (when (= beg end)
-        (evil-sp--fail)))
+        (evil-cp--fail)))
     beg))
 
 (defun evil-cp--new-ending (beg end &optional no-error)
@@ -542,18 +544,22 @@ Copied from `evil-smartparens'."
       (evil-cp--fail)
     end))
 
-(defun evil-cp--safe-yank (beg end type register yank-handler)
-  "Copied from `evil-smartparens'."
-  (condition-case nil
-      (let ((new-beg (evil-cp--new-beginning beg end))
-            (new-end (evil-cp--new-ending beg end)))
-        (if (and (= new-end end)
-                 (= new-beg beg))
-            (evil-yank beg end type register yank-handler)
-          (evil-yank new-beg new-end 'inclusive yank-handler)))
-    (error (let* ((beg (evil-cp--new-beginning beg end :shrink))
-                  (end (evil-cp--new-ending beg end)))
-             (evil-yank beg end type register yank-handler)))))
+(defun evil-cp--ignoring-yank (beg end type register yank-handler)
+  "This is a version of yank ignores unbalanced parentheses to
+keep the region safe.
+
+Copied from `evil-smartparens'."
+  (save-excursion
+    (condition-case nil
+        (let ((new-beg (evil-cp--new-beginning beg end))
+              (new-end (evil-cp--new-ending beg end)))
+          (if (and (= new-end end)
+                   (= new-beg beg))
+              (evil-yank beg end type register yank-handler)
+            (evil-yank new-beg new-end 'inclusive yank-handler)))
+      (error (let* ((beg (evil-cp--new-beginning beg end :shrink))
+                    (end (evil-cp--new-ending beg end)))
+               (evil-yank beg end type register yank-handler))))))
 
 (evil-define-operator evil-cp-yank (beg end type register yank-handler)
   "Saves the characters in motion into the kill-ring while
@@ -571,7 +577,7 @@ respecting parentheses."
 
      ;; unbalanced block, don't add parens
      ((and (eq type 'block)
-           (not evil-cleverparens-balance-yanked-region))
+           (not evil-cleverparens-complete-parens-in-yanked-region))
       (evil-cp--fail))
 
      ;; unbalanced block, add parens
@@ -583,19 +589,21 @@ respecting parentheses."
       (evil-yank beg end type register yank-handler))
 
      ;; unbalanced line, remove ending new-line
-     ((eq type 'line)
+     ((and (eq type 'line)
+           evil-cleverparens-complete-parens-in-yanked-region)
       (when (or (= end (point-max))
                 (= (char-after end) 10))
         (setq end (1- end)))
       (evil-cp--yank-characters beg end register yank-handler))
 
      ;; unbalanced, add parens
-     (evil-cleverparens-balance-yanked-region
+     (evil-cleverparens-complete-parens-in-yanked-region
       (evil-cp--yank-characters beg end register yank-handler))
 
      (t
-      (evil-cp--safe-yank beg end type yank-handler)))))
+      (evil-cp--ignoring-yank beg end type register yank-handler)))))
 
+;; TODO: this should probably still do what Vim does when region is safe
 (evil-define-operator evil-cp-yank-line (beg end type register)
   "Acts like `paredit-copy-sexp-as-kill'."
   :motion evil-line
@@ -690,13 +698,17 @@ delimiters in the region defined by `BEG' and `END'."
              (<= (point) (point-at-eol)))
     (forward-char)))
 
+;; TODO: dd fails when comment contains parens
+;; TODO: dW on ((foo)) leaves the point outside the parens
+;; TODO: dW should always use ignoring mode
 (evil-define-operator evil-cp-delete (beg end type register yank-handler)
   "A version of `evil-delete' that attempts to leave the region
 its acting on with balanced parentheses. The behavior of
 kill-ring is determined by the
-`evil-cleverparens-balance-yanked-region' variable."
+`evil-cleverparens-complete-parens-in-yanked-region' variable."
   :move-point nil
   (interactive "<R><x><y>")
+  (message "%s" type)
   (let ((safep (sp-region-ok-p beg end)))
     (evil-cp-yank beg end type register yank-handler)
     (cond ((or (= beg end)
@@ -846,6 +858,7 @@ kill-ring is determined by the
     (evil-signal-at-bob-or-eob count)
     (sp-forward-sexp count)))
 
+;; TODO: fails when used at the end of the buffer
 (evil-define-motion evil-cp-backward-sexp (count)
   "Motion for moving backwward by a sexp via `sp-backward-sexp'."
   :type exclusive
@@ -880,6 +893,7 @@ level sexp)."
     (re-search-forward (sp--get-opening-regexp) nil t count)
     (backward-char)))
 
+;; TODO: doesn't work at the end of the buffer
 (evil-define-motion evil-cp-previous-opening (count)
   "Motion for moving to the previous open parentheses."
   :type inclusive
@@ -962,6 +976,7 @@ movement."
     (evil-signal-at-bob-or-eob (- (or count 1)))
     (evil-backward-end thing count)))
 
+;; TODO: point jumps weird when barfing inside a form
 (defun evil-cp-< (n)
   "Slurping/barfing operation that acts differently based on the points
 location in the form.
@@ -1025,7 +1040,10 @@ forward while maintaining the location of point in the original delimiter.
   (bar baz[)] foo -> (bar baz foo[)]
 
 When point is in the middle of a form, it will act as a regular
-forward-slurp."
+forward-slurp.
+
+If you are having problems with this function, make sure that the
+parentheses in your buffer are balanced overall."
   (interactive "p")
   (cond
    ((not (evil-cp--inside-form-p))
@@ -1289,7 +1307,7 @@ the current form."
 ;;; Variables ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun evil-cp-toggle-balanced-yank (&optional forcep)
-  "Toggles the setting `evil-cleverparens-balance-yanked-region',
+  "Toggles the setting `evil-cleverparens-complete-parens-in-yanked-region',
 which determines whether or not an incomplete yanked region
 should be supplemented with the missing parentheses at the end
 and/or beginning."
@@ -1297,13 +1315,13 @@ and/or beginning."
   (cond
    (forcep
     (message "Turned yank auto-balancing ON.")
-    (setq evil-cleverparens-balance-yanked-region t))
-   ((not evil-cleverparens-balance-yanked-region)
+    (setq evil-cleverparens-complete-parens-in-yanked-region t))
+   ((not evil-cleverparens-complete-parens-in-yanked-region)
     (message "Turned yank auto-balancing ON.")
-    (setq evil-cleverparens-balance-yanked-region t))
+    (setq evil-cleverparens-complete-parens-in-yanked-region t))
    (t
     (message "Turned yank auto-balancing OFF.")
-    (setq evil-cleverparens-balance-yanked-region nil))))
+    (setq evil-cleverparens-complete-parens-in-yanked-region nil))))
 
 (defgroup evil-cleverparens nil
   "`evil-mode' for handling your parentheses with a mix of `smartparens' and `paredit'"
@@ -1323,7 +1341,7 @@ This is a feature copied from `evil-smartparens'."
   :group 'evil-smartparens
   :type 'string)
 
-(defcustom evil-cleverparens-balance-yanked-region nil
+(defcustom evil-cleverparens-complete-parens-in-yanked-region nil
   "Determines how to handle yanking a region containing
   unbalanced expressions. If this value is non-nil, a yanked
   region containing missing parentheses will include the missing
@@ -1394,8 +1412,8 @@ swallowed by the comment."
     ("H"   . evil-cp-backward-sexp)
     ("["   . evil-cp-previous-opening)
     ("]"   . evil-cp-next-closing)
-    ("{"   . evil-cp-previous-closing)
-    ("}"   . evil-cp-next-opening)
+    ("{"   . evil-cp-next-opening)
+    ("}"   . evil-cp-previous-closing)
     ("("   . evil-cp-beginning-of-defun)
     (")"   . evil-cp-end-of-defun)
     ("d"   . evil-cp-delete)
@@ -1415,8 +1433,8 @@ swallowed by the comment."
   override evil's bindings in normal mode.")
 
 (defvar evil-cp-additional-bindings
-  '(("M-k" . evil-cp-drag-up)
-    ("M-t" . sp-transpose-sexp)
+  '(("M-t" . sp-transpose-sexp)
+    ("M-k" . evil-cp-drag-up)
     ("M-j" . evil-cp-drag-down)
     ("M-J" . sp-join-sexp)
     ("M-s" . sp-splice-sexp)
@@ -1463,8 +1481,10 @@ swallowed by the comment."
   "Alist containing the default paredit bindings to corresponding
 smartparens functions.")
 
+;; TODO: paredit-open-round doesn't play well with Clojure
 (defvar evil-cp-paredit-insert-bindings
-  '(("("  . paredit-open-round)
+  '(
+    ;; ("("  . paredit-open-round)
     (")"  . paredit-close-round)
     ("["  . paredit-open-bracket)
     ("]"  . paredit-close-bracket)
@@ -1481,11 +1501,12 @@ smartparens functions.")
       (cdr it))))
 
 (defun evil-cp--enable-movement-keys ()
-  (evil-cp--populate-mode-bindings-for-state
-   (if evil-cleverparens-swap-move-by-word-and-symbol
-              evil-cp-swapped-movement-keys
-            evil-cp-regular-movement-keys)
-   'normal))
+  (let ((keys (if evil-cleverparens-swap-move-by-word-and-symbol
+                  evil-cp-swapped-movement-keys
+                evil-cp-regular-movement-keys)))
+    (evil-cp--populate-mode-bindings-for-state keys 'normal)
+    ;; TODO: enable these in operation/motion state as well
+    ))
 
 (defun evil-cp-use-regular-bindings ()
   (interactive)
@@ -1546,7 +1567,9 @@ parentheses and comments. These keys are a subset of what
 for an advanced modal structural editing experience."
   :group 'evil-cleverparens
   :keymap '()
-  :lighter (" ecp" (:eval (if evil-cleverparens-balance-yanked-region "/b" "")))
+  :lighter (" ecp"
+            (:eval (if evil-cleverparens-complete-parens-in-yanked-region
+                       "/b" "/i")))
   :init-value nil
   (let ((prev-state evil-state))
     (evil-normal-state)
