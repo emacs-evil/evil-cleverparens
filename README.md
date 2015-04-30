@@ -197,7 +197,7 @@ I like to think of s-expressions as forming a layer of levels that define the
 AST of the code they represent, kind of like this picture of rice fields in
 China:
 
-![rice-field](http://data.chinahighlights.com/image/travelguide/china-hiking/longji-terraced-field.gif)
+![rice-fields](rice_fields.jpg)
 
 In this analogy, *splicing* is the operation of taking a layer and leveling it
 down one step. In `evil-cleverparens` this can be done in two ways: If you are in
