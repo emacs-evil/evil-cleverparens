@@ -607,7 +607,6 @@ respecting parentheses."
      (t
       (evil-cp--ignoring-yank beg end type register yank-handler)))))
 
-;; TODO: this should probably still do what Vim does when region is safe
 (evil-define-operator evil-cp-yank-line (beg end type register)
   "Acts like `paredit-copy-sexp-as-kill'."
   :motion evil-line
@@ -709,7 +708,6 @@ and string delimiters."
              (<= (point) (point-at-eol)))
     (forward-char)))
 
-;; TODO: dW on ((foo)) leaves the point outside the parens
 (evil-define-operator evil-cp-delete (beg end type register yank-handler)
   "A version of `evil-delete' that attempts to leave the region
 its acting on with balanced parentheses. The behavior of
@@ -899,7 +897,6 @@ level sexp)."
     (re-search-forward (sp--get-opening-regexp) nil t count)
     (backward-char)))
 
-;; TODO: doesn't work at the end of the buffer
 (evil-define-motion evil-cp-previous-opening (count)
   "Motion for moving to the previous open parentheses."
   :type inclusive
@@ -979,7 +976,6 @@ movement."
     (evil-signal-at-bob-or-eob (- (or count 1)))
     (evil-backward-end thing count)))
 
-;; TODO: point jumps weird when barfing inside a form
 (defun evil-cp-< (n)
   "Slurping/barfing operation that acts differently based on the points
 location in the form.
@@ -1026,7 +1022,6 @@ forward-barf."
 
    (t (sp-forward-barf-sexp n))))
 
-;; TODO: I should perhaps use only smartparens or paredit for consistencys sake?
 (defun evil-cp-> (n)
   "Slurping/barfing operation that acts differently based on the points
 location in the form.
@@ -1458,48 +1453,47 @@ swallowed by the comment."
   evil-cleverparens via a modifier key (using the meta-key by
   default). Only enabled in evil's normal mode.")
 
-(defvar evil-cp-paredit-bindings
-  '(("C-M-f"       . paredit-forward)
-    ("C-M-b"       . paredit-backward)
-    ("C-M-u"       . paredit-backward-up)
-    ("C-M-d"       . paredit-forward-down)
-    ("C-M-p"       . paredit-backward-down)
-    ("C-M-n"       . paredit-forward-up)
-    ("M-s"         . paredit-splice-sexp)
-    ("M-S"         . paredit-split-sexp)
-    ("M-<up>"      . paredit-splice-sexp-killing-backward)
-    ("M-<down>"    . paredit-splice-sexp-killing-forward)
-    ("M-r"         . paredit-raise-sexp)
-    ("C-)"         . paredit-forward-slurp-sexp)
-    ("C-<right>"   . paredit-forward-slurp-sexp)
-    ("C-}"         . paredit-forward-barf-sexp)
-    ("C-<left>"    . paredit-forward-barf-sexp)
-    ("C-("         . paredit-backward-slurp-sexp)
-    ("C-M-<left>"  . paredit-backward-slurp-sexp)
-    ("C-{"         . paredit-backward-barf-sexp)
-    ("C-M-<right>" . paredit-backward-barf-sexp)
-    ("("           . paredit-open-round)
-    (")"           . paredit-close-round)
-    ("["           . paredit-open-bracket)
-    ("]"           . paredit-close-bracket)
-    ("{"           . paredit-open-curly)
-    ("}"           . paredit-close-curly)
-    (";"           . paredit-semicolon))
-  "Alist containing the default paredit bindings to corresponding
-smartparens functions.")
+;; (defvar evil-cp-paredit-bindings
+;;   '(("C-M-f"       . paredit-forward)
+;;     ("C-M-b"       . paredit-backward)
+;;     ("C-M-u"       . paredit-backward-up)
+;;     ("C-M-d"       . paredit-forward-down)
+;;     ("C-M-p"       . paredit-backward-down)
+;;     ("C-M-n"       . paredit-forward-up)
+;;     ("M-s"         . paredit-splice-sexp)
+;;     ("M-S"         . paredit-split-sexp)
+;;     ("M-<up>"      . paredit-splice-sexp-killing-backward)
+;;     ("M-<down>"    . paredit-splice-sexp-killing-forward)
+;;     ("M-r"         . paredit-raise-sexp)
+;;     ("C-)"         . paredit-forward-slurp-sexp)
+;;     ("C-<right>"   . paredit-forward-slurp-sexp)
+;;     ("C-}"         . paredit-forward-barf-sexp)
+;;     ("C-<left>"    . paredit-forward-barf-sexp)
+;;     ("C-("         . paredit-backward-slurp-sexp)
+;;     ("C-M-<left>"  . paredit-backward-slurp-sexp)
+;;     ("C-{"         . paredit-backward-barf-sexp)
+;;     ("C-M-<right>" . paredit-backward-barf-sexp)
+;;     ("("           . paredit-open-round)
+;;     (")"           . paredit-close-round)
+;;     ("["           . paredit-open-bracket)
+;;     ("]"           . paredit-close-bracket)
+;;     ("{"           . paredit-open-curly)
+;;     ("}"           . paredit-close-curly)
+;;     (";"           . paredit-semicolon))
+;;   "Alist containing the default paredit bindings to corresponding
+;; smartparens functions.")
 
-;; TODO: paredit-open-round doesn't play well with Clojure
-(defvar evil-cp-paredit-insert-bindings
-  '(
-    ;; ("("  . paredit-open-round)
-    (")"  . paredit-close-round)
-    ("["  . paredit-open-bracket)
-    ("]"  . paredit-close-bracket)
-    ("{"  . paredit-open-curly)
-    ("}"  . paredit-close-curly)
-    (";"  . paredit-semicolon))
-  "Alist containing keys for following paredit's insert commands
-  behavior.")
+;; (defvar evil-cp-paredit-insert-bindings
+;;   '(
+;;     ;; ("("  . paredit-open-round)
+;;     (")"  . paredit-close-round)
+;;     ("["  . paredit-open-bracket)
+;;     ("]"  . paredit-close-bracket)
+;;     ("{"  . paredit-open-curly)
+;;     ("}"  . paredit-close-curly)
+;;     (";"  . paredit-semicolon))
+;;   "Alist containing keys for following paredit's insert commands
+;;   behavior.")
 
 (defun evil-cp--populate-mode-bindings-for-state (bindings state)
   (--each bindings
@@ -1511,9 +1505,7 @@ smartparens functions.")
   (let ((keys (if evil-cleverparens-swap-move-by-word-and-symbol
                   evil-cp-swapped-movement-keys
                 evil-cp-regular-movement-keys)))
-    (evil-cp--populate-mode-bindings-for-state keys 'normal)
-    ;; TODO: enable these in operation/motion state as well
-    ))
+    (evil-cp--populate-mode-bindings-for-state keys 'normal)))
 
 (defun evil-cp-use-regular-bindings ()
   (interactive)
@@ -1526,32 +1518,32 @@ smartparens functions.")
   (evil-cp--populate-mode-bindings-for-state evil-cp-additional-bindings 'normal))
 
 ;;;###autoload
-(defun evil-cp-use-paredit-like-bindings ()
-  "Loads up paredit like bindings for insert mode. These are a
-superset of `evil-cp-use-paredit-like-insert-bindings'."
-  (interactive)
-  (evil-cp--populate-mode-bindings-for-state sp-paredit-bindings 'insert))
+;; (defun evil-cp-use-paredit-like-bindings ()
+;;   "Loads up paredit like bindings for insert mode. These are a
+;; superset of `evil-cp-use-paredit-like-insert-bindings'."
+;;   (interactive)
+;;   (evil-cp--populate-mode-bindings-for-state sp-paredit-bindings 'insert))
 
 ;;;###autoload
-(defun evil-cp-use-paredit-like-insert-bindings ()
-  "Loads up paredit like behavior in insert mode for inserting
-parentheses and comments. These keys are a subset of what
-`evil-cp-use-paredit-like-bindings'."
-  (interactive)
-  (evil-cp--populate-mode-bindings-for-state evil-cp-paredit-insert-bindings 'insert))
+;; (defun evil-cp-use-paredit-like-insert-bindings ()
+;;   "Loads up paredit like behavior in insert mode for inserting
+;; parentheses and comments. These keys are a subset of what
+;; `evil-cp-use-paredit-like-bindings'."
+;;   (interactive)
+;;   (evil-cp--populate-mode-bindings-for-state evil-cp-paredit-insert-bindings 'insert))
 
 ;;;###autoload
-(defun evil-cp-use-smartparens-like-bindings ()
-  "Loads up the default smartparens bindings in insert mode."
-  (interactive)
-  (evil-cp--populate-mode-bindings-for-state sp-smartparens-bindings 'insert))
+;; (defun evil-cp-use-smartparens-like-bindings ()
+;;   "Loads up the default smartparens bindings in insert mode."
+;;   (interactive)
+;;   (evil-cp--populate-mode-bindings-for-state sp-smartparens-bindings 'insert))
 
-(defun evil-cp--enable-insert-bindings ()
-  (cond
-   ((eq sp-base-key-bindings 'sp)
-    (evil-cp-use-smartparens-like-bindings))
-   ((eq sp-base-key-bindings 'paredit)
-    (evil-cp-use-paredit-like-bindings))))
+;; (defun evil-cp--enable-insert-bindings ()
+;;   (cond
+;;    ((eq sp-base-key-bindings 'sp)
+;;     (evil-cp-use-smartparens-like-bindings))
+;;    ((eq sp-base-key-bindings 'paredit)
+;;     (evil-cp-use-paredit-like-bindings))))
 
 (defun evil-cp--enable-text-objects ()
   "Enables text-objects defined in evil-cleverparens."
@@ -1583,14 +1575,14 @@ for an advanced modal structural editing experience."
     (evil-change-state prev-state)
     (if evil-cleverparens-mode
         (progn
-          (unless smartparens-mode (smartparens-mode t))
-          (unless smartparens-strict-mode (smartparens-strict-mode t))
+          ;; (unless smartparens-mode (smartparens-mode t))
+          ;; (unless smartparens-strict-mode (smartparens-strict-mode t))
           (evil-cp--enable-movement-keys)
           (evil-cp-use-regular-bindings)
           (evil-cp--enable-text-objects)
-          (evil-cp--enable-insert-bindings)
-          (when evil-cleverparens-paredit-like-insert-behavior
-            (evil-cp-use-paredit-like-insert-bindings))
+          ;; (evil-cp--enable-insert-bindings)
+          ;; (when evil-cleverparens-paredit-like-insert-behavior
+          ;;   (evil-cp-use-paredit-like-insert-bindings))
           (when evil-cleverparens-use-additional-bindings
             (evil-cp-use-additional-bindings))
           (if (bound-and-true-p evil-surround-mode)
