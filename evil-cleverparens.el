@@ -700,10 +700,12 @@ delimiters in the region defined by `BEG' and `END'."
         (delete-char 1)
         (cl-decf chars-left))))))
 
-(defun evil-cp--first-non-blank-non-opening ()
-  "Like `evil-first-non-blank' but also skips opening parentheses."
+(defun evil-cp-first-non-blank-non-opening ()
+  "Like `evil-first-non-blank' but also skips opening parentheses
+and string delimiters."
+  (interactive)
   (evil-first-non-blank)
-  (while (and (evil-cp--looking-at-opening-p)
+  (while (and (evil-cp--looking-at-any-opening-p)
              (<= (point) (point-at-eol)))
     (forward-char)))
 
@@ -733,7 +735,7 @@ kill-ring is determined by the
                    (beginning-of-line)
                    (sp-forward-whitespace t)))
               (1- end)))
-           (evil-cp--first-non-blank-non-opening)
+           (evil-cp-first-non-blank-non-opening)
            (if (evil-cp--looking-at-any-closing-p)
                (progn
                  (forward-line -1)
@@ -854,7 +856,6 @@ kill-ring is determined by the
   (while (evil-cp--looking-at-any-opening-p)
     (evil-forward-char 1 nil t))
   (evil-cp-change-line beg (1- end) type register yank-handler #'evil-cp-delete-line))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1432,6 +1433,7 @@ swallowed by the comment."
     ("x"   . evil-cp-delete-char-or-splice)
     (">"   . evil-cp->)
     ("<"   . evil-cp-<)
+    ("_"   . evil-cp-first-non-blank-non-opening)
     ("M-T" . evil-cp-toggle-balanced-yank)
     ("M-z" . evil-cp-override))
   "Alist containing the regular evil-cleverparens bindings that

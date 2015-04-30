@@ -132,7 +132,11 @@ behavior of =w=, =e=, =b= and =ge= with those of =W=, =E=, =B= and =gE=.
 | =}=   | Move to the previous closing parentheses  |
 | =(=   | Move backward up a sexp.                  |
 | =)=   | Move forward up a sexp.                   |
-
+**** Others
+Since =^= and =_= do the same thing in regular =evil=, =evil-cleverparens= takes over
+the =_= key and binds it to =evil-cp-first-non-blank-non-opening= which, as you may
+guess from the name, moves the point to the first position that's not whitespace
+nor an opening delimiter.
 *** Text Objects
 =evil-cleverparens= adds the following text objects:
 **** /Form/ bound to =f=
