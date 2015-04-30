@@ -1442,7 +1442,7 @@ swallowed by the comment."
     ("M-j" . evil-cp-drag-down)
     ("M-J" . sp-join-sexp)
     ("M-s" . sp-splice-sexp)
-    ("M-x" . sp-split-sexp)
+    ("M-S" . sp-split-sexp)
     ("M-R" . evil-cp-raise-form)
     ("M-r" . sp-raise-sexp)
     ("M-a" . evil-cp-insert-at-end-of-form)

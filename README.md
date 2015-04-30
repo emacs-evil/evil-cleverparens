@@ -224,7 +224,7 @@ regular `evil`.
 `((foobar))` -> `(foobar)`
 
 To continue the rice field analogy, *splitting* is like digging a ditch to
-separate two fields from each other, and it's bound to `M-x`.
+separate two fields from each other, and it's bound to `M-S`.
 
 `(foo bar some | foobars)` -> `(foo bar some) | (foobars)`
 
