@@ -1,19 +1,23 @@
+# evil-cleverparens
+
 Use Vim/evil like modal editing with lisp without screwing up the structure of
 your code. Tries to offer useful alternatives for behavior which would otherwise
 be destructive.
 
-# Installation
+## Installation
 
 The recommended way to install is through `elpa`, though in its current state, the
 package doesn't actually exist there yet, which means that you are here too
 early. I will get it on `elpa` as soon as I have used it myself long enough to
 make sure it works for the most part.
 
-`M-x package-install evil-cleverparens`
+`M-x` `package-install evil-cleverparens`
 
 To enable `evil-cleverparens`, put:
 
-    (add-hook 'smartparens-enabled-hook #'evil-cleverparens-mode)
+```emacs-lisp
+(add-hook 'smartparens-enabled-hook #'evil-cleverparens-mode)
+```
 
 into your `.emacs` or `init.el` file, which will turn on `evil-cleverparens` when
 `smartparens` is activated.
@@ -22,13 +26,15 @@ If you use `smartparens` with non-lispy modes you probably want to only activate
 `evil-cleverparens` with certain major modes. To do this, you can replace the
 former snippet with:
 
-    (add-hook '<your-lispy-mode> #'evil-cleverparens-mode)
+```emacs-lisp
+(add-hook '<your-lispy-mode> #'evil-cleverparens-mode)
+```
 
-# Features
+## Features
 
-## Editing
+### Editing
 
-### Yanking
+#### Yanking
 
 **Problem**: You yank a region of text that contains unbalanced delimiters, so now
 pasting that region into your buffer will result in an unbalanced mess. 
@@ -66,13 +72,13 @@ kill-ring, whereas the ignoring behavior will store just `foo` instead.
     is. Otherwise it does what `paredit-copy-as-kill` does for any expression on
     the current line. If you have:
     
-        (foo
-         bar)
+   `(foo
+     bar)`
     
     With point at the beginning of the buffer, then `Y` will yank the whole sexp
     instead of just the first line.
 
-### Deleting
+#### Deleting
 
 1.  `dW`
 
@@ -85,13 +91,15 @@ kill-ring, whereas the ignoring behavior will store just `foo` instead.
     If the line is balanced, acts like regular evil's `dd` would do. Otherwise deletes
     the line while saving out any parentheses that would put the region out of
     balance.
-    
-        (defun im-a-function ()
-          (i-do-stuff 1 2 3))
-    
+
+    ```emacs-lisp
+    (defun im-a-function ()
+      (i-do-stuff 1 2 3))
+    ```
+
     Calling `dd` on the first line of the function definition will result in:
     
-        ((i-do-stuff 1 2 3))
+    `((i-do-stuff 1 2 3))`
     
     And repeating the command would delete everything.
 
@@ -105,20 +113,24 @@ kill-ring, whereas the ignoring behavior will store just `foo` instead.
     `evil-cp-delete-line` deletes from *point* until the end of the line, or until it
     reaches a point where deleting more would leave the line out of balance.
     
-        (map (fn [x] |(conj coll (rest x))) stuff)
+    ```clojure
+    (map (fn [x] |(conj coll (rest x))) stuff)
+    ```
     
     So with point at marked by `|`, pressing `D` would leave you with:
-    
-        (map (fn [x]) stuff)
 
-### Changing
+    ```clojure
+    (map (fn [x]) stuff)
+    ```
+
+#### Changing
 
 Given the behavior of `evil-cp-delete`, changing, i.e. `c` and `C` should work as you
 would expect.
 
-## Movement
+### Movement
 
-### By word / symbol
+#### By word / symbol
 
 The regular movement keys, i.e. `w`, `e`, `b`, `ge`, `W`, `E`, `B` and `gE` ignore parentheses
 and string delimiters. I find that when I edit lisp, it's more common for me to
@@ -126,7 +138,7 @@ want to move by symbol rather than by word, so I have provided a customizable
 variable, `evil-cleverparens-swap-move-by-word-and-symbol`, which reverses the
 behavior of `w`, `e`, `b` and `ge` with those of `W`, `E`, `B` and `gE`.
 
-### Structurally
+#### Structurally
 
 | Key   | Behavior                                  |
 |-------|-------------------------------------------|
@@ -141,91 +153,97 @@ behavior of `w`, `e`, `b` and `ge` with those of `W`, `E`, `B` and `gE`.
 | `(`   | Move backward up a sexp.                  |
 | `)`   | Move forward up a sexp.                   |
 
-### Others
+#### Others
 
 Since `^` and `_` do the same thing in regular `evil`, `evil-cleverparens` takes over
 the `_` key and binds it to `evil-cp-first-non-blank-non-opening` which, as you may
 guess from the name, moves the point to the first position that's not whitespace
 nor an opening delimiter.
 
-## Text Objects
+### Text Objects
 
 `evil-cleverparens` adds the following text objects:
 
-### *Form* bound to `f`
+#### *Form* bound to `f`
 
 Form is either a s-expression or a string, as defined by `smartparens` for the
 mode in question.
 
-### *Comment* bound to `c`
+#### *Comment* bound to `c`
 
 Selecting an *outer* comment means selecting both the comment delimiter and the
 comment text, whereas selecting an *inner* comment means selecting only the text
 but not the comment delimiters.
 
-### *Defun* bound to `d`
+#### *Defun* bound to `d`
 
 Selects the top-level s-expression.
 
-### *Symbol* bound to `o`
+#### *Symbol* bound to `o`
 
 This is actually part of regular `evil`, but I didn't know about it before diving
 into this project. I now use `dio` to delete a symbol instead of `diW`.
 
-## Extra
+### Extra
 
-### Slurping and Barfing
+#### Slurping and Barfing
 
-Slurping and barfing in `normal-state` is done with the keys `<` and `>` keys. They do
-slightly different things depending on the location of the point inside the form:
+Slurping and barfing in `normal-state` is done with the `<` and `>` keys. They
+do slightly different things depending on the location of the point inside the
+form:
 
-| Location of point | Command     | Effect         |
-|-------------------|-------------|----------------|
-| Opening delimiter | `evil-cp->` | Backward barf  |
-| Opening delimiter | `evil-cp-<` | Backward slurp |
-| Else              | `evil-cp->` | Forward slurp  |
-| Else              | `evil-cp-<` | Forward barf   |
+| Location of point | Command     | Effect          |
+|-------------------|-------------|-----------------|
+| Opening delimiter | `evil-cp->` | Barf backwards  |
+| Opening delimiter | `evil-cp-<` | Slurp backwards |
+| Else              | `evil-cp->` | Slurp forwards  |
+| Else              | `evil-cp-<` | Slurp forwards  |
 
-If the command was when the point was on top of either opening or a closing
-delimiter, the point will perform its action and retain its position at the
-delimiter it started from. If the command was called from within the form then
-point doesn't get moved.
+In addition if the point was on an opening/closing delimiter it will move along
+with the delimiter. Otherwise the point maintains its position.
 
-### Splicing / Splitting
+#### Splicing / Splitting
 
 I like to think of s-expressions as forming a layer of levels that define the
-AST of the code they represent, kind of like this picture of rice fields in
-China:
+[AST](http://en.wikipedia.org/wiki/Abstract_syntax_tree) of the code they
+represent, kind of like this picture of rice fields in China:
 
 ![rice-fields](rice_fields.jpg)
 
-In this analogy, *splicing* is the operation of taking a layer and leveling it
-down one step. In `evil-cleverparens` this can be done in two ways: If you are in
-the middle of the rice field, then pressing `M-s` will call `sp-splice-sexp`, or if
-you are at the edges (i.e. at the parentheses) then calling `x` will do the same
-thing. `x` works otherwise just as it would in regular `evil`. So for example
-pressing `x` while on any of the parentheses in the below expression will do the
-following:
+In this analogy, *splicing* is like taking a layer and leveling it down one
+step. In `evil-cleverparens` this can be done in two ways: If you are standing
+in the middle of the rice field, then calling `M-s` or `sp-splice-sexp` will do
+just that. If you are at the edges of the field (i.e. at the parentheses) then
+calling `x` will delete both the delimiter you are looking at plus its matching
+pair. If you're not looking at a delimiter, `x` works just as it would in
+regular `evil`.
 
 `((foobar))` -> `(foobar)`
 
-To continue this analogy, *splitting* is like digging a ditch to separate two
-fields, and it's bound to `M-x`.
+To continue the rice field analogy, *splitting* is like digging a ditch to
+separate two fields from each other, and it's bound to `M-x`.
 
-### Dragging / Transposing
+`(foo bar some | foobars)` -> `(foo bar some) | (foobars)`
 
-`evil-cleverparens` incorporates the [drag-stuff.el](https://github.com/rejeep/drag-stuff.el) mode via `M-j` and `M-k`. If the
-two lines they are acting on are both clear of obstructions, then
-`evil-cleverparens` will act the same as `drag-stuff` by swapping the two lines in
-question, i.e.:
+#### Dragging / Transposing
 
-    ;; This is a comment |
-    (this-is-a-form)
+`evil-cleverparens` incorporates the
+[drag-stuff.el](https://github.com/rejeep/drag-stuff.el) mode via `M-j` and
+`M-k`. If the two lines they are acting on are both clear of obstructions, then
+`evil-cleverparens` will act the same as `drag-stuff` by swapping the two lines
+in question, i.e.:
+
+```emcas-lisp
+;; This is a comment |
+(this-is-a-form)
+```
 
 with point represented by |, will turn into this:
 
-    (this-is-a-form)
-    ;; This is a comment |
+```emacs-lisp
+(this-is-a-form)
+;; This is a comment |
+```
 
 If one of the lines is safe, but swapping it with another would disturb the
 balance of the following expression, then the command teleports the safe line to
@@ -237,12 +255,10 @@ the other side of the unbalanced form:
   (foobar))
 ```
 
-->
-
 ```emacs-lisp
-    (defun im-a-function ()
-      (foobar))
-    ;; This is a comment |
+(defun im-a-function ()
+  (foobar))
+;; This is a comment |
 ```
 
 If both lines are part of unbalanced expressions, then the `M-j` and `M-k` keys will
@@ -253,8 +269,6 @@ transpose the forms the point is located in forwards or backwards.
     (> (abs (- (region-beginning) (region-end)))
        evil-cleverparens-threshold))
 ```
-
-->
 
 ```emacs-lisp
 (when (> (abs (- (region-beginning) (region-end)))
@@ -269,15 +283,15 @@ being unaffected.
 In addition to the dragging behavior, you can also use traditional transposing
 with `sp-transpose-sexp` bound to `M-t`.
 
-### Wrapping
+#### Wrapping
 
 `evil-cleverparens` and its text objects work well with [evil-surround](https://github.com/timcharper/evil-surround).
 
-### Raising
+#### Raising
 
 `sp-raise-sexp` is bound to `M-r`.
 
-### Quick insert
+#### Quick insert
 
 The following keys can be used to quickly move and enter the `insert-state`
 in a position relative to the location of point inside a form:
@@ -302,7 +316,7 @@ following modes as well:
 
 Very rich in features but doesn't attempt to conform to the `vim/evil` layout of bindings.
 
-### [roman/evil-paredit](https://github.com/roman/evil-paredit)
+#### [roman/evil-paredit](https://github.com/roman/evil-paredit)
 
 Prevents the user from messing up their parentheses by erroring
 out. `evil-cleverparens` originally started out as a fork of this project, with
@@ -333,7 +347,7 @@ the two projects are different in the following ways:
     the offending parentheses in kill-ring via
     `evil-cleverparens-balance-yanked-region`.
 
-# Limitations and the Escape Hatch
+## Limitations and the Escape Hatch
 
 Ensuring that a region is safe can be expensive. Similar to `evil-smartparens`,
 `evil-cleverparens` provides a variable `evil-cleverparens-threshold` that
@@ -346,7 +360,7 @@ command with it will make `evil-cleverparens` default to using the regular `evil
 alternatives. `r` and `R` are the same as in regular `evil` so those can be used to
 fix annoying situations as well.
 
-# Disclaimer
+## Disclaimer
 
 This is my first Emacs Lisp project more than 100 lines long, so the code is
 likely ugly and likelihood of bugs is quite high. Bug reports/fixes are
