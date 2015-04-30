@@ -10,7 +10,7 @@
 ;;
 ;; This file is free software (MIT License)
 
-;; Version: 0.0.1
+;; Version: 0.1.0
 
 ;; URL: https://github.com/luxbock/evil-cleverparens
 
@@ -19,6 +19,8 @@
 ;;                    (paxedit "1.1.4")
 ;;                    (drag-stuff "0.1.0")
 ;;                    (smartparens "1.6.1"))
+
+;; TODO: Remove the commented out code
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
