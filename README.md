@@ -13,7 +13,7 @@ make sure it works for the most part.
 
 `M-x` `package-install evil-cleverparens`
 
-To enable `evil-cleverparens`, put:
+To enable `evil-cleverparens` with `smartparens`:
 
 ```emacs-lisp
 (add-hook 'smartparens-enabled-hook #'evil-cleverparens-mode)
