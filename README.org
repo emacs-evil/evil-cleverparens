@@ -112,25 +112,6 @@ So with point at marked by =|=, pressing =D= would leave you with:
 **** Changing
 Given the behavior of =evil-cp-delete=, changing, i.e. =c= and =C= should work as you
 would expect.
-**** Splicing
-The =x= key works as it would in regular =evil=, but if called on top of a closing
-or an opening delimiter, then both that delimiter and its matching counterpart
-get removed.
-
-#+BEGIN_SRC emacs-lisp :results silent
-((foobar))
-#+END_SRC
-
-I.e. if you were to use =x= on any of the parentheses in the above expression, you
-would end up with:
-
-#+BEGIN_SRC emacs-lisp :results silent
-(foobar)
-#+END_SRC
-
-If you can't be bothered moving to the end of a form to splice its contents, you
-can also call =M-s= to execute =sp-splice-sexp=.
-
 *** Movement
 **** By word / symbol
 The regular movement keys, i.e. =w=, =e=, =b=, =ge=, =W=, =E=, =B= and =gE= ignore parentheses
@@ -182,6 +163,33 @@ If the command was when the point was on top of either opening or a closing
 delimiter, the point will perform its action and retain its position at the
 delimiter it started from. If the command was called from within the form then
 point doesn't get moved.
+**** Splicing / Splitting
+I like to think of s-expressions as forming a layer of levels that define the
+AST of the code they represent, kind of like this picture of rice fields in
+China:
+
+![rice-field](http://data.chinahighlights.com/image/travelguide/china-hiking/longji-terraced-field.gif)
+
+In this analogy, /splicing/ is the operation of taking a layer and leveling it
+down one step. In =evil-cleverparens= this can be done in two ways: If you are in
+the middle of the rice field, then pressing =M-s= will call =sp-splice-sexp=, or if
+you are at the edges (i.e. at the parentheses) then calling =x= will do the same
+thing. =x= works otherwise just as it would in regular =evil=. So for example
+pressing =x= while on any of the parentheses in the below expression will do the
+following:
+
+#+BEGIN_SRC emacs-lisp :results silent
+((foobar))
+#+END_SRC
+
+->
+
+#+BEGIN_SRC emacs-lisp :results silent
+(foobar)
+#+END_SRC
+
+To continue this analogy, /splitting/ is like digging a ditch to separate two
+fields, and it's bound to =M-x=.
 **** Dragging / Transposing
 =evil-cleverparens= incorporates the [[https://github.com/rejeep/drag-stuff.el][drag-stuff.el]] mode via =M-j= and =M-k=. If the
 two lines they are acting on are both clear of obstructions, then
@@ -245,8 +253,6 @@ with =sp-transpose-sexp= bound to =M-t=.
 =evil-cleverparens= and its text objects work well with [[https://github.com/timcharper/evil-surround][evil-surround]].
 **** Raising
 =sp-raise-sexp= is bound to =M-r=.
-**** Splitting
-=sp-split-sexp= is bound to =M-S=.
 **** Quick insert
 The following keys can be used to quickly move and enter the =insert-state=
 in a position relative to the location of point inside a form:

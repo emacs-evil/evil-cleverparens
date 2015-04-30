@@ -1443,7 +1443,7 @@ swallowed by the comment."
     ("M-j" . evil-cp-drag-down)
     ("M-J" . sp-join-sexp)
     ("M-s" . sp-splice-sexp)
-    ("M-S" . sp-split-sexp)
+    ("M-x" . sp-split-sexp)
     ("M-R" . evil-cp-raise-form)
     ("M-r" . sp-raise-sexp)
     ("M-a" . evil-cp-insert-at-end-of-form)
@@ -1598,8 +1598,5 @@ for an advanced modal structural editing experience."
           (run-hooks 'evil-cleverparens-enabled-hook))
       (run-hooks 'evil-cleverparens-disabled-hook))))
 
-;; Text objects
-
 (provide 'evil-cleverparens)
-
 ;;; evil-parens.el ends here
