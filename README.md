@@ -30,6 +30,11 @@ former snippet with:
 (add-hook '<your-lispy-mode> #'evil-cleverparens-mode)
 ```
 
+`evil-cleverparens` doesn't enable `smartparens` or `paredit` by default. The
+only keys modified by `evil-cleverparens` are in the `normal-state` so if you
+want additional bindings in `insert-state`, then it's recommended that you use
+either of those modes.
+
 ## Features
 
 ### Editing
@@ -83,8 +88,11 @@ kill-ring, whereas the ignoring behavior will store just `foo` instead.
 1.  `dW`
 
     `dW` follows the logic outlined above, and respects the ignoring / balancing
-    behavior as mentioned. Personally I think it's easier to use `dio` and `dao` to
-    delete by *symbol* instead of WORD.
+    behavior as mentioned. `evil-cleverparens` doesn't change the region of the
+    `big-WORD` text object, but only makes sure that issuing such a command
+    won't delete any delimiters that would leave your document
+    unbalanced. Therefore my suggestion is to use `dio` and `dao` to delete by
+    symbol instead.
 
 2.  `dd`
 
@@ -178,11 +186,6 @@ but not the comment delimiters.
 #### *Defun* bound to `d`
 
 Selects the top-level s-expression.
-
-#### *Symbol* bound to `o`
-
-This is actually part of regular `evil`, but I didn't know about it before diving
-into this project. I now use `dio` to delete a symbol instead of `diW`.
 
 ### Extra
 
