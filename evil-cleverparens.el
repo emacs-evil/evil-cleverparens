@@ -3,24 +3,24 @@
 ;; Copyright (C) 2015 Olli Piepponen
 ;;
 ;; Author: Olli Piepponen <opieppo@gmail.com>
-;; Mantainer: Olli Piepponen <opieppo@gmail.com>
-;; Keywords: smartparens, parentheses, evil
+;; URL: https://github.com/luxbock/evil-cleverparens
+;; Keywords: cleverparens, parentheses, evil, paredit, smartparens
+;; Version: 0.1.0
+;; Package-Requires: ((evil "1.0") (paredit "1") (paxedit "1.1.4") (drag-stuff "0.1.0") (smartparens "1.6.1"))
 ;;
 ;; This file is NOT part of GNU Emacs.
 ;;
 ;; This file is free software (MIT License)
 
-;; Version: 0.1.0
+;;; Commentary:
 
-;; URL: https://github.com/luxbock/evil-cleverparens
-
-;; Package-Requires: ((evil "0.0.0")
-;;                    (paredit "1")
-;;                    (paxedit "1.1.4")
-;;                    (drag-stuff "0.1.0")
-;;                    (smartparens "1.6.1"))
+;; Use Vim/evil like modal editing with lisp without screwing up the structure
+;; of your code. Tries to offer useful alternatives for behavior which would
+;; otherwise be destructive.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; Code:
 
 (require 'dash)
 (require 'evil)
@@ -310,7 +310,7 @@ balanced parentheses."
     (error "Not inside a sexp.")))
 
 ;;; Evil Operators ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-'
+
 (defun evil-cp--splice-form ()
   "Evil friendly version of splice that takes care of the
 location of point, which also works for strings. Unlike
@@ -1533,4 +1533,4 @@ for an advanced modal structural editing experience."
       (run-hooks 'evil-cleverparens-disabled-hook))))
 
 (provide 'evil-cleverparens)
-;;; evil-parens.el ends here
+;;; evil-cleverparens.el ends here
