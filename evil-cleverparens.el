@@ -1029,7 +1029,7 @@ forward-barf."
 (defun evil-cp--slurp-sexp ()
   (save-excursion
     (sp-up-sexp)
-    (when (not (looking-at-p "[:space:]"))
+    (when (not (looking-at-p "[[:space:]]"))
       (insert " ")))
   (paredit-forward-slurp-sexp))
 
