@@ -20,8 +20,6 @@
 ;;                    (drag-stuff "0.1.0")
 ;;                    (smartparens "1.6.1"))
 
-;; TODO: Remove the commented out code
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (require 'dash)
@@ -1414,7 +1412,6 @@ swallowed by the comment."
     ("B"  . evil-backward-word-begin)
     ("gE" . evil-backward-word-end)))
 
-;; TODO: Create evil-cp- versions of up-sexp commands
 (defvar evil-cp-regular-bindings
   '(("L"   . evil-cp-forward-sexp)
     ("H"   . evil-cp-backward-sexp)
@@ -1462,48 +1459,6 @@ swallowed by the comment."
   evil-cleverparens via a modifier key (using the meta-key by
   default). Only enabled in evil's normal mode.")
 
-;; (defvar evil-cp-paredit-bindings
-;;   '(("C-M-f"       . paredit-forward)
-;;     ("C-M-b"       . paredit-backward)
-;;     ("C-M-u"       . paredit-backward-up)
-;;     ("C-M-d"       . paredit-forward-down)
-;;     ("C-M-p"       . paredit-backward-down)
-;;     ("C-M-n"       . paredit-forward-up)
-;;     ("M-s"         . paredit-splice-sexp)
-;;     ("M-S"         . paredit-split-sexp)
-;;     ("M-<up>"      . paredit-splice-sexp-killing-backward)
-;;     ("M-<down>"    . paredit-splice-sexp-killing-forward)
-;;     ("M-r"         . paredit-raise-sexp)
-;;     ("C-)"         . paredit-forward-slurp-sexp)
-;;     ("C-<right>"   . paredit-forward-slurp-sexp)
-;;     ("C-}"         . paredit-forward-barf-sexp)
-;;     ("C-<left>"    . paredit-forward-barf-sexp)
-;;     ("C-("         . paredit-backward-slurp-sexp)
-;;     ("C-M-<left>"  . paredit-backward-slurp-sexp)
-;;     ("C-{"         . paredit-backward-barf-sexp)
-;;     ("C-M-<right>" . paredit-backward-barf-sexp)
-;;     ("("           . paredit-open-round)
-;;     (")"           . paredit-close-round)
-;;     ("["           . paredit-open-bracket)
-;;     ("]"           . paredit-close-bracket)
-;;     ("{"           . paredit-open-curly)
-;;     ("}"           . paredit-close-curly)
-;;     (";"           . paredit-semicolon))
-;;   "Alist containing the default paredit bindings to corresponding
-;; smartparens functions.")
-
-;; (defvar evil-cp-paredit-insert-bindings
-;;   '(
-;;     ;; ("("  . paredit-open-round)
-;;     (")"  . paredit-close-round)
-;;     ("["  . paredit-open-bracket)
-;;     ("]"  . paredit-close-bracket)
-;;     ("{"  . paredit-open-curly)
-;;     ("}"  . paredit-close-curly)
-;;     (";"  . paredit-semicolon))
-;;   "Alist containing keys for following paredit's insert commands
-;;   behavior.")
-
 (defun evil-cp--populate-mode-bindings-for-state (bindings state)
   (--each bindings
     (evil-define-key state evil-cleverparens-mode-map
@@ -1525,34 +1480,6 @@ swallowed by the comment."
   "Loads up additional key bindings prefixed with the Meta key."
   (interactive)
   (evil-cp--populate-mode-bindings-for-state evil-cp-additional-bindings 'normal))
-
-;;;###autoload
-;; (defun evil-cp-use-paredit-like-bindings ()
-;;   "Loads up paredit like bindings for insert mode. These are a
-;; superset of `evil-cp-use-paredit-like-insert-bindings'."
-;;   (interactive)
-;;   (evil-cp--populate-mode-bindings-for-state sp-paredit-bindings 'insert))
-
-;;;###autoload
-;; (defun evil-cp-use-paredit-like-insert-bindings ()
-;;   "Loads up paredit like behavior in insert mode for inserting
-;; parentheses and comments. These keys are a subset of what
-;; `evil-cp-use-paredit-like-bindings'."
-;;   (interactive)
-;;   (evil-cp--populate-mode-bindings-for-state evil-cp-paredit-insert-bindings 'insert))
-
-;;;###autoload
-;; (defun evil-cp-use-smartparens-like-bindings ()
-;;   "Loads up the default smartparens bindings in insert mode."
-;;   (interactive)
-;;   (evil-cp--populate-mode-bindings-for-state sp-smartparens-bindings 'insert))
-
-;; (defun evil-cp--enable-insert-bindings ()
-;;   (cond
-;;    ((eq sp-base-key-bindings 'sp)
-;;     (evil-cp-use-smartparens-like-bindings))
-;;    ((eq sp-base-key-bindings 'paredit)
-;;     (evil-cp-use-paredit-like-bindings))))
 
 (defun evil-cp--enable-text-objects ()
   "Enables text-objects defined in evil-cleverparens."
