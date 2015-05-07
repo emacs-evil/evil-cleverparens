@@ -493,18 +493,6 @@ list of (fn args) to pass to `apply''"
         (apply f args)))
     (point)))
 
-(defun evil-cp--point-after (&rest actions)
-  "Return POINT after performing ACTIONS.
-
-An action is either the symbol of a function or a two element
-list of (fn args) to pass to `apply''"
-  (save-excursion
-    (dolist (fn-and-args actions)
-      (let ((f (if (listp fn-and-args) (car fn-and-args) fn-and-args))
-            (args (if (listp fn-and-args) (cdr fn-and-args) nil)))
-        (apply f args)))
-    (point)))
-
 (defun evil-cp--new-beginning (beg end &optional shrink)
   "Return a new value for BEG if POINT is inside an empty sexp.
 
