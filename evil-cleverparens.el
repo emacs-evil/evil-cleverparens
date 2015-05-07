@@ -1153,7 +1153,7 @@ If the point is inside a nested sexp then
             (evil-cp-transpose-sexp-backward))
            ;; teleport line to the end of the top level sexp
            (t
-            (let ((pos (column-number-at-pos (point)))
+            (let ((pos (current-column))
                   (text (buffer-substring beg end)))
               (delete-region beg (1+ end))
               (sp-backward-sexp)
@@ -1200,7 +1200,7 @@ If the point is inside a nested sexp then
             (evil-cp-transpose-sexp-forward))
            ;; teleport line to the end of the top level sexp
            (t
-            (let ((pos (column-number-at-pos (point)))
+            (let ((pos (current-column))
                   (text (buffer-substring beg end)))
               (delete-region beg (1+ end))
               (sp-forward-sexp)
