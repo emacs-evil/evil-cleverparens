@@ -308,7 +308,7 @@ following modes as well:
 
 Very rich in features but doesn't attempt to conform to the `vim/evil` layout of bindings.
 
-#### [roman/evil-paredit](https://github.com/roman/evil-paredit)
+### [roman/evil-paredit](https://github.com/roman/evil-paredit)
 
 Prevents the user from messing up their parentheses by erroring
 out. `evil-cleverparens` originally started out as a fork of this project, with
