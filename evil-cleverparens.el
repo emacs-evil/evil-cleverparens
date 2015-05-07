@@ -757,7 +757,7 @@ kill-ring is determined by the
          ;; Not sure what this should do in visual-state
          (let ((safep (sp-region-ok-p beg end)))
            (if (not safep)
-               ((evil-cp--fail))
+               (evil-cp--fail)
              (evil-delete-line beg end type register yank-handler))))
 
         ((paredit-in-string-p)
