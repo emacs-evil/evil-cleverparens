@@ -6,34 +6,23 @@ be destructive.
 
 ## Installation
 
-The recommended way to install is through `elpa`, though in its current state, the
-package doesn't actually exist there yet, which means that you are here too
-early. I will get it on `elpa` as soon as I have used it myself long enough to
-make sure it works for the most part.
+The recommended way to install is via `elpa` from
+[MELPA](http://melpa.org/). The following should work:
 
 `M-x` `package-install evil-cleverparens`
 
-To enable `evil-cleverparens` with `smartparens`:
-
-```emacs-lisp
-(add-hook 'smartparens-enabled-hook #'evil-cleverparens-mode)
-```
-
-into your `.emacs` or `init.el` file, which will turn on `evil-cleverparens` when
-`smartparens` is activated.
+`evil-cleverparens` uses functions from both `smartparens` and
+`paredit`. Neither one is required by default, but using one of them is highly
+recommended, as `evil-cleverparens` doesn't provide anything for the
+`insert-state`. If you are an user of `smartparens`, `smartparens-strict-mode`
+is also recommended.
 
 If you use `smartparens` with non-lispy modes you probably want to only activate
-`evil-cleverparens` with certain major modes. To do this, you can replace the
-former snippet with:
+`evil-cleverparens` with certain major modes.
 
 ```emacs-lisp
 (add-hook '<your-lispy-mode> #'evil-cleverparens-mode)
 ```
-
-`evil-cleverparens` doesn't enable `smartparens` or `paredit` by default. The
-only keys modified by `evil-cleverparens` are in the `normal-state` so if you
-want additional bindings in `insert-state`, then it's recommended that you use
-either of those modes.
 
 ## Features
 
