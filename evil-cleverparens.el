@@ -421,7 +421,7 @@ buffer if `BACKP' is nil and at the beginning if it is true."
                        (setq closing (cons (char-after (point)) closing)))))
                    t)
                ((scan-error) nil))))
-    (when backp (beginning-of-buffer))
+    (when backp (goto-char (point-min)))
     (apply #'insert (nreverse closing))
     ;; see above
     (when backp (delete-char 1))))
