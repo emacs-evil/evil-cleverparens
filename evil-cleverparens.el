@@ -1389,7 +1389,11 @@ swallowed by the comment."
 ;;; Keys ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defvar evil-cp-regular-movement-keys
-  '(("W"  . evil-cp-forward-symbol-begin)
+  '(("w"  . evil-forward-word-begin)
+    ("e"  . evil-forward-word-end)
+    ("b"  . evil-backward-word-begin)
+    ("ge" . evil-backward-word-end)
+    ("W"  . evil-cp-forward-symbol-begin)
     ("E"  . evil-cp-forward-symbol-end)
     ("B"  . evil-cp-backward-symbol-begin)
     ("gE" . evil-cp-backward-symbol-end)))
