@@ -70,7 +70,8 @@ question. Ignores parentheses inside strings."
   (save-excursion
     (when pos (goto-char pos))
     (and (sp--looking-at-p (sp--get-opening-regexp))
-         (not (evil-cp--inside-string-p)))))
+         (not (evil-cp--inside-string-p))
+         (not (looking-at-p "`")))))
 
 (defun evil-cp--looking-at-closing-p (&optional pos)
   "Predicate that returns true if point is looking at an closing
@@ -79,7 +80,10 @@ question. Ignores parentheses inside strings."
   (save-excursion
     (when pos (goto-char pos))
     (and (sp--looking-at-p (sp--get-closing-regexp))
-         (not (evil-cp--inside-string-p)))))
+         (not (evil-cp--inside-string-p))
+         ;; this is not very elegant but gets around the issue of tripping on
+         ;; quoted lists in emacs-lisp-mode.
+         (not (looking-at-p "'")))))
 
 (defun evil-cp--looking-at-paren-p (&optional pos)
   "Predicate that returns true if point is looking at a
