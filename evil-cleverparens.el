@@ -708,7 +708,6 @@ kill-ring is determined by the
 `evil-cleverparens-complete-parens-in-yanked-region' variable."
   :move-point nil
   (interactive "<R><x><y>")
-  (message "%s" type)
   (let ((safep (sp-region-ok-p beg end)))
     (evil-cp-yank beg end type register yank-handler)
     (cond ((or (= beg end)
@@ -767,13 +766,24 @@ kill-ring is determined by the
 
         ((save-excursion (paredit-skip-whitespace t (point-at-eol))
                          (or (eolp) (eq (char-after) ?\; )))
-         (save-excursion
-           (when (paredit-in-char-p)
-             (backward-char)))
-         (let ((beg (point))
-               (end (point-at-eol)))
-           (evil-yank-characters (point) (point-at-eol) register)
-           (delete-region beg end)))
+         (when (paredit-in-char-p) (backward-char))
+         ;; `kill-line' inlined from from `simple.el'
+         ;; this works but is not very evilidiomatic
+         (kill-region
+          (point)
+          (progn
+            (when (eobp) (evil-signal-at-eob))
+            (let ((end (save-excursion (end-of-visible-line) (point))))
+              (if (or (save-excursion
+                        ;; If trailing whitespace is visible,
+                        ;; don't treat it as nothing.
+                        (unless show-trailing-whitespace
+                          (skip-chars-forward " \t" end))
+                        (= (point) end))
+                      (and kill-whole-line (bolp)))
+                  (forward-visible-line 1)
+                (goto-char end)))
+            (point))))
 
         (t
          (save-excursion
@@ -820,7 +830,7 @@ kill-ring is determined by the
                      (beginning-of-line)
                      (sp-forward-whitespace t)))
                 (1- end)))
-             (evil-cp--move-point-after-linewise)
+             (evil-cp-first-non-blank-non-opening)
              (indent-according-to-mode)
              (evil-insert 1))
 
@@ -829,8 +839,7 @@ kill-ring is determined by the
              (evil-insert 1 nlines))
 
             (t
-             (evil-cp-delete beg end type register yank-handler)
-             (forward-char)
+             (funcall delete-func beg end type register yank-handler)
              (evil-insert 1))))))
 
 (evil-define-operator evil-cp-change-line (beg end type register yank-handler)
