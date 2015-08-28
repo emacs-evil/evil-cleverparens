@@ -18,6 +18,8 @@
 ;; of your code. Tries to offer useful alternatives for behavior which would
 ;; otherwise be destructive.
 
+;; TODO: text-objects break when they contain strings with delimiters
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; Code:
@@ -1235,7 +1237,11 @@ insert mode at the beginning of the form. Using an arbitrarily
 large `COUNT' is guaranteened to take the point to the beginning
 of the top level form."
   (interactive "<c>")
-  (let ((defun-beginning (save-excursion (beginning-of-defun) (point)))
+  ;; TODO: fails if the sexp contains a string with an open paren
+  (let ((defun-beginning
+          (save-excursion
+            (beginning-of-defun)
+            (point)))
         target)
     (when (not (sp-backward-up-sexp count))
       (goto-char defun-beginning))
