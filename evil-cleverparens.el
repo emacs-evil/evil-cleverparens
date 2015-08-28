@@ -28,6 +28,7 @@
 (require 'paxedit)
 (require 'drag-stuff)
 (require 'smartparens)
+(require 'subr-x)
 
 ;;; Overriding ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
