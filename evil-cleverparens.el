@@ -848,14 +848,14 @@ kill-ring is determined by the
   (interactive "<R><x><y>")
   (evil-cp-change beg end type register yank-handler #'evil-cp-delete-line))
 
-(evil-define-operator evil-change-whole-line (beg end type register yank-handler)
+(evil-define-operator evil-cp-change-whole-line (beg end type register yank-handler)
   "Change whole line while respecting parentheses."
-  ;; :motion evil-line
+  :motion evil-line
   (interactive "<R><x>")
-  (evil-first-non-blank)
-  (while (evil-cp--looking-at-any-opening-p)
-    (evil-forward-char 1 nil t))
-  (evil-cp-change-line beg (1- end) type register yank-handler #'evil-cp-delete-line))
+  (if (sp-region-ok-p beg end)
+      (evil-change beg end type register yank-handler)
+    (evil-cp-first-non-blank-non-opening)
+    (evil-cp-change beg end type register yank-handler #'evil-cp-delete-line)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
