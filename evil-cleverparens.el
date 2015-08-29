@@ -868,8 +868,6 @@ kill-ring is determined by the
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; HMM: is there any point to these wrappers now?
-
 (evil-define-motion evil-cp-forward-sexp (count)
   "Motion for moving forward by a sexp via `sp-forward-sexp'."
   :type exclusive
@@ -898,36 +896,84 @@ level sexp)."
     (end-of-defun count)
     (backward-char 2)))
 
+(defun evil-cp--paren-navigation-helper (move-dir paren-side)
+  (let ((move-fn (case move-dir
+                   (:next 'forward-char)
+                   (:previous 'backward-char)))
+        (the-end (case move-dir
+                   (:next 'point-max)
+                   (:previous 'point-min)))
+        (paren-p (case paren-side
+                   (:opening 'evil-cp--looking-at-any-opening-p)
+                   (:closing 'evil-cp--looking-at-any-closing-p)))
+        (pt-orig (point))
+        done-p)
+    (when (funcall paren-p) (funcall move-fn))
+    (while (not done-p)
+      (cond
+       ((= (point) (funcall the-end))
+        (setq done-p t)
+        (goto-char pt-orig))
+       ((funcall paren-p)
+        (setq done-p t))
+       (t
+        (funcall move-fn))))))
+
 (evil-define-motion evil-cp-next-opening (count)
   "Motion for moving to the next open parentheses."
   :move-point nil
   :type inclusive
   (let ((count (or count 1)))
-    (when (evil-cp--looking-at-opening-p) (forward-char))
-    (re-search-forward (sp--get-opening-regexp) nil t count)
-    (backward-char)))
+    (dotimes (i count)
+      (evil-cp--paren-navigation-helper :next :opening))))
 
 (evil-define-motion evil-cp-previous-opening (count)
   "Motion for moving to the previous open parentheses."
+  :move-point nil
   :type inclusive
   (let ((count (or count 1)))
-    (re-search-backward (sp--get-opening-regexp) nil t count)))
+    (dotimes (i count)
+      (evil-cp--paren-navigation-helper :previous :opening))))
 
 (evil-define-motion evil-cp-next-closing (count)
   "Motion for moving to the next closing parentheses."
   :move-point nil
   :type inclusive
   (let ((count (or count 1)))
-    (when (evil-cp--looking-at-closing-p) (forward-char))
-    (re-search-forward (sp--get-closing-regexp) nil t count)
-    (backward-char)))
+    (dotimes (i count)
+      (evil-cp--paren-navigation-helper :next :closing))))
 
 (evil-define-motion evil-cp-previous-closing (count)
   "Motion for moving to the previous closing parentheses."
   :move-point nil
   :type inclusive
   (let ((count (or count 1)))
-    (re-search-backward (sp--get-closing-regexp) nil t count)))
+    (dotimes (i count)
+      (evil-cp--paren-navigation-helper :previous :closing))))
+
+(evil-define-motion evil-cp-backward-up-sexp (count)
+  "Motion for moving backward up to the previous level of
+parentheses. Basically just wraps `sp-backward-up-sexp' as an
+evil-motion."
+  :move-point nil
+  :type inclusive
+  (let ((count (or count 1)))
+    ;; for some reason calling `sp-backward-up-sexp' with a large `count'
+    ;; doesn't move the point at all
+    (dotimes (i count)
+      (sp-backward-up-sexp))))
+
+(evil-define-motion evil-cp-up-sexp (count)
+  "Motion for moving up to the previous level of parenteheses.
+The same as `sp-up-sexp', but leaves the point on top of the
+closing paren."
+  :move-point nil
+  :type inclusive
+  (let ((count (or count 1)))
+    (when (evil-cp--looking-at-closing-p) (forward-char))
+    (dotimes (i count)
+      (sp-up-sexp))
+    (backward-char)))
 
 (evil-define-motion evil-cp-forward-symbol-begin (count)
   "Copy of `evil-forward-word-begin' using 'evil-symbol for the
@@ -1455,6 +1501,9 @@ swallowed by the comment."
     ("_"   . evil-cp-first-non-blank-non-opening)
     ("M-T" . evil-cp-toggle-balanced-yank)
     ("M-z" . evil-cp-override))
+    ("("   . evil-cp-backward-up-sexp)
+    (")"   . evil-cp-up-sexp)))
+
   "Alist containing the regular evil-cleverparens bindings that
   override evil's bindings in normal mode.")
 
