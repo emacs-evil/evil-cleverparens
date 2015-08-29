@@ -1078,13 +1078,6 @@ forward-barf."
 
    (t (sp-forward-barf-sexp n))))
 
-(defun evil-cp--slurp-sexp ()
-  (save-excursion
-    (sp-up-sexp)
-    (when (not (looking-at-p "[[:space:]]"))
-      (insert " ")))
-  (paredit-forward-slurp-sexp))
-
 (defun evil-cp-> (n)
   "Slurping/barfing operation that acts differently based on the points
 location in the form.
@@ -1127,16 +1120,12 @@ parentheses in your buffer are balanced overall."
    ((evil-cp--looking-at-any-closing-p)
     (condition-case nil
         (dotimes (_ n)
-          ;; paredit's version doesn't leave an empty space at the beginning of
-          ;; an empty sexp
-          (evil-cp--slurp-sexp)
-          (sp-forward-sexp)
-          (when (not (evil-cp--looking-at-any-closing-p))
-            (sp-forward-whitespace)
-            (sp-forward-sexp)))
+          (sp-forward-slurp-sexp)
+          (evil-cp-up-sexp))
       (error nil)))
 
-   (t (evil-cp--slurp-sexp))))
+   (t
+    (dotimes (_ n) (sp-forward-slurp-sexp)))))
 
 (defun evil-cp--line-safe-p (&optional move-fn)
   "Predicate that checks if the line as defined by `MOVE-FN' is
