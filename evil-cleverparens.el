@@ -1400,8 +1400,8 @@ This is a feature copied from `evil-smartparens'."
   unbalanced expressions. If this value is non-nil, a yanked
   region containing missing parentheses will include the missing
   parens appended to the end."
- :group 'evil-cleverparens
- :type 'boolean)
+  :group 'evil-cleverparens
+  :type 'boolean)
 
 (defcustom evil-cleverparens-swap-move-by-word-and-symbol nil
   "If true, the keys w, e, b, and ge will be bound to the
@@ -1465,7 +1465,7 @@ swallowed by the comment."
     ("B"  . evil-backward-word-begin)
     ("gE" . evil-backward-word-end)))
 
-(defvar evil-cp-regular-bindings
+(defvar evil-cp-additional-movement-keys
   '(("L"   . evil-cp-forward-sexp)
     ("H"   . evil-cp-backward-sexp)
     ("M-l" . evil-cp-end-of-defun)
@@ -1474,25 +1474,25 @@ swallowed by the comment."
     ("]"   . evil-cp-next-closing)
     ("{"   . evil-cp-next-opening)
     ("}"   . evil-cp-previous-closing)
-    ("("   . sp-backward-up-sexp)
-    (")"   . sp-up-sexp)
-    ("d"   . evil-cp-delete)
-    ("c"   . evil-cp-change)
-    ("y"   . evil-cp-yank)
-    ("D"   . evil-cp-delete-line)
-    ("C"   . evil-cp-change-line)
-    ("s"   . evil-cp-substitute)
-    ("S"   . evil-cp-change-whole-line)
-    ("Y"   . evil-cp-yank-line)
-    ("x"   . evil-cp-delete-char-or-splice)
-    (">"   . evil-cp->)
-    ("<"   . evil-cp-<)
-    ("_"   . evil-cp-first-non-blank-non-opening)
-    ("M-T" . evil-cp-toggle-balanced-yank)
-    ("M-z" . evil-cp-override))
     ("("   . evil-cp-backward-up-sexp)
     (")"   . evil-cp-up-sexp)))
 
+(defvar evil-cp-regular-bindings
+  (append evil-cp-additional-movement-keys
+          '(("d"   . evil-cp-delete)
+            ("c"   . evil-cp-change)
+            ("y"   . evil-cp-yank)
+            ("D"   . evil-cp-delete-line)
+            ("C"   . evil-cp-change-line)
+            ("s"   . evil-cp-substitute)
+            ("S"   . evil-cp-change-whole-line)
+            ("Y"   . evil-cp-yank-line)
+            ("x"   . evil-cp-delete-char-or-splice)
+            (">"   . evil-cp->)
+            ("<"   . evil-cp-<)
+            ("_"   . evil-cp-first-non-blank-non-opening)
+            ("M-T" . evil-cp-toggle-balanced-yank)
+            ("M-z" . evil-cp-override)))
   "Alist containing the regular evil-cleverparens bindings that
   override evil's bindings in normal mode.")
 
@@ -1531,6 +1531,11 @@ swallowed by the comment."
   (interactive)
   (evil-cp--populate-mode-bindings-for-state evil-cp-regular-bindings 'normal))
 
+(defun evil-cp-use-additional-movement-keys-in-visual-and-motion-states ()
+  (interactive)
+  (evil-cp--populate-mode-bindings-for-state evil-cp-additional-movement-keys 'visual)
+  (evil-cp--populate-mode-bindings-for-state evil-cp-additional-movement-keys 'motion))
+
 ;;;###autoload
 (defun evil-cp-use-additional-bindings ()
   "Loads up additional key bindings prefixed with the Meta key."
@@ -1567,14 +1572,10 @@ for an advanced modal structural editing experience."
     (evil-change-state prev-state)
     (if evil-cleverparens-mode
         (progn
-          ;; (unless smartparens-mode (smartparens-mode t))
-          ;; (unless smartparens-strict-mode (smartparens-strict-mode t))
           (evil-cp--enable-movement-keys)
           (evil-cp-use-regular-bindings)
+          (evil-cp-use-additional-movement-keys-in-visual-and-motion-states)
           (evil-cp--enable-text-objects)
-          ;; (evil-cp--enable-insert-bindings)
-          ;; (when evil-cleverparens-paredit-like-insert-behavior
-          ;;   (evil-cp-use-paredit-like-insert-bindings))
           (when evil-cleverparens-use-additional-bindings
             (evil-cp-use-additional-bindings))
           (if (bound-and-true-p evil-surround-mode)
