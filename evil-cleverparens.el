@@ -1358,6 +1358,54 @@ the current form."
       (backward-char)
       (sp-raise-sexp))))
 
+
+
+(defun evil-cp--wrap-helper (dir pair count)
+  (case dir
+    (:next
+     (sp-select-next-thing count)
+     (sp-wrap-with-pair pair))
+    (:previous
+     (save-excursion
+       (sp-select-previous-thing count)
+       (sp-wrap-with-pair pair))))
+  (when evil-cleverparens-insert-after-next-round
+    (when (and (string-equal pair "(") (eq dir :next))
+      (insert " ")
+      (backward-char)
+      (evil-insert-state))))
+
+(evil-define-command evil-cp-wrap-next-round (count)
+  (interactive "<c>")
+  (setq count (or count 1))
+  (evil-cp--wrap-helper :next "(" count))
+
+(evil-define-command evil-cp-wrap-previous-round (count)
+  (interactive "<c>")
+  (setq count (or count 1))
+  (evil-cp--wrap-helper :previous "(" count))
+
+(evil-define-command evil-cp-wrap-next-square (count)
+  (interactive "<c>")
+  (setq count (or count 1))
+  (evil-cp--wrap-helper :next "[" count))
+
+(evil-define-command evil-cp-wrap-next-curly (count)
+  (interactive "<c>")
+  (setq count (or count 1))
+  (evil-cp--wrap-helper :previous "[" count))
+
+(evil-define-command evil-cp-wrap-next-curly (count)
+  (interactive "<c>")
+  (setq count (or count 1))
+  (evil-cp--wrap-helper :next "{" count))
+
+(evil-define-command evil-cp-wrap-previous-curly (count)
+  (interactive "<c>")
+  (setq count (or count 1))
+  (evil-cp--wrap-helper :previous "{" count))
+
+
 ;;; Variables ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun evil-cp-toggle-balanced-yank (&optional forcep)
@@ -1419,6 +1467,13 @@ automatically insert a newline to prevent the closing from being
 swallowed by the comment."
   :group 'evil-cleverparens
   :type 'boolean)
+
+(defcustom evil-cleverparens-insert-after-next-round t
+  "Determines whether or not to enter insert-state after calling
+  `evil-cp-cp-wrap-next-round'. The assumption is that the main
+  use case for this command is to wrap the next thing(s) as
+  arguments to a function call, after which you'll insert the
+  name of the function.")
 
 (defcustom evil-cleverparens-use-special-bindings t
   "If true, enable special bindings defined in `evil-cp-special-bindings-alist'"
@@ -1510,7 +1565,13 @@ swallowed by the comment."
     ("M-c" . evil-cp-copy-paste-form)
     ("M-q" . sp-indent-defun)
     ("M-o" . evil-cp-open-below-form)
-    ("M-O" . evil-cp-open-above-form))
+    ("M-O" . evil-cp-open-above-form)
+    ("M-(" . evil-cp-wrap-next-round)
+    ("M-)" . evil-cp-wrap-previous-round)
+    ("M-[" . evil-cp-wrap-next-square)
+    ("M-]" . evil-cp-wrap-previous-square)
+    ("M-{" . evil-cp-wrap-next-curly)
+    ("M-}" . evil-cp-wrap-previous-curly))
   "Alist containing additional functionality for
   evil-cleverparens via a modifier key (using the meta-key by
   default). Only enabled in evil's normal mode.")
