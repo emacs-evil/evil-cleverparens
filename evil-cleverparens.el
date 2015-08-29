@@ -63,15 +63,24 @@ This is a feature copied from `evil-smartparens'."
   (and (looking-at (sp--get-stringlike-regexp))
        (not (paredit-in-string-escape-p))))
 
+(defvar evil-cp--pair-list
+  '(("(" . ")") ("[" . "]") ("{" . "}") ("\"" . "\""))
+  "List of parentheses pairs recognized by evil-cleverparens.")
+
+(defun evil-cp--get-opening-regexp ()
+  (sp--strict-regexp-opt (--map (car it) evil-cp--pair-list)))
+
+(defun evil-cp--get-closing-regexp ()
+  (sp--strict-regexp-opt (--map (cdr it) evil-cp--pair-list)))
+
 (defun evil-cp--looking-at-opening-p (&optional pos)
   "Predicate that returns true if point is looking at an opening
 parentheses as defined by smartparens for the major mode in
 question. Ignores parentheses inside strings."
   (save-excursion
     (when pos (goto-char pos))
-    (and (sp--looking-at-p (sp--get-opening-regexp))
-         (not (evil-cp--inside-string-p))
-         (not (looking-at-p "`")))))
+    (and (sp--looking-at-p (evil-cp--get-opening-regexp))
+         (not (evil-cp--inside-string-p)))))
 
 (defun evil-cp--looking-at-closing-p (&optional pos)
   "Predicate that returns true if point is looking at an closing
@@ -79,11 +88,8 @@ paren as defined by smartparens for the major mode in
 question. Ignores parentheses inside strings."
   (save-excursion
     (when pos (goto-char pos))
-    (and (sp--looking-at-p (sp--get-closing-regexp))
-         (not (evil-cp--inside-string-p))
-         ;; this is not very elegant but gets around the issue of tripping on
-         ;; quoted lists in emacs-lisp-mode.
-         (not (looking-at-p "'")))))
+    (and (sp--looking-at-p (evil-cp--get-closing-regexp))
+         (not (evil-cp--inside-string-p)))))
 
 (defun evil-cp--looking-at-paren-p (&optional pos)
   "Predicate that returns true if point is looking at a
@@ -662,9 +668,6 @@ respecting parentheses."
                                        (point)))
                                 register)))))))
 
-;; TODO: something really weird going on with `sp-point-in-comment' it behaves
-;; differently inside my loop compared to when I call it via M-:.  I tried
-;; fixing it by calling `syntax-ppss-flush-cache' but it didn't work
 (defun evil-cp--delete-characters (beg end)
   "Deletes everything except unbalanced parentheses / string
 delimiters in the region defined by `BEG' and `END'."
@@ -890,8 +893,7 @@ level sexp)."
   "Motion for moving to the end of a defun (i.e. a top level sexp)."
   :type inclusive
   (let ((count (or count 1)))
-    (if (save-excursion
-          (evil-cp--looking-at-closing-p))
+    (if (evil-cp--looking-at-closing-p)
         (forward-char 2))
     (end-of-defun count)
     (backward-char 2)))
