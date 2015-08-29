@@ -1562,7 +1562,7 @@ swallowed by the comment."
     ("M-r" . sp-raise-sexp)
     ("M-a" . evil-cp-insert-at-end-of-form)
     ("M-i" . evil-cp-insert-at-beginning-of-form)
-    ("M-c" . evil-cp-copy-paste-form)
+    ("M-w" . evil-cp-copy-paste-form)
     ("M-q" . sp-indent-defun)
     ("M-o" . evil-cp-open-below-form)
     ("M-O" . evil-cp-open-above-form)
