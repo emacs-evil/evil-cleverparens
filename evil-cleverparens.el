@@ -1348,6 +1348,40 @@ the current form."
     (indent-according-to-mode)
     (evil-insert 1)))
 
+(defun evil-cp--kill-sexp-range (count)
+  (let ((pt-orig (point))
+        (end     (point-min))
+        (n       (or count 1))
+        (ok      t))
+    (save-excursion
+      (while (and (> n 0) ok)
+        (setq ok (sp-forward-sexp 1))
+        (sp-get ok (when (> :end end) (setq end :end)))
+        (setq n (1- n))))
+    (when ok (cons pt-orig end))))
+
+(evil-define-command evil-cp-yank-sexp (count &optional register yank-handler)
+  (interactive "<c><x><y>")
+  (-when-let (kill-range (evil-cp--kill-sexp-range count))
+    (let* ((evil-was-yanked-without-register
+            (and evil-was-yanked-without-register
+                 (not register)))
+           (beg (car kill-range))
+           (end (cdr kill-range)))
+      (evil-yank-characters beg end register yank-handler))))
+
+(evil-define-command evil-cp-delete-sexp (count &optional register yank-handler)
+  (interactive "<c><x><y>")
+  (-when-let (kill-range (evil-cp--kill-sexp-range count))
+    (evil-cp-yank-sexp count register yank-handler)
+    (delete-region (car kill-range) (cdr kill-range))))
+
+(evil-define-command evil-cp-change-sexp (count &optional register yank-handler)
+  (interactive "<c><x><y>")
+  (-when-let (kill-range (evil-cp--kill-sexp-range count))
+    (evil-cp-delete-sexp count register yank-handler)
+    (evil-insert-state)))
+
 (defun evil-cp-raise-form ()
   "Raises the form under point."
   (interactive)
@@ -1357,8 +1391,6 @@ the current form."
        (sp-beginning-of-sexp))
       (backward-char)
       (sp-raise-sexp))))
-
-
 
 (defun evil-cp--wrap-helper (dir pair count)
   (case dir
@@ -1563,6 +1595,9 @@ swallowed by the comment."
     ("M-a" . evil-cp-insert-at-end-of-form)
     ("M-i" . evil-cp-insert-at-beginning-of-form)
     ("M-w" . evil-cp-copy-paste-form)
+    ("M-y" . evil-cp-yank-sexp)
+    ("M-d" . evil-cp-delete-sexp)
+    ("M-c" . evil-cp-change-sexp)
     ("M-q" . sp-indent-defun)
     ("M-o" . evil-cp-open-below-form)
     ("M-O" . evil-cp-open-above-form)
