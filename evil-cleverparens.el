@@ -1490,27 +1490,12 @@ This is a feature copied from `evil-smartparens'."
   :group 'evil-cleverparens
   :type 'boolean)
 
-(defcustom evil-cleverparens-paredit-like-insert-behavior t
-  "Determines if insert behavior should follow paredit's
-conventions in matters such as auto-inserting extra spaces when
-typing an opening parentheses at the end of a symbol, or if
-inserting a comment before closing parentheses should
-automatically insert a newline to prevent the closing from being
-swallowed by the comment."
-  :group 'evil-cleverparens
-  :type 'boolean)
-
 (defcustom evil-cleverparens-insert-after-next-round t
   "Determines whether or not to enter insert-state after calling
   `evil-cp-cp-wrap-next-round'. The assumption is that the main
   use case for this command is to wrap the next thing(s) as
   arguments to a function call, after which you'll insert the
   name of the function.")
-
-(defcustom evil-cleverparens-use-special-bindings t
-  "If true, enable special bindings defined in `evil-cp-special-bindings-alist'"
-  :group 'evil-cleverparens
-  :type 'boolean)
 
 (defvar evil-cp--override nil
   "Should the next command skip region checks?")
