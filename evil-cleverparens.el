@@ -1505,6 +1505,12 @@ This is a feature copied from `evil-smartparens'."
   :type 'boolean
   :group 'evil-cleverparens)
 
+(defcustom evil-cleverparens-use-additional-movement-keys t
+  "Should additional movement keys, mostly those related to
+  parentheses navigation, be enabled."
+  :type 'boolean
+  :group 'evil-cleverparens)
+
 (defcustom evil-cleverparens-enabled-hook nil
   "Called after `evil-cleverparens-mode' is turned on."
   :type 'hook
@@ -1550,21 +1556,20 @@ This is a feature copied from `evil-smartparens'."
     (")"   . evil-cp-up-sexp)))
 
 (defvar evil-cp-regular-bindings
-  (append evil-cp-additional-movement-keys
-          '(("d"   . evil-cp-delete)
-            ("c"   . evil-cp-change)
-            ("y"   . evil-cp-yank)
-            ("D"   . evil-cp-delete-line)
-            ("C"   . evil-cp-change-line)
-            ("s"   . evil-cp-substitute)
-            ("S"   . evil-cp-change-whole-line)
-            ("Y"   . evil-cp-yank-line)
-            ("x"   . evil-cp-delete-char-or-splice)
-            (">"   . evil-cp->)
-            ("<"   . evil-cp-<)
-            ("_"   . evil-cp-first-non-blank-non-opening)
-            ("M-T" . evil-cp-toggle-balanced-yank)
-            ("M-z" . evil-cp-override)))
+  '(("d"   . evil-cp-delete)
+    ("c"   . evil-cp-change)
+    ("y"   . evil-cp-yank)
+    ("D"   . evil-cp-delete-line)
+    ("C"   . evil-cp-change-line)
+    ("s"   . evil-cp-substitute)
+    ("S"   . evil-cp-change-whole-line)
+    ("Y"   . evil-cp-yank-line)
+    ("x"   . evil-cp-delete-char-or-splice)
+    (">"   . evil-cp->)
+    ("<"   . evil-cp-<)
+    ("_"   . evil-cp-first-non-blank-non-opening)
+    ("M-T" . evil-cp-toggle-balanced-yank)
+    ("M-z" . evil-cp-override))
   "Alist containing the regular evil-cleverparens bindings that
   override evil's bindings in normal mode.")
 
@@ -1596,32 +1601,58 @@ This is a feature copied from `evil-smartparens'."
   evil-cleverparens via a modifier key (using the meta-key by
   default). Only enabled in evil's normal mode.")
 
-(defun evil-cp--populate-mode-bindings-for-state (bindings state)
+(defun evil-cp--populate-mode-bindings-for-state (bindings state addp)
+  "Helper function that defines `BINDINGS' for the evil-state
+`STATE' when `ADDP' is true. If `ADDP' is false, then the keys in
+`BINDINGS' are set to nil instead, effectively disabling the keys
+in question."
   (--each bindings
     (evil-define-key state evil-cleverparens-mode-map
       (read-kbd-macro (car it))
-      (cdr it))))
+      (if addp (cdr it) nil))))
 
-(defun evil-cp--enable-movement-keys ()
+;;;###autoload
+(defun evil-cp-set-movement-keys ()
+  "Sets the movement keys in
+`evil-cleverparens-regular-movement-keys' or
+`evil-cp-swapped-movement-keys' based on the value of
+`evil-cleverparens-swap-move-by-word-and-symbol'."
+  (interactive)
   (let ((keys (if evil-cleverparens-swap-move-by-word-and-symbol
                   evil-cp-swapped-movement-keys
                 evil-cp-regular-movement-keys)))
-    (evil-cp--populate-mode-bindings-for-state keys 'normal)))
+    (evil-cp--populate-mode-bindings-for-state keys 'normal t)))
 
-(defun evil-cp-use-regular-bindings ()
-  (interactive)
-  (evil-cp--populate-mode-bindings-for-state evil-cp-regular-bindings 'normal))
-
-(defun evil-cp-use-additional-movement-keys-in-visual-and-motion-states ()
-  (interactive)
-  (evil-cp--populate-mode-bindings-for-state evil-cp-additional-movement-keys 'visual)
-  (evil-cp--populate-mode-bindings-for-state evil-cp-additional-movement-keys 'motion))
+(defun evil-cp--enable-regular-bindings ()
+  "Enables the regular evil-cleverparens bindings based on
+`evil-cp-regular-bindings'."
+  (evil-cp--populate-mode-bindings-for-state
+   evil-cp-regular-bindings
+   'normal
+   t))
 
 ;;;###autoload
-(defun evil-cp-use-additional-bindings ()
-  "Loads up additional key bindings prefixed with the Meta key."
+(defun evil-cp-set-additional-movement-keys ()
+  "Sets the movement keys is `evil-cp-additional-movement-keys'
+for normal, visual and operator states if
+`evil-cleverparens-use-additional-movement-keys' is true."
   (interactive)
-  (evil-cp--populate-mode-bindings-for-state evil-cp-additional-bindings 'normal))
+  (dolist (state '(normal visual operator))
+    (evil-cp--populate-mode-bindings-for-state
+     evil-cp-additional-movement-keys
+     state
+     evil-cleverparens-use-additional-movement-keys)))
+
+;;;###autoload
+(defun evil-cp-set-additional-bindings ()
+  "Sets the movement keys is `evil-cp-additional-bindings' for
+normal-state if `evil-cleverparens-use-additional-bindings' is
+true."
+  (interactive)
+  (evil-cp--populate-mode-bindings-for-state
+   evil-cp-additional-bindings
+   'normal
+   evil-cleverparens-use-additional-bindings))
 
 (defun evil-cp--enable-text-objects ()
   "Enables text-objects defined in evil-cleverparens."
@@ -1648,23 +1679,19 @@ for an advanced modal structural editing experience."
             (:eval (if evil-cleverparens-complete-parens-in-yanked-region
                        "/b" "/i")))
   :init-value nil
-  (let ((prev-state evil-state))
-    (evil-normal-state)
-    (evil-change-state prev-state)
-    (if evil-cleverparens-mode
-        (progn
-          (evil-cp--enable-movement-keys)
-          (evil-cp-use-regular-bindings)
-          (evil-cp-use-additional-movement-keys-in-visual-and-motion-states)
-          (evil-cp--enable-text-objects)
-          (when evil-cleverparens-use-additional-bindings
-            (evil-cp-use-additional-bindings))
-          (if (bound-and-true-p evil-surround-mode)
-              (evil-cp--enable-surround-operators)
-            (add-hook 'evil-surround-mode-hook
-                      'evil-cp--enable-surround-operators))
-          (run-hooks 'evil-cleverparens-enabled-hook))
-      (run-hooks 'evil-cleverparens-disabled-hook))))
+  (if evil-cleverparens-mode
+      (progn
+        (evil-cp-set-movement-keys)
+        (evil-cp--enable-regular-bindings)
+        (evil-cp--enable-text-objects)
+        (evil-cp-set-additional-bindings)
+        (evil-cp-set-additional-movement-keys)
+        (if (bound-and-true-p evil-surround-mode)
+            (evil-cp--enable-surround-operators)
+          (add-hook 'evil-surround-mode-hook
+                    'evil-cp--enable-surround-operators))
+        (run-hooks 'evil-cleverparens-enabled-hook))
+    (run-hooks 'evil-cleverparens-disabled-hook)))
 
 (provide 'evil-cleverparens)
 ;;; evil-cleverparens.el ends here
