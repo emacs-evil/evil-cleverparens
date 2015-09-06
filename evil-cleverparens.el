@@ -1372,38 +1372,57 @@ in `evil-open-below'."
     (indent-according-to-mode)
     (evil-insert 1)))
 
+
 (defun evil-cp--kill-sexp-range (count)
-  (let ((pt-orig (point))
-        (end     (point-min))
-        (n       (or count 1))
-        (ok      t))
-    (save-excursion
+  (save-excursion
+    (when (not (evil-cp--inside-form-p))
+      (sp-forward-whitespace))
+    (let* ((beg       (point))
+           (end       (point))
+           (enc-range (evil-cp--get-form-range))
+           (e-beg     (or (car enc-range) (point)))
+           (e-end     (or (cadr enc-range) (point)))
+           (n         (or count 1))
+           (ok        t))
       (while (and (> n 0) ok)
         (setq ok (sp-forward-sexp 1))
-        (sp-get ok (when (> :end end) (setq end :end)))
-        (setq n (1- n))))
-    (when ok (cons pt-orig end))))
+        (when ok
+          (sp-get ok
+            (when (> :end end) (setq end :end))
+            (when (and (>= :end e-end) (> beg :beg))
+              (setq beg :beg))))
+        (setq n (1- n)))
+      (cons beg end))))
 
-(evil-define-command evil-cp-yank-sexp (count &optional register yank-handler)
-  (interactive "<c><x><y>")
-  (-when-let (kill-range (evil-cp--kill-sexp-range count))
-    (let* ((evil-was-yanked-without-register
-            (and evil-was-yanked-without-register
-                 (not register)))
-           (beg (car kill-range))
-           (end (cdr kill-range)))
-      (evil-yank-characters beg end register yank-handler))))
+(defun evil-cp--del-characters (beg end &optional register yank-handler)
+  (evil-yank-characters beg end register yank-handler)
+  (delete-region beg end))
 
-(evil-define-command evil-cp-delete-sexp (count &optional register yank-handler)
-  (interactive "<c><x><y>")
-  (-when-let (kill-range (evil-cp--kill-sexp-range count))
-    (evil-cp-yank-sexp count register yank-handler)
-    (delete-region (car kill-range) (cdr kill-range))))
+(evil-define-command evil-cp-yank-sexp (count &optional register)
+  "Copies COUNT many sexps from point to the kill-ring.
+Essentially a less greedy version of `evil-cp-yank-line'."
+  (interactive "<c><x>")
+  (let* ((range (evil-cp--kill-sexp-range count))
+         (beg (car range))
+         (end (cdr range)))
+    (evil-yank-characters beg end register)))
 
-(evil-define-command evil-cp-change-sexp (count &optional register yank-handler)
-  (interactive "<c><x><y>")
-  (-when-let (kill-range (evil-cp--kill-sexp-range count))
-    (evil-cp-delete-sexp count register yank-handler)
+(evil-define-command evil-cp-delete-sexp (count &optional register)
+  "Kills COUNT many sexps from point. Essentially a less greedy
+version of `evil-cp-delete-line'."
+  (interactive "<c><x>")
+  (let* ((range (evil-cp--kill-sexp-range count))
+         (beg (car range))
+         (end (cdr range)))
+    (evil-cp--del-characters beg end register)))
+
+(evil-define-command evil-cp-change-sexp (count &optional register)
+  "Like `evil-cp-delete-sexp' but enters insert mode after the operation."
+  (interactive "<c><x>")
+  (let* ((range (evil-cp--kill-sexp-range count))
+         (beg (car range))
+         (end (cdr range)))
+    (evil-cp-delete-sexp count register)
     (evil-insert-state)))
 
 (defun evil-cp-raise-form ()
