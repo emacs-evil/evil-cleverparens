@@ -1425,15 +1425,78 @@ version of `evil-cp-delete-line'."
     (evil-cp-delete-sexp count register)
     (evil-insert-state)))
 
-(defun evil-cp-raise-form ()
-  "Raises the form under point."
-  (interactive)
+(defun evil-cp-top-level-yank-handler (text)
+  (insert (concat "\n" (s-trim text) "\n"))
+  (backward-char 1))
+
+(evil-define-command evil-cp-yank-enclosing (count &optional register)
+  "Copies the enclosing form to kill-ring. With COUNT, yanks the
+nth form upwards instead. When called with a raw prefix argument,
+yanks the top-level form and deletes the leftover whitespace,
+while adding a yank-handler that inserts two newlines at the end
+and beginning of the copied top-level form."
+  (interactive "<c><x>")
   (when (evil-cp--inside-form-p)
     (save-excursion
+      (if (equal current-prefix-arg '(4))
+          (progn
+            (beginning-of-defun)
+            (sp-get (sp-get-sexp)
+              (evil-yank-characters
+               :beg
+               :end
+               register
+               #'evil-cp-top-level-yank-handler)))
+        (evil-cp-backward-up-sexp count)
+        (evil-cp--guard-point
+         (sp-get (sp-get-enclosing-sexp)
+           (evil-yank-characters :beg :end register)))))))
+
+(evil-define-command evil-cp-delete-enclosing (count &optional register)
+  "Kills the enclosing form. With COUNT, kills the nth form
+upwards instead. When called with a raw prefix argument, kills
+the top-level form and deletes the extra whitespace."
+  (interactive "<c><x>")
+  (when (evil-cp--inside-form-p)
+    (if (equal current-prefix-arg '(4))
+        (progn
+          (beginning-of-defun)
+          (sp-get (sp-get-sexp)
+            (evil-cp--del-characters
+             :beg
+             :end
+             register
+             #'evil-cp-top-level-yank-handler))
+          (sp-backward-whitespace)
+          (let ((del-me (save-excursion (sp-forward-whitespace t))))
+            (delete-char (- del-me 2))
+            (forward-char)))
+      (evil-cp-backward-up-sexp count)
       (evil-cp--guard-point
-       (sp-beginning-of-sexp))
-      (backward-char)
-      (sp-raise-sexp))))
+       (sp-get (sp-get-enclosing-sexp)
+         (evil-cp--del-characters :beg :end register))))))
+
+(evil-define-command evil-cp-change-enclosing (count &optional register)
+  "Calls `evil-cp-delete-enclosing' and enters insert-state."
+  (interactive "<c><x>")
+  (when (evil-cp--inside-form-p)
+    (evil-cp-delete-enclosing count register)
+    (when (equal current-prefix-arg '(4))
+      (insert "\n\n")
+      (backward-char 1))
+    (evil-insert-state)))
+
+(defun evil-cp-raise-form (&optional count)
+  "Raises the form under point COUNT many times."
+  (interactive "P")
+  (let ((count (or count 1)))
+    (dotimes (_ count)
+      (when (evil-cp--inside-form-p)
+        (save-excursion
+          (evil-cp--guard-point
+           (sp-beginning-of-sexp))
+          (backward-char)
+          (sp-raise-sexp))))))
 
 (defun evil-cp--wrap-helper (dir pair count)
   (case dir
@@ -1654,6 +1717,9 @@ This is a feature copied from `evil-smartparens'."
     ("M-y" . evil-cp-yank-sexp)
     ("M-d" . evil-cp-delete-sexp)
     ("M-c" . evil-cp-change-sexp)
+    ("M-Y" . evil-cp-yank-enclosing)
+    ("M-D" . evil-cp-delete-enclosing)
+    ("M-C" . evil-cp-change-enclosing)
     ("M-q" . sp-indent-defun)
     ("M-o" . evil-cp-open-below-form)
     ("M-O" . evil-cp-open-above-form)
