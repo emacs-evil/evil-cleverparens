@@ -127,13 +127,13 @@ question. Ignores parentheses inside strings."
          (nth 3 (syntax-ppss)))))
 
 (defun evil-cp--looking-at-any-opening-p (&optional pos)
-  "Predicate to check if point (or `POS') is on an opening
+  "Predicate to check if point (or POS) is on an opening
 parentheses or a string delimiter."
   (or (evil-cp--looking-at-opening-p pos)
       (evil-cp--looking-at-string-opening-p pos)))
 
 (defun evil-cp--looking-at-any-closing-p (&optional pos)
-  "Predicate to check if point (or `POS') is on an opening
+  "Predicate to check if point (or POS) is on an opening
 parentheses or a string delimiter."
   (or (evil-cp--looking-at-closing-p pos)
       (evil-cp--looking-at-string-closing-p pos)))
@@ -202,7 +202,7 @@ point to that location."
 
 (defun evil-cp--matching-paren-pos (&optional pos)
   "Finds the location of the matching paren for where point is
-located. Also works for strings. Takes an optional `POS' argument
+located. Also works for strings. Takes an optional POS argument
 for temporarily moving the point to before proceeding.
   Assumes that the parentheses in the buffer are balanced."
   (save-excursion
@@ -225,13 +225,13 @@ for temporarily moving the point to before proceeding.
                (car bounds)))))))
 
 (defun evil-cp--text-balanced-p (text)
-  "Checks if the string `TEXT' is balanced or not."
+  "Checks if the string TEXT is balanced or not."
   (with-temp-buffer
     (insert text)
     (sp-region-ok-p (point-min) (point-max))))
 
 (defun evil-cp--balanced-block-p (beg end)
-  "Checks whether the block defined by `BEG' and `END' contains
+  "Checks whether the block defined by BEG and END contains
 balanced parentheses."
   (let ((region (evil-yank-rectangle beg end)))
     (with-temp-buffer
@@ -410,7 +410,7 @@ and deleting other characters. Can be overriden by
 (defun evil-cp--insert-missing-parentheses (backp)
   "Calling this function in a buffer with unbalanced parentheses
 will have the missing parentheses be inserted at the end of the
-buffer if `BACKP' is nil and at the beginning if it is true."
+buffer if BACKP is nil and at the beginning if it is true."
   (let ((closing nil))
     ;; fix for the degenerate case of nothing but closing parens
     (when backp (save-excursion (insert " ")))
@@ -457,7 +457,7 @@ beginning."
 (defun evil-cp--yank-characters
     (beg end &optional register yank-handler add-parens-p)
   "Yank characters while keeping parentheses balanced. The
-optional `ADD-PARENS-P' arg determines how to handle the missing
+optional ADD-PARENS-P arg determines how to handle the missing
 parentheses: if nil, the non-balanced parens are
 ignored. Otherwise they are added to the start/beginning of the
 region."
@@ -670,7 +670,7 @@ respecting parentheses."
 
 (defun evil-cp--delete-characters (beg end)
   "Deletes everything except unbalanced parentheses / string
-delimiters in the region defined by `BEG' and `END'."
+delimiters in the region defined by BEG and END."
   (let ((chars-left (- end beg)))
     (goto-char beg)
     (while (> chars-left 0)
@@ -1128,7 +1128,7 @@ parentheses in your buffer are balanced overall."
     (dotimes (_ n) (sp-forward-slurp-sexp)))))
 
 (defun evil-cp--line-safe-p (&optional move-fn)
-  "Predicate that checks if the line as defined by `MOVE-FN' is
+  "Predicate that checks if the line as defined by MOVE-FN is
 safe for transposing."
   (save-excursion
     (when move-fn (funcall move-fn))
@@ -1140,7 +1140,7 @@ safe for transposing."
       (and sexps-ok-p (not in-string-p)))))
 
 (defun evil-cp--transpose (this-fn)
-  "Transposes a sexp either forward or backward as defined by `THIS-FN'."
+  "Transposes a sexp either forward or backward as defined by THIS-FN."
   (save-excursion
     (when (evil-cp--looking-at-opening-p)
       (forward-char))
@@ -1261,9 +1261,10 @@ If the point is inside a nested sexp then
    (t (evil-substitute beg end type register))))
 
 (evil-define-command evil-cp-insert-at-end-of-form (count)
-  "Move point `COUNT' times with `sp-forward-sexp' and enter
-insert mode at the end of form. Using an arbitrarily large
-`COUNT' is guaranteened to take the point to the beginning of the top level form."
+  "Move point COUNT times with `sp-forward-sexp' and enter insert
+mode at the end of form. Using an arbitrarily large COUNT is
+guaranteened to take the point to the beginning of the top level
+form."
   (interactive "<c>")
   (let ((defun-end (save-excursion (end-of-defun) (point)))
         target)
@@ -1273,9 +1274,9 @@ insert mode at the end of form. Using an arbitrarily large
     (evil-insert 1)))
 
 (evil-define-command evil-cp-insert-at-beginning-of-form (count)
-  "Move point `COUNT' times with `sp-backward-up-sexp' and enter
+  "Move point COUNT times with `sp-backward-up-sexp' and enter
 insert mode at the beginning of the form. Using an arbitrarily
-large `COUNT' is guaranteened to take the point to the beginning
+large COUNT is guaranteened to take the point to the beginning
 of the top level form."
   (interactive "<c>")
   ;; TODO: fails if the sexp contains a string with an open paren
@@ -1602,9 +1603,9 @@ This is a feature copied from `evil-smartparens'."
   default). Only enabled in evil's normal mode.")
 
 (defun evil-cp--populate-mode-bindings-for-state (bindings state addp)
-  "Helper function that defines `BINDINGS' for the evil-state
-`STATE' when `ADDP' is true. If `ADDP' is false, then the keys in
-`BINDINGS' are set to nil instead, effectively disabling the keys
+  "Helper function that defines BINDINGS for the evil-state
+STATE when ADDP is true. If ADDP is false, then the keys in
+BINDINGS are set to nil instead, effectively disabling the keys
 in question."
   (--each bindings
     (evil-define-key state evil-cleverparens-mode-map
