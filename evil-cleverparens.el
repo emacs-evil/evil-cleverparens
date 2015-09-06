@@ -1600,8 +1600,8 @@ Even on a large computer you shouldn't set this too high or your
 computer will freeze when copying large files out of Emacs.
 
 This is a feature copied from `evil-smartparens'."
-  :group 'evil-smartparens
-  :type 'string)
+  :group 'evil-cleverparens
+  :type 'number)
 
 (defcustom evil-cleverparens-complete-parens-in-yanked-region nil
   "Determines how to handle yanking a region containing
