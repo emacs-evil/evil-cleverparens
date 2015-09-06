@@ -1420,12 +1420,7 @@ in `evil-open-below'."
     (:previous
      (save-excursion
        (sp-select-previous-thing count)
-       (sp-wrap-with-pair pair))))
-  (when evil-cleverparens-insert-after-next-round
-    (when (and (string-equal pair "(") (eq dir :next))
-      (insert " ")
-      (backward-char)
-      (evil-insert-state))))
+       (sp-wrap-with-pair pair)))))
 
 (evil-define-command evil-cp-wrap-next-round (count)
   (interactive "<c>")
@@ -1442,7 +1437,7 @@ in `evil-open-below'."
   (setq count (or count 1))
   (evil-cp--wrap-helper :next "[" count))
 
-(evil-define-command evil-cp-wrap-next-curly (count)
+(evil-define-command evil-cp-wrap-previous-square (count)
   (interactive "<c>")
   (setq count (or count 1))
   (evil-cp--wrap-helper :previous "[" count))
@@ -1510,12 +1505,6 @@ This is a feature copied from `evil-smartparens'."
   :group 'evil-cleverparens
   :type 'boolean)
 
-(defcustom evil-cleverparens-insert-after-next-round t
-  "Determines whether or not to enter insert-state after calling
-  `evil-cp-cp-wrap-next-round'. The assumption is that the main
-  use case for this command is to wrap the next thing(s) as
-  arguments to a function call, after which you'll insert the
-  name of the function.")
 
 (defvar evil-cp--override nil
   "Should the next command skip region checks?")
