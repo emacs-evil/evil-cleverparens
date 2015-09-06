@@ -654,20 +654,24 @@ respecting parentheses."
       (let ((beginning (point))
             (eol (point-at-eol)))
         (let ((end-of-list-p (paredit-forward-sexps-to-kill beginning eol)))
-          (if end-of-list-p (progn (up-list) (backward-char)))
-          (evil-yank-characters beginning
-                                (cond (kill-whole-line
-                                       (or (save-excursion
-                                             (paredit-skip-whitespace t)
-                                             (and (not (eq (char-after) ?\; ))
-                                                  (point)))
-                                           (point-at-eol)))
-                                      ((and (not end-of-list-p)
-                                            (eq (point-at-eol) eol))
-                                       eol)
-                                      (t
-                                       (point)))
-                                register)))))))
+          (when end-of-list-p
+            (up-list)
+            (backward-char))
+          (evil-yank-characters
+           beginning
+           (cond
+            (kill-whole-line
+             (or (save-excursion
+                   (paredit-skip-whitespace t)
+                   (and (not (eq (char-after) ?\; ))
+                        (point)))
+                 (point-at-eol)))
+            ((and (not end-of-list-p)
+                  (eq (point-at-eol) eol))
+             eol)
+            (t
+             (point)))
+           register)))))))
 
 (defun evil-cp--delete-characters (beg end)
   "Deletes everything except unbalanced parentheses / string
