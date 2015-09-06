@@ -1326,23 +1326,45 @@ sexp regardless of what level the point is currently at."
       (backward-char offset))))
 
 (evil-define-command evil-cp-open-below-form (count)
-  "Enters insert mode after entering a newline at the end of the
-current form."
+  "Move COUNT levels up from the current form and enter
+insert-state. If the last form is a top-level sexp then two
+newlines are inserted instead. If point is not inside a form,
+inserts two newlines and enters insert-state between them.
+
+Note thath the COUNT parameter doesn't affect the amount of
+times that the inserted text gets output into the buffer, unlike
+in `evil-open-below'."
   (interactive "<c>")
   (setq count (or count 1))
-  (sp-up-sexp count)
-  (insert "\n")
-  (indent-according-to-mode)
-  (evil-insert 1))
+  (if (not (evil-cp--inside-form-p))
+      (progn
+        (insert "\n\n")
+        (forward-line -1)
+        (evil-insert-state))
+    (sp-up-sexp count)
+    (if (save-excursion
+          (backward-char)
+          (evil-cp--top-level-sexp-p))
+        (insert "\n\n")
+      (insert "\n"))
+    (indent-according-to-mode)
+    (evil-insert-state)))
 
 (evil-define-command evil-cp-open-above-form (count)
-  "Enters insert mode after entering a newline at the begnning of
-the current form."
+  "Move COUNT levels backwards up from the current form and
+enter insert-state. If the form is a top-level sexp then two
+newlines are inserted instead.
+
+Note thath the COUNT parameter doesn't affect the amount of
+times that the inserted text gets output into the buffer, unlike
+in `evil-open-below'."
   (interactive "<c>")
   (setq count (or count 1))
-  (sp-backward-up-sexp)
+  (sp-backward-up-sexp count)
   (save-excursion
-    (insert "\n")
+    (if (evil-cp--top-level-sexp-p)
+        (insert "\n\n")
+      (insert "\n"))
     (indent-according-to-mode)
     (evil-insert 1)))
 
