@@ -1452,6 +1452,33 @@ in `evil-open-below'."
   (setq count (or count 1))
   (evil-cp--wrap-helper :previous "{" count))
 
+(defun evil-cp-insert (count &optional vcount skip-empty-lines)
+  "Like `evil-insert' but if invoked infront of a round opening
+parentheses, will insert an empty space in front of the point.
+The idea is that most often in this situation you are entering
+insert-state in order to add a new function-call"
+  (interactive "p")
+  (if (or (evil-visual-state-p)
+          (= (point-min) (point))
+          (not (and (looking-back "(")
+                    (not (looking-at-p "[[:space:]]"))
+                    (not (sp-point-in-string-or-comment))
+                    (not (looking-back "'(")))))
+      (call-interactively 'evil-insert)
+    (setq evil-cp--inserted-space-after-round-open t)
+    (insert " ")
+    (backward-char)
+    (evil-insert count)))
+
+(defun evil-cp-insert-exit-hook ()
+  "Deletes the extra space left by `evil-cp-insert' if nothing was inserted."
+  (when (and evil-cp--inserted-space-after-round-open
+             (or (not evil-current-insertion)
+                 (= (car evil-current-insertion)
+                    (cdr evil-current-insertion)))
+             (looking-at-p "[[:space:]]"))
+    (delete-char 1)
+    (setq evil-cp--inserted-space-after-round-open nil)))
 
 ;;; Variables ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1505,9 +1532,16 @@ This is a feature copied from `evil-smartparens'."
   :group 'evil-cleverparens
   :type 'boolean)
 
+(defcustom evil-cleverparens-use-regular-insert nil
+  "Determines whether to use `evil-insert' or `evil-cp-insert'."
+  :group 'evil-cleverparens
+  :type 'boolean)
 
 (defvar evil-cp--override nil
   "Should the next command skip region checks?")
+
+(defvar evil-cp--inserted-space-after-round-open nil
+  "Helper var for `evil-cp-insert'.")
 
 (defcustom evil-cleverparens-use-additional-bindings t
   "Should additional bindings be enabled."
@@ -1638,7 +1672,18 @@ in question."
   (evil-cp--populate-mode-bindings-for-state
    evil-cp-regular-bindings
    'normal
-   t))
+   t)
+  (if evil-cleverparens-use-regular-insert
+      ;; in case we change our mind
+      (progn
+        (evil-define-key 'normal evil-cleverparens-mode-map
+          "i" 'evil-insert)
+        (remove-hook 'evil-insert-state-exit-hook
+                     'evil-cp-insert-exit-hook))
+    (evil-define-key 'normal evil-cleverparens-mode-map
+      "i" 'evil-cp-insert)
+    (add-hook 'evil-insert-state-exit-hook
+              'evil-cp-insert-exit-hook)))
 
 ;;;###autoload
 (defun evil-cp-set-additional-movement-keys ()
