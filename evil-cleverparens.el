@@ -1297,10 +1297,12 @@ of the top level form."
     (forward-char)
     (sp-get (sp-get-enclosing-sexp) (list :beg :end))))
 
-(evil-define-command evil-cp-copy-paste-form ()
-  "Copies the surrounding form to kill-ring and inserts it after
-the current form."
-  (let* ((prefixp (equal current-prefix-arg '(4)))
+(defun evil-cp-copy-paste-form (&optional arg)
+  "Copies the surrounding form and inserts it below itself. If
+called with a single prefix-argument, will copy the top-level
+sexp regardless of what level the point is currently at."
+  (interactive "P")
+  (let* ((prefixp (equal arg '(4)))
          (bounds
           (if prefixp
               (evil-cp--defun-bounds)
@@ -1309,24 +1311,18 @@ the current form."
                (list :beg :end)))))
          (beg (car bounds))
          (end (cadr bounds))
-         (offset (- end (point))))
+         (offset (- end (point)))
+         (text (buffer-substring-no-properties beg end)))
     (when (and beg end)
-      (evil-yank beg end)
-      (cond
-       ((or prefixp (evil-cp--top-level-sexp-p))
-        (end-of-defun)
-        (insert "\n")
-        (yank)
-        (insert "\n"))
-       ((> 80 (+ end (- end beg)))
-        (sp-up-sexp)
-        (insert " ")
-        (yank))
-       (t
+      (if (or prefixp (evil-cp--top-level-sexp-p))
+          (progn
+            (end-of-defun)
+            (insert "\n" text "\n"))
+        (when (evil-cp--looking-at-any-opening-p) (forward-char))
         (sp-up-sexp)
         (insert "\n")
         (indent-according-to-mode)
-        (yank)))
+        (insert text))
       (backward-char offset))))
 
 (evil-define-command evil-cp-open-below-form (count)
