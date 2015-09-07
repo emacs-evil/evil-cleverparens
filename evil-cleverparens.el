@@ -32,6 +32,7 @@
 (require 'smartparens)
 (require 'subr-x)
 
+
 ;;; Overriding ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun evil-cp--override ()
@@ -55,6 +56,7 @@ This is a feature copied from `evil-smartparens'."
   (when (region-active-p)
     (> (abs (- (region-beginning) (region-end)))
        evil-cleverparens-threshold)))
+
 
 ;;; Helper functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -246,6 +248,7 @@ balanced parentheses."
   "Error out with a friendly message."
   (error "Can't find a safe region to act on."))
 
+
 ;;; Text Objects ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; The symbol text object already exists at "o"
@@ -325,6 +328,7 @@ balanced parentheses."
                  (sp-get (sp-get-sexp) (list :beg :end-in))))))
         (evil-range (1+ (car bounds)) (cadr bounds) 'inclusive :expanded t))
     (error "Not inside a sexp.")))
+
 
 ;;; Evil Operators ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -406,8 +410,6 @@ and deleting other characters. Can be overriden by
              (evil-cp-yank beg end type register yank-handler)
            (evil-yank beg end type register yank-handler))
          (evil-cp-delete-or-splice-region beg end))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Originally from:
 ;; http://emacs.stackexchange.com/questions/777/closing-all-pending-parenthesis
@@ -923,7 +925,8 @@ kill-ring is determined by the
     (evil-cp-first-non-blank-non-opening)
     (evil-cp-change beg end type register yank-handler #'evil-cp-delete-line)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; Movement ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (evil-define-motion evil-cp-forward-sexp (count)
   "Motion for moving forward by a sexp via `sp-forward-sexp'."
@@ -1089,6 +1092,8 @@ movement."
     (evil-signal-at-bob-or-eob (- (or count 1)))
     (evil-backward-end thing count)))
 
+;;; Additional Operations ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defun evil-cp-< (n)
   "Slurping/barfing operation that acts differently based on the points
 location in the form.
@@ -1184,6 +1189,7 @@ parentheses in your buffer are balanced overall."
    (t
     (dotimes (_ n) (sp-forward-slurp-sexp)))))
 
+
 (defun evil-cp--line-safe-p (&optional move-fn)
   "Predicate that checks if the line as defined by MOVE-FN is
 safe for transposing."
@@ -1260,6 +1266,7 @@ If the point is inside a nested sexp then
               (beginning-of-line)
               (forward-char pos)))))))))
 
+
 (evil-define-command evil-cp-drag-down (count)
   "If both the line where point is, and the line below it are
 balanced, this operation acts the same as `drag-stuff-down',
@@ -1306,6 +1313,7 @@ If the point is inside a nested sexp then
               (beginning-of-line)
               (forward-char pos)))))))))
 
+
 (evil-define-operator evil-cp-substitute (beg end type register)
   "Parentheses safe version of `evil-substitute'."
   :motion evil-forward-char
@@ -1316,6 +1324,7 @@ If the point is inside a nested sexp then
    ((evil-cp--looking-at-any-closing-p)
     (evil-insert 1))
    (t (evil-substitute beg end type register))))
+
 
 (evil-define-command evil-cp-insert-at-end-of-form (count)
   "Move point COUNT times with `sp-forward-sexp' and enter insert
@@ -1346,6 +1355,7 @@ of the top level form."
       (goto-char defun-beginning))
     (forward-char)
     (evil-insert 1)))
+
 
 (defun evil-cp--defun-bounds ()
   (save-excursion
@@ -1380,6 +1390,7 @@ sexp regardless of what level the point is currently at."
         (indent-according-to-mode)
         (insert text))
       (backward-char offset))))
+
 
 (evil-define-command evil-cp-open-below-form (count)
   "Move COUNT levels up from the current form and enter
@@ -1424,7 +1435,6 @@ in `evil-open-below'."
     (indent-according-to-mode)
     (evil-insert 1)))
 
-
 (defun evil-cp--kill-sexp-range (count)
   (save-excursion
     (when (not (evil-cp--inside-form-p))
@@ -1445,6 +1455,7 @@ in `evil-open-below'."
               (setq beg :beg))))
         (setq n (1- n)))
       (cons beg end))))
+
 
 (defun evil-cp--del-characters (beg end &optional register yank-handler)
   (evil-yank-characters beg end register yank-handler)
@@ -1550,6 +1561,7 @@ the top-level form and deletes the extra whitespace."
       (backward-char 1))
     (evil-insert-state)))
 
+
 (defun evil-cp-raise-form (&optional count)
   "Raises the form under point COUNT many times."
   (interactive "P")
@@ -1561,6 +1573,7 @@ the top-level form and deletes the extra whitespace."
            (sp-beginning-of-sexp))
           (backward-char)
           (sp-raise-sexp))))))
+
 
 (defun evil-cp--wrap-helper (dir pair count)
   (case dir
@@ -1602,6 +1615,7 @@ the top-level form and deletes the extra whitespace."
   (setq count (or count 1))
   (evil-cp--wrap-helper :previous "{" count))
 
+
 (defun evil-cp-insert (count &optional vcount skip-empty-lines)
   "Like `evil-insert' but if invoked infront of a round opening
 parentheses, will insert an empty space in front of the point.
@@ -1634,6 +1648,7 @@ insert-state in order to add a new function-call"
         (delete-char 1)
         (setq evil-cp--inserted-space-after-round-open nil))
     (setq evil-cp--inserted-space-after-round-open nil)))
+
 
 ;;; Variables ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
