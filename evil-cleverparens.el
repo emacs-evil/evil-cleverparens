@@ -302,7 +302,7 @@ balanced parentheses."
                    (goto-char (cdr bounds))
                    (evil-end-of-line)
                    (point))))
-        (evil-range beg end 'block 'inclusive :expanded t)))))
+        (evil-range beg end 'block :expanded t)))))
 
 (evil-define-text-object evil-cp-a-defun (count &optional beg end type)
   "An outer text object for a top level sexp (defun)."
