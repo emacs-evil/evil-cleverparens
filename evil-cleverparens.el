@@ -1452,30 +1452,42 @@ in `evil-open-below'."
 
 (evil-define-command evil-cp-yank-sexp (count &optional register)
   "Copies COUNT many sexps from point to the kill-ring.
-Essentially a less greedy version of `evil-cp-yank-line'."
+Essentially a less greedy version of `evil-cp-yank-line'. When
+called with \\[universal-argument], copies everything from point
+to the end of the the current form."
   (interactive "<c><x>")
-  (let* ((range (evil-cp--kill-sexp-range count))
-         (beg (car range))
-         (end (cdr range)))
-    (evil-yank-characters beg end register)))
+  (if (and (equal current-prefix-arg '(4))
+           (evil-cp--inside-form-p))
+      (sp-get (sp-get-enclosing-sexp)
+        (evil-yank-characters (point) (1- :end)))
+    (let* ((range (evil-cp--kill-sexp-range count))
+           (beg (car range))
+           (end (cdr range)))
+      (evil-yank-characters (car range) (cdr range) register))))
 
 (evil-define-command evil-cp-delete-sexp (count &optional register)
   "Kills COUNT many sexps from point. Essentially a less greedy
-version of `evil-cp-delete-line'."
+version of `evil-cp-delete-line'. When called with
+\\[universal-argument], deletes everything from point to the end
+of the the current form."
   (interactive "<c><x>")
-  (let* ((range (evil-cp--kill-sexp-range count))
-         (beg (car range))
-         (end (cdr range)))
-    (evil-cp--del-characters beg end register)))
+  (if (and (equal current-prefix-arg '(4))
+           (evil-cp--inside-form-p))
+      (sp-get (sp-get-enclosing-sexp)
+        (evil-cp--del-characters (point) (1- :end)))
+    (let* ((range (evil-cp--kill-sexp-range count))
+           (beg (car range))
+           (end (cdr range)))
+      (evil-cp--del-characters beg end register))))
 
 (evil-define-command evil-cp-change-sexp (count &optional register)
-  "Like `evil-cp-delete-sexp' but enters insert mode after the operation."
+  "Like `evil-cp-delete-sexp' but enters insert mode after the
+operation. When called with \\[universal-argument], deletes
+everything from point to the end of the the current form before
+entering insert-state."
   (interactive "<c><x>")
-  (let* ((range (evil-cp--kill-sexp-range count))
-         (beg (car range))
-         (end (cdr range)))
-    (evil-cp-delete-sexp count register)
-    (evil-insert-state)))
+  (evil-cp-delete-sexp count register)
+  (evil-insert-state))
 
 (defun evil-cp-top-level-yank-handler (text)
   (insert (concat "\n" (s-trim text) "\n"))
