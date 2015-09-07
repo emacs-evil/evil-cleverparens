@@ -168,11 +168,14 @@ an empty form."
   "Predicate that returns true if point is inside a string."
   (save-excursion
     (when pos (goto-char pos))
-    (let ((string-ppss (nth 3 (syntax-ppss))))
-      (or string-ppss
-          (progn
-            (forward-char)
-            (nth 3 (syntax-ppss)))))))
+    (let ((pt (point)))
+      (when (not (or (= pt (point-max))
+                     (= pt (point-min))))
+       (let ((string-ppss (nth 3 (syntax-ppss))))
+         (or string-ppss
+             (progn
+               (forward-char)
+               (nth 3 (syntax-ppss)))))))))
 
 (defun evil-cp--inside-form-p (&optional pos)
   "Predicate that returns true if point is either inside a sexp
