@@ -1597,11 +1597,14 @@ The idea is that most often in this situation you are entering
 insert-state in order to add a new function-call"
   (interactive "p")
   (if (or (evil-visual-state-p)
+          (looking-at-p "[\n\t ]+")
+          (sp-point-in-string-or-comment)
+          (evil-cp--looking-at-empty-form)
           (= (point-min) (point))
+          (= (point-max) (point))
           (not (and (looking-back "(")
-                    (not (looking-at-p "[[:space:]]"))
-                    (not (sp-point-in-string-or-comment))
-                    (not (looking-back "'(")))))
+                    (not (looking-back "'("))
+                    (not (looking-back "#(")))))
       (call-interactively 'evil-insert)
     (setq evil-cp--inserted-space-after-round-open t)
     (insert " ")
@@ -1610,12 +1613,14 @@ insert-state in order to add a new function-call"
 
 (defun evil-cp-insert-exit-hook ()
   "Deletes the extra space left by `evil-cp-insert' if nothing was inserted."
-  (when (and evil-cp--inserted-space-after-round-open
-             (or (not evil-current-insertion)
-                 (= (car evil-current-insertion)
-                    (cdr evil-current-insertion)))
-             (looking-at-p "[[:space:]]"))
-    (delete-char 1)
+  (if (and evil-cp--inserted-space-after-round-open
+           (or (not evil-current-insertion)
+               (= (car evil-current-insertion)
+                  (cdr evil-current-insertion)))
+           (looking-at-p "[[:space:]]"))
+      (progn
+        (delete-char 1)
+        (setq evil-cp--inserted-space-after-round-open nil))
     (setq evil-cp--inserted-space-after-round-open nil)))
 
 ;;; Variables ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
