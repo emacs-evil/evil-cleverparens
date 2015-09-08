@@ -1804,8 +1804,6 @@ insert-state in order to add a new function-call"
     (setq evil-cp--inserted-space-after-round-open nil)))
 
 
-;;; Variables ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (defun evil-cp-toggle-balanced-yank (&optional forcep)
   "Toggles the setting `evil-cleverparens-complete-parens-in-yanked-region',
 which determines whether or not an incomplete yanked region
@@ -1822,6 +1820,9 @@ and/or beginning."
    (t
     (message "Turned yank auto-balancing OFF.")
     (setq evil-cleverparens-complete-parens-in-yanked-region nil))))
+
+
+;;; Variables ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defgroup evil-cleverparens nil
   "`evil-mode' for handling your parentheses with a mix of `smartparens' and `paredit'"
