@@ -69,6 +69,18 @@ This is a feature copied from `evil-smartparens'."
   '(("(" . ")") ("[" . "]") ("{" . "}") ("\"" . "\""))
   "List of parentheses pairs recognized by evil-cleverparens.")
 
+(defun evil-cp--pair-for (pair pairs)
+  (cond
+   ((not pairs)
+    (message "Pair for %s not found." pair))
+   ((string= pair (caar pairs))
+    (car pairs))
+   (t
+    (evil-cp--pair-for pair (cdr pairs)))))
+
+(defun evil-cp-pair-for (pair)
+  (evil-cp--pair-for pair evil-cp--pair-list))
+
 (defun evil-cp--get-opening-regexp ()
   (sp--strict-regexp-opt (--map (car it) evil-cp--pair-list)))
 
@@ -1035,6 +1047,7 @@ closing paren."
       (sp-up-sexp))
     (backward-char)))
 
+
 (evil-define-motion evil-cp-forward-symbol-begin (count)
   "Copy of `evil-forward-word-begin' using 'evil-symbol for the
 movement."
@@ -1574,46 +1587,168 @@ the top-level form and deletes the extra whitespace."
           (backward-char)
           (sp-raise-sexp))))))
 
+(defun evil-cp--wrap-region-with-pair (pair start end)
+  "Helper that inserts a pair as indicated by PAIR at positions
+  START and END. Performs no safety checks on the regions."
+  (-when-let (this-pair (evil-cp-pair-for pair))
+    (let ((open (car this-pair))
+          (close (cdr this-pair)))
+      (save-excursion
+        (goto-char start)
+        (insert open)
+        (goto-char end)
+        (insert close)))))
 
-(defun evil-cp--wrap-helper (dir pair count)
-  (case dir
-    (:next
-     (sp-select-next-thing count)
-     (sp-wrap-with-pair pair))
-    (:previous
-     (save-excursion
-       (sp-select-previous-thing count)
-       (sp-wrap-with-pair pair)))))
+(defun evil-cp--wrap-next (pair count)
+  (let ((pt-orig (point))
+        (this-pair (evil-cp-pair-for pair)))
+    (when (sp-point-in-symbol)
+      (sp-get (sp-get-symbol)
+        (goto-char :beg)))
+    (let ((start   (point))
+          (open    (car this-pair))
+          (close   (cdr this-pair))
+          (enc-end (sp-get (sp-get-enclosing-sexp) :end)))
+      (sp-forward-sexp count)
+      (setq end (if enc-end (min (point) enc-end) (point)))
+      (when (not (= end pt-orig))
+        (goto-char start)
+        (insert open)
+        (goto-char (1+ end))
+        (insert close)
+        (goto-char start)
+        (indent-region start end)
+        (forward-char (1+ (- pt-orig start)))))))
+
+(defun evil-cp--wrap-previous (pair count)
+  (let ((pt-orig (point))
+        (this-pair (evil-cp-pair-for pair)))
+    (when (and (sp-point-in-symbol)
+               ;; seems to be a bug in `sp-point-in-symbol'
+               (not (= pt-orig (point-max))))
+      (sp-get (sp-get-symbol)
+        (goto-char :end)))
+    (let ((start   (point))
+          (open    (car this-pair))
+          (close   (cdr this-pair))
+          (enc-beg (sp-get (sp-get-enclosing-sexp) :beg)))
+      (sp-backward-sexp count)
+      (setq beg (if enc-beg (max (point) enc-beg) (point)))
+      (when (not (= pt-orig beg))
+        (goto-char beg)
+        (insert open)
+        (goto-char (1+ start))
+        (insert close)
+        (goto-char start)
+        (indent-region beg start)
+        (backward-char (- (point) pt-orig 1))))))
+
+(defun evil-cp-prefix-arg-count ()
+  "Gets the count for how many times the prefix argument was called with."
+  (when (consp current-prefix-arg)
+    (log (car current-prefix-arg) 4)))
 
 (evil-define-command evil-cp-wrap-next-round (count)
+  "Wraps the next COUNT sexps inside parentheses. If the point is
+inside a symbol, that symbol is treated as the first sexp to
+wrap.
+
+When called with \\[universal-argument], wraps the current
+enclosing form and the next N forms, where N is the count for how
+many times the \\[universal-argument] was invoked."
   (interactive "<c>")
   (setq count (or count 1))
-  (evil-cp--wrap-helper :next "(" count))
+  (if (consp current-prefix-arg)
+      (let ((count (1+ (evil-cp-prefix-arg-count))))
+        (save-excursion
+          (sp-backward-up-sexp)
+          (evil-cp--wrap-next "(" count)))
+    (evil-cp--wrap-next "(" count)))
 
 (evil-define-command evil-cp-wrap-previous-round (count)
+  "Wraps the previous COUNT sexps inside parentheses. If the point is
+inside a symbol, that symbol is treated as the first sexp to
+wrap.
+
+When called with \\[universal-argument], wraps the current
+enclosing form and the previous N forms, where N is the count for how
+many times the \\[universal-argument] was invoked."
   (interactive "<c>")
   (setq count (or count 1))
-  (evil-cp--wrap-helper :previous "(" count))
+  (if (consp current-prefix-arg)
+      (let ((count (1+ (evil-cp-prefix-arg-count))))
+        (save-excursion
+          (sp-up-sexp)
+          (evil-cp--wrap-previous "(" count)))
+    (evil-cp--wrap-previous "(" count)))
 
 (evil-define-command evil-cp-wrap-next-square (count)
+  "Wraps the next COUNT sexps inside square braces. If the point
+is inside a symbol, that symbol is treated as the first sexp to
+wrap.
+
+When called with \\[universal-argument], wraps the current
+enclosing form and the next N forms, where N is the count for how
+many times the \\[universal-argument] was invoked."
   (interactive "<c>")
   (setq count (or count 1))
-  (evil-cp--wrap-helper :next "[" count))
+  (if (consp current-prefix-arg)
+      (let ((count (1+ (evil-cp-prefix-arg-count))))
+        (save-excursion
+          (sp-backward-up-sexp)
+          (evil-cp--wrap-next "[" count)))
+    (evil-cp--wrap-next "[" count)))
 
 (evil-define-command evil-cp-wrap-previous-square (count)
+  "Wraps the previous COUNT sexps inside square braces. If the
+point is inside a symbol, that symbol is treated as the first
+sexp to wrap.
+
+When called with \\[universal-argument], wraps the current
+enclosing form and the previous N forms, where N is the count for how
+many times the \\[universal-argument] was invoked."
   (interactive "<c>")
   (setq count (or count 1))
-  (evil-cp--wrap-helper :previous "[" count))
+  (if (consp current-prefix-arg)
+      (let ((count (1+ (evil-cp-prefix-arg-count))))
+        (save-excursion
+          (sp-up-sexp)
+          (evil-cp--wrap-previous "[" count)))
+    (evil-cp--wrap-previous "[" count)))
 
 (evil-define-command evil-cp-wrap-next-curly (count)
+  "Wraps the next COUNT sexps inside curly braces. If the point
+is inside a symbol, that symbol is treated as the first sexp to
+wrap.
+
+When called with \\[universal-argument], wraps the current
+enclosing form and the next N forms, where N is the count for how
+many times the \\[universal-argument] was invoked."
   (interactive "<c>")
   (setq count (or count 1))
-  (evil-cp--wrap-helper :next "{" count))
+  (if (consp current-prefix-arg)
+      (let ((count (1+ (evil-cp-prefix-arg-count))))
+        (save-excursion
+          (sp-backward-up-sexp)
+          (evil-cp--wrap-next "{" count)))
+    (evil-cp--wrap-next "{" count)))
 
 (evil-define-command evil-cp-wrap-previous-curly (count)
+  "Wraps the previous COUNT sexps inside curly braces. If the point is
+inside a symbol, that symbol is treated as the first sexp to
+wrap.
+
+When called with \\[universal-argument], wraps the current
+enclosing form and the previous N forms, where N is the count for
+how many times the \\[universal-argument] was invoked."
   (interactive "<c>")
   (setq count (or count 1))
-  (evil-cp--wrap-helper :previous "{" count))
+  (if (consp current-prefix-arg)
+      (let ((count (1+ (evil-cp-prefix-arg-count))))
+        (save-excursion
+          (sp-up-sexp)
+          (evil-cp--wrap-previous "{" count)))
+    (evil-cp--wrap-previous "{" count)))
 
 
 (defun evil-cp-insert (count &optional vcount skip-empty-lines)
