@@ -1046,11 +1046,28 @@ closing paren."
     (backward-char)))
 
 
+(defun forward-evil-cp-symbol (&optional count)
+  "Move forward COUNT \"WORDS\".
+Moves point COUNT WORDS forward or (- COUNT) WORDS backward if
+COUNT is negative. Point is placed after the end of the WORD (if
+forward) or at the first character of the WORD (if backward). A
+WORD is a sequence of non-whitespace characters
+'[^\\n\\r\\t\\f ]', or an empty line matching ^$."
+  (evil-forward-nearest
+   count
+   #'(lambda (&optional cnt)
+       (let ((pnt (point)))
+         (forward-symbol cnt)
+         (if (= pnt (point)) cnt 0)))
+   #'forward-evil-empty-line))
+
 (evil-define-motion evil-cp-forward-symbol-begin (count)
   "Copy of `evil-forward-word-begin' using 'evil-symbol for the
 movement."
   :type exclusive
-  (let ((thing 'evil-symbol)
+  (let ((thing (if evil-cleverparens-are-parens-symbols-p
+                   'evil-symbol
+                 'evil-cp-symbol))
         (orig (point))
         (count (or count 1)))
     (evil-signal-at-bob-or-eob count)
@@ -1075,7 +1092,9 @@ movement."
   "Copy of `evil-forward-word-end' using 'evil-symbol for the
 movement."
   :type inclusive
-  (let ((thing 'evil-symbol)
+  (let ((thing (if evil-cleverparens-are-parens-symbols-p
+                   'evil-symbol
+                 'evil-cp-symbol))
         (count (or count 1)))
     (evil-signal-at-bob-or-eob count)
     (unless (and (evil-operator-state-p)
@@ -1091,7 +1110,9 @@ movement."
   "Copy of `evil-backward-word-begin' using 'evil-symbol for the
 movement."
   :type exclusive
-  (let ((thing 'evil-symbol))
+  (let ((thing (if evil-cleverparens-are-parens-symbols-p
+                   'evil-symbol
+                 'evil-cp-symbol)))
     (evil-signal-at-bob-or-eob (- (or count 1)))
     (evil-backward-beginning thing count)))
 
@@ -1099,7 +1120,9 @@ movement."
   "Copy of `evil-backward-word-end' using 'evil-symbol for the
 movement."
   :type inclusive
-  (let ((thing 'evil-symbol))
+  (let ((thing (if evil-cleverparens-are-parens-symbols-p
+                   'evil-symbol
+                 'evil-cp-symbol)))
     (evil-signal-at-bob-or-eob (- (or count 1)))
     (evil-backward-end thing count)))
 
@@ -1834,6 +1857,16 @@ This is a feature copied from `evil-smartparens'."
   of the point does not matter on line-wise operations. Setting
   this to nil will restore a more traditional `evil' like
   behavior."
+  :group 'evil-cleverparens
+  :type 'boolean)
+
+(defcustom evil-cleverparens-are-parens-symbols-p nil
+  "Determines whether parentheses and other delimiters are
+  considered symbols or not. The effect this has is that when
+  enabled (default), the by-symbol navigation commands happily
+  travel through these delimiters. This can be handy if you are
+  already used to using evil-cleverparenses parentheses navigation
+  commands."
   :group 'evil-cleverparens
   :type 'boolean)
 
