@@ -182,14 +182,12 @@ an empty form."
   "Predicate that returns true if point is inside a string."
   (save-excursion
     (when pos (goto-char pos))
-    (let ((pt (point)))
-      (when (not (or (= pt (point-max))
-                     (= pt (point-min))))
-       (let ((string-ppss (nth 3 (syntax-ppss))))
-         (or string-ppss
-             (progn
-               (forward-char)
-               (nth 3 (syntax-ppss)))))))))
+    (when (not (or (eobp) (bobp)))
+      (let ((string-ppss (nth 3 (syntax-ppss))))
+        (or string-ppss
+            (progn
+              (forward-char)
+              (nth 3 (syntax-ppss))))))))
 
 (defun evil-cp--inside-form-p (&optional pos)
   "Predicate that returns true if point is either inside a sexp
@@ -1623,9 +1621,7 @@ the top-level form and deletes the extra whitespace."
 (defun evil-cp--wrap-previous (pair count)
   (let ((pt-orig (point))
         (this-pair (evil-cp-pair-for pair)))
-    (when (and (sp-point-in-symbol)
-               ;; seems to be a bug in `sp-point-in-symbol'
-               (not (= pt-orig (point-max))))
+    (when (and (sp-point-in-symbol) (not (eobp))) ; bug in `sp-point-in-symbol'?
       (sp-get (sp-get-symbol)
         (goto-char :end)))
     (let ((start   (point))
@@ -1761,8 +1757,8 @@ insert-state in order to add a new function-call"
           (looking-at-p "[\n\t ]+")
           (sp-point-in-string-or-comment)
           (evil-cp--looking-at-empty-form)
-          (= (point-min) (point))
-          (= (point-max) (point))
+          (bobp)
+          (eobp)
           (not (and (looking-back "(")
                     (not (looking-back "'("))
                     (not (looking-back "#(")))))
