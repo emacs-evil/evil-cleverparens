@@ -1791,11 +1791,10 @@ to true."
   (cond
    ((or (evil-visual-state-p)
         (looking-at-p "[\n\t ]+")
-        (sp-point-in-string-or-comment)
-        (evil-cp--looking-at-empty-form)
         (bobp)
         (eobp)
-        )
+        (sp-point-in-string-or-comment)
+        (evil-cp--looking-at-empty-form))
     (call-interactively 'evil-insert))
    ((and (looking-back "(")
          (not (looking-back "'("))
