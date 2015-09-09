@@ -1065,9 +1065,9 @@ WORD is a sequence of non-whitespace characters
   "Copy of `evil-forward-word-begin' using 'evil-symbol for the
 movement."
   :type exclusive
-  (let ((thing (if evil-cleverparens-are-parens-symbols-p
-                   'evil-symbol
-                 'evil-cp-symbol))
+  (let ((thing (if evil-cleverparens-move-skip-delimiters
+                   'evil-cp-symbol
+                 'evil-symbol))
         (orig (point))
         (count (or count 1)))
     (evil-signal-at-bob-or-eob count)
@@ -1092,9 +1092,9 @@ movement."
   "Copy of `evil-forward-word-end' using 'evil-symbol for the
 movement."
   :type inclusive
-  (let ((thing (if evil-cleverparens-are-parens-symbols-p
-                   'evil-symbol
-                 'evil-cp-symbol))
+  (let ((thing (if evil-cleverparens-move-skip-delimiters
+                   'evil-cp-symbol
+                 'evil-symbol))
         (count (or count 1)))
     (evil-signal-at-bob-or-eob count)
     (unless (and (evil-operator-state-p)
@@ -1110,9 +1110,9 @@ movement."
   "Copy of `evil-backward-word-begin' using 'evil-symbol for the
 movement."
   :type exclusive
-  (let ((thing (if evil-cleverparens-are-parens-symbols-p
-                   'evil-symbol
-                 'evil-cp-symbol)))
+  (let ((thing (if evil-cleverparens-move-skip-delimiters
+                   'evil-cp-symbol
+                 'evil-symbol)))
     (evil-signal-at-bob-or-eob (- (or count 1)))
     (evil-backward-beginning thing count)))
 
@@ -1120,9 +1120,9 @@ movement."
   "Copy of `evil-backward-word-end' using 'evil-symbol for the
 movement."
   :type inclusive
-  (let ((thing (if evil-cleverparens-are-parens-symbols-p
-                   'evil-symbol
-                 'evil-cp-symbol)))
+  (let ((thing (if evil-cleverparens-move-skip-delimiters
+                   'evil-cp-symbol
+                 'evil-symbol)))
     (evil-signal-at-bob-or-eob (- (or count 1)))
     (evil-backward-end thing count)))
 
@@ -1888,7 +1888,7 @@ This is a feature copied from `evil-smartparens'."
   :group 'evil-cleverparens
   :type 'boolean)
 
-(defcustom evil-cleverparens-are-parens-symbols-p nil
+(defcustom evil-cleverparens-move-skip-delimiters true
   "Determines whether parentheses and other delimiters are
   considered symbols or not. The effect this has is that when
   enabled (default), the by-symbol navigation commands happily
