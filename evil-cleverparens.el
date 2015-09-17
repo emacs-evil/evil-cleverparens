@@ -2069,14 +2069,14 @@ and/or beginning."
 (defcustom evil-cleverparens-threshold 1500
   "If the region being operated on is larger than this we cop out.
 
-Quite a bit of work gets done to ensure the region being worked
-is in an safe state, so this lets us sarifice safety for a snappy
-editor on slower computers.
+   Quite a bit of work gets done to ensure the region being worked
+   is in an safe state, so this lets us sarifice safety for a snappy
+   editor on slower computers.
 
-Even on a large computer you shouldn't set this too high or your
-computer will freeze when copying large files out of Emacs.
+   Even on a large computer you shouldn't set this too high or your
+   computer will freeze when copying large files out of Emacs.
 
-This is a feature copied from `evil-smartparens'."
+   This is a feature copied from `evil-smartparens'."
   :group 'evil-cleverparens
   :type 'number)
 
