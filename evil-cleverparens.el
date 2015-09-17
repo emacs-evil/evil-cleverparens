@@ -6,7 +6,7 @@
 ;; URL: https://github.com/luxbock/evil-cleverparens
 ;; Keywords: cleverparens, parentheses, evil, paredit, smartparens
 ;; Version: 0.1.0
-;; Package-Requires: ((evil "1.0") (paredit "1") (paxedit "1.1.4") (drag-stuff "0.1.0") (smartparens "1.6.1"))
+;; Package-Requires: ((evil "1.0") (paredit "1") (smartparens "1.6.1"))
 ;;
 ;; This file is NOT part of GNU Emacs.
 ;;
@@ -27,8 +27,6 @@
 (require 'dash)
 (require 'evil)
 (require 'paredit)
-(require 'paxedit)
-(require 'drag-stuff)
 (require 'smartparens)
 (require 'subr-x)
 
@@ -589,15 +587,16 @@ region."
      ,@body
      (point)))
 
+(defun evil-cp--swap-regions (r1 r2)
+  "Transposes the regions where R1 and R2 are cons-pairs where
+the car is the start and the cdr is the end of each respective
+region."
+  (when (and r1 r2)
+    (transpose-regions (cdr-safe r1)
+                       (car-safe r1)
+                       (cdr-safe r2)
+                       (car-safe r2))))
 
-An action is either the symbol of a function or a two element
-list of (fn args) to pass to `apply''"
-  (save-excursion
-    (dolist (fn-and-args actions)
-      (let ((f (if (listp fn-and-args) (car fn-and-args) fn-and-args))
-            (args (if (listp fn-and-args) (cdr fn-and-args) nil)))
-        (apply f args)))
-    (point)))
 (defmacro evil-cp--movement-bounds (movement)
   (let ((beg (gensym))
         (end (gensym)))
@@ -1355,128 +1354,255 @@ parentheses in your buffer are balanced overall."
     (dotimes (_ n) (sp-forward-slurp-sexp)))))
 
 
-(defun evil-cp--line-safe-p (&optional move-fn)
-  "Predicate that checks if the line as defined by MOVE-FN is
-safe for transposing."
+(defun evil-cp--symbol-bounds ()
   (save-excursion
-    (when move-fn (funcall move-fn))
-    (let* ((beg (line-beginning-position))
-           (end (line-end-position))
-           (parsed (parse-partial-sexp beg end))
-           (sexps-ok-p (= (nth 0 parsed) 0))
-           (in-string-p (nth 3 parsed)))
-      (and sexps-ok-p (not in-string-p)))))
+    (if (looking-at-p "\\_<")
+        (evil-cp--sp-obj-bounds (sp-get-symbol))
+      (when (sp-point-in-symbol)
+        (evil-cp--sp-obj-bounds (sp-get-symbol))))))
 
-(defun evil-cp--transpose (this-fn)
-  "Transposes a sexp either forward or backward as defined by THIS-FN."
+(defun evil-cp--cant-forward-sexp-p ()
   (save-excursion
-    (when (evil-cp--looking-at-opening-p)
-      (forward-char))
-    (sp-end-of-sexp)
-    (funcall this-fn)))
+    (condition-case nil
+        (forward-sexp)
+      (error t))))
 
-(defun evil-cp-transpose-sexp-backward ()
-  "Transposes the sexp under point backward."
-  (interactive "p")
-  (evil-cp--transpose 'paxedit-transpose-backward))
+(defun evil-cp--cant-backward-sexp-p ()
+  (save-excursion
+    (condition-case nil
+        (backward-sexp)
+      (error t))))
 
-(defun evil-cp-transpose-sexp-forward ()
-  "Transposes the sexp under point forward."
-  (interactive "p")
-  (evil-cp--transpose 'paxedit-transpose-forward))
+(defun evil-cp--last-symbol-of-form-p ()
+  (save-excursion
+    (-when-let (end (cdr (evil-cp--symbol-bounds)))
+      (goto-char end)
+      (evil-cp--cant-forward-sexp-p))))
 
-(evil-define-command evil-cp-drag-up (count)
-  "If both the line where point is, and the line above it are
-balanced, this operation acts the same as `drag-stuff-up',
-i.e. it will swap the two lines with each other.
+(defun evil-cp--first-symbol-of-form-p ()
+  (save-excursion
+    (-when-let (beg (car (evil-cp--symbol-bounds)))
+      (goto-char beg)
+      (evil-cp--cant-backward-sexp-p))))
 
-If the point is on a top level sexp, it will be tranposed with
-the top level sexp above it.
+(defun evil-cp--first-form-of-form-p ()
+  (when (evil-cp--inside-any-form-p)
+    (save-excursion
+      (evil-cp--guard-point
+       (evil-cp-backward-up-sexp)
+       (evil-cp--cant-backward-sexp-p)))))
 
-If the point is inside a nested sexp then
-`paxedit-transpose-backward' is called."
+(defun evil-cp--last-form-of-form-p ()
+  (when (evil-cp--inside-any-form-p)
+    (save-excursion
+      (evil-cp--guard-point
+       (evil-cp--up-list)
+       (evil-cp--cant-forward-sexp-p)))))
+
+(defun evil-cp--next-thing-bounds* (by-line-p)
+  "Fetches the bounds for the next \"thing\" from the location of
+  point. The thing may be a symbol, a form, a line or a comment
+  block. When BY-LINE-P is true, defaults to swapping by line and
+  only swaps by form if the next line is not safe. May move the
+  point. Acts as a helper for `evil-cp--next-thing-bounds'."
+  (let* ((next-form
+          (save-excursion
+            (evil-cp--skip-whitespace-and-comments)
+            (evil-cp--movement-bounds (forward-sexp))))
+         (next-line
+          (or (when (not (= (point-at-eol) (point-max)))
+                (save-excursion
+                  (forward-line)
+                  (evil-cp--comment-block-bounds)))
+              (evil-cp--safe-line-bounds (forward-line)))))
+    (cond
+     (by-line-p (or next-line next-form))
+     (evil-cleverparens-drag-ignore-lines next-form)
+     ((and next-line next-form
+           (<= (cdr next-form) (cdr next-line)))
+      next-form)
+     (t (or next-line next-form)))))
+
+(defun evil-cp--previous-thing-bounds* (by-line-p)
+  "Fetches the bounds for the previous \"thing\" from the
+  location of point. The thing may be a symbol, a form, a line or
+  a comment block. When BY-LINE-P is true, defaults to swapping
+  by line and only swaps by form if the next line is not safe.
+  May move the point. Acts as a helper for
+  `evil-cp--previous-thing-bounds'."
+  (let ((prev-form
+         (save-excursion
+           (backward-sexp)
+           (when (not (bobp))
+             (evil-cp--next-sexp-bounds))))
+        (prev-line
+         (when (not (= (point-at-bol) (point-min)))
+           (or (save-excursion
+                 (forward-line -1)
+                 (evil-cp--comment-block-bounds))
+               (evil-cp--safe-line-bounds (forward-line -1))))))
+    (cond
+     (by-line-p (or prev-line prev-form))
+     (evil-cleverparens-drag-ignore-lines prev-form)
+     ((and prev-line prev-form
+           (>= (cdr prev-form) (cdr prev-line)))
+      prev-form)
+     (t (or prev-line prev-form)))))
+
+(defmacro evil-cp--next-thing-bounds (&optional movement by-line-p)
+  "Fetches the bounds for the next hing which may be a symbol, a
+form, a line or a comment block."
+  `(save-excursion
+     ,movement
+     (evil-cp--next-thing-bounds* ,by-line-p)))
+
+(defmacro evil-cp--previous-thing-bounds (&optional movement by-line-p)
+  "Fetches the bounds for the previous thing which may be a
+symbol, a form, a line or a comment block."
+  `(save-excursion
+     ,movement
+     (evil-cp--previous-thing-bounds* ,by-line-p)))
+
+(defun evil-cp--swap-with-next (this-bounds &optional by-line-p)
+  "Swaps the region defined by THIS-BOUNDS with the next thing
+from the end of THIS-BOUNDS."
+  (when this-bounds
+    (let ((that-bounds (evil-cp--next-thing-bounds
+                        (goto-char (cdr this-bounds))
+                        by-line-p)))
+      (if (not (= (point) (point-at-eol)))
+          (evil-cp--swap-regions this-bounds that-bounds)
+        (progn
+          (backward-char)
+          (evil-cp--swap-regions this-bounds that-bounds)
+          (forward-char)))
+      (when evil-cleverparens-indent-afterwards
+        (save-excursion
+          (goto-char (car this-bounds))
+          (evil-cp--backward-up-list t)
+          (indent-sexp))))))
+
+(defun evil-cp--swap-with-previous (this-bounds &optional by-line-p)
+  "Swaps the region defined by THIS-BOUNDS with the previous
+thing from the beginning of of THIS-BOUNDS."
+  (when this-bounds
+    (let ((that-bounds (evil-cp--previous-thing-bounds
+                        (goto-char (car this-bounds))
+                        by-line-p)))
+      (when that-bounds
+        (if (not (= (point) (point-at-eol)))
+            (evil-cp--swap-regions this-bounds that-bounds)
+          (backward-char)
+          (evil-cp--swap-regions this-bounds that-bounds)
+          (forward-char))
+        (when evil-cleverparens-indent-afterwards
+          (save-excursion
+            (goto-char (car that-bounds))
+            (evil-cp--backward-up-list t)
+            (indent-sexp)))))))
+
+(defun evil-cp--comment-block? ()
+  "Checks whether point is on a line that starts with whitespace
+or a comment."
+  (save-excursion
+    (evil-first-non-blank)
+    (looking-at-p sp-comment-char)))
+
+(defun evil-cp--comment-block-bounds (&optional pos)
+  "Gets the bounds for a comment block (i.e. a group of lines
+that start with whitespace or a comment)."
+  (save-excursion
+    (when pos (goto-char pos))
+    (when (evil-cp--comment-block?)
+      (let (beg end)
+        (save-excursion
+          (beginning-of-line)
+          (setq beg (point))
+          (while (and (not (bobp)) (evil-cp--comment-block?))
+            (forward-line -1)
+            (when (evil-cp--comment-block?) (setq beg (point)))))
+        (save-excursion
+          (end-of-line)
+          (setq end (point))
+          (while (and (not (eobp)) (evil-cp--comment-block?))
+            (forward-line 1)
+            (end-of-line)
+            (when (evil-cp--comment-block?) (setq end (point)))))
+        (cons beg end)))))
+
+(evil-define-command evil-cp-drag-forward (count)
+  ;; TODO: write better doc-strings
+  "Drags the thing under point forward. The thing can be either a
+symbol, a form, a line or a comment block. Does not mess with the
+depth of expressions by slurping or barfing. If the thing under
+point is at the end of a form then tries to drag its \"parent\"
+thing forward instead. Maintains the location of point relative
+to the thing being dragged."
   (interactive "<c>")
-  (setq count (or count 1))
-  (if (equal current-prefix-arg '(4))
-      ;; transpose top-level sexp
-      (save-excursion
-        (beginning-of-defun)
-        (sp-forward-sexp)
-        (backward-char)
-        (paxedit-transpose-backward))
-    (catch 'stop
-      (dotimes (_ count)
-        (let* ((beg (point-at-bol))
-               (end (point-at-eol))
-               (here-safe-p (sp-region-ok-p beg end))
-               (next-safe-p (save-excursion
-                              (forward-line -1)
-                              (sp-region-ok-p (point-at-bol)
-                                              (point-at-eol)))))
-          (cond
-           ;; swap lines
-           ((and here-safe-p next-safe-p)
-            (drag-stuff-up 1))
-           ;; transpose sexp
-           ((evil-cp--inside-sexp-p)
-            (evil-cp-transpose-sexp-backward))
-           ;; teleport line to the end of the top level sexp
-           (t
-            (let ((pos (current-column))
-                  (text (buffer-substring beg end)))
-              (delete-region beg (1+ end))
-              (sp-backward-sexp)
-              (insert text "\n")
-              (forward-line -1)
-              (beginning-of-line)
-              (forward-char pos)))))))))
+  ;; TODO: do something with universal-argument?
+  (if (evil-visual-state-p)
+      (let* ((v-range (evil-visual-range))
+             (linep   (eq 'line (evil-visual-type)))
+             (beg     (car v-range))
+             (end     (if linep (1- (cadr v-range)) (cadr v-range))))
+        ;; TODO: restore visual-state
+        (when (sp-region-ok-p beg end)
+          (evil-cp--swap-with-next (cons beg end) linep)))
+    (let (drag-by-line-p)
+      (evil-cp--swap-with-next
+       (let ((sym-bounds (evil-cp--symbol-bounds)))
+         (if (and sym-bounds
+                  (not (sp-point-in-string-or-comment))
+                  (not (evil-cp--last-symbol-of-form-p)))
+             sym-bounds
+           (if (evil-cp--inside-any-form-p)
+               (save-excursion
+                 (while (evil-cp--last-form-of-form-p)
+                   (when (evil-cp--looking-at-any-opening-p)
+                     (forward-char))
+                   (evil-cp--up-list))
+                 (evil-cp--get-enclosing-bounds))
+             (setq drag-by-line-p t)
+             (if (evil-cp--comment-block?)
+                 (evil-cp--comment-block-bounds)
+               (evil-cp--safe-line-bounds)))))
+       drag-by-line-p))))
 
-
-(evil-define-command evil-cp-drag-down (count)
-  "If both the line where point is, and the line below it are
-balanced, this operation acts the same as `drag-stuff-down',
-i.e. it will swap the two lines with each other.
-
-If the point is on a top level sexp, it will be tranposed with
-the top level sexp below it.
-
-If the point is inside a nested sexp then
-`paxedit-transpose-forward' is called."
+(evil-define-command evil-cp-drag-backward (count)
+  "Drags the thing under point backward. The thing can be either
+a symbol, a form, a line or a comment block. Does not mess with
+the depth of expressions by slurping or barfing. If the thing
+under point is at the beginning of a form then tries to drag its
+\"parent\" thing backward instead. Maintains the location of
+point relative to the thing being dragged."
   (interactive "<c>")
-  (setq count (or count 1))
-  (if (equal current-prefix-arg '(4))
-      ;; transpose top-level sexp
-      (save-excursion
-        ;; go to the last parent
-        (beginning-of-defun)
-        (sp-forward-sexp)
-        (backward-char)
-        (paxedit-transpose-forward))
-    (catch 'stop
-      (dotimes (_ count)
-        (let* ((beg (point-at-bol))
-               (end (point-at-eol))
-               (here-safe-p (sp-region-ok-p beg end))
-               (next-safe-p (save-excursion
-                              (forward-line 1)
-                              (sp-region-ok-p (point-at-bol)
-                                              (point-at-eol)))))
-          (cond
-           ;; swap lines
-           ((and here-safe-p next-safe-p)
-            (drag-stuff-down 1))
-           ;; transpose sexp
-           ((evil-cp--inside-sexp-p)
-            (evil-cp-transpose-sexp-forward))
-           ;; teleport line to the end of the top level sexp
-           (t
-            (let ((pos (current-column))
-                  (text (buffer-substring beg end)))
-              (delete-region beg (1+ end))
-              (sp-forward-sexp)
-              (insert "\n" text)
-              (beginning-of-line)
-              (forward-char pos)))))))))
+  (if (evil-visual-state-p)
+      (let* ((v-range (evil-visual-range))
+             (linep   (eq 'line (evil-visual-type)))
+             (beg     (car v-range))
+             (end     (if linep (1- (cadr v-range)) (cadr v-range))))
+        ;; TODO: restore visual-state
+        (when (sp-region-ok-p beg end)
+          (evil-cp--swap-with-previous (cons beg end) linep)))
+    (let (drag-by-line-p)
+      (evil-cp--swap-with-previous
+       (let ((sym-bounds (evil-cp--symbol-bounds)))
+         (if (and sym-bounds
+                  (not (sp-point-in-string-or-comment))
+                  (not (evil-cp--first-symbol-of-form-p)))
+             sym-bounds
+           (if (evil-cp--inside-any-form-p)
+               (save-excursion
+                 (when (not (evil-cp--looking-at-any-opening-p))
+                   (evil-cp--backward-up-list))
+                 (while (evil-cp--first-form-of-form-p)
+                   (evil-cp--backward-up-list))
+                 (evil-cp--next-sexp-bounds))
+             (setq drag-by-line-p t)
+             (if (evil-cp--comment-block?)
+                 (evil-cp--comment-block-bounds)
+               (evil-cp--safe-line-bounds)))))
+       drag-by-line-p))))
 
 
 (evil-define-operator evil-cp-substitute (beg end type register)
@@ -2036,6 +2162,18 @@ This is a feature copied from `evil-smartparens'."
   :group 'evil-cleverparens
   :type 'boolean)
 
+(defcustom evil-cleverparens-drag-ignore-lines nil
+  ""
+  :group 'evil-cleverparens
+  :type 'boolean)
+
+(defcustom evil-cleverparens-indent-afterwards t
+  "Controls whether to automatically indent when performing
+  commands that alter the structure of the surrounding code.
+  Enabled by default."
+  :group 'evil-cleverparens
+  :type 'boolean)
+
 (defcustom evil-cleverparens-use-regular-insert nil
   "Determines whether to use `evil-insert' or `evil-cp-insert'."
   :group 'evil-cleverparens
@@ -2125,8 +2263,8 @@ This is a feature copied from `evil-smartparens'."
 
 (defvar evil-cp-additional-bindings
   '(("M-t" . sp-transpose-sexp)
-    ("M-k" . evil-cp-drag-up)
-    ("M-j" . evil-cp-drag-down)
+    ("M-k" . evil-cp-drag-backward)
+    ("M-j" . evil-cp-drag-forward)
     ("M-J" . sp-join-sexp)
     ("M-s" . sp-splice-sexp)
     ("M-S" . sp-split-sexp)
