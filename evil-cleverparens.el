@@ -1158,15 +1158,30 @@ WORD is a sequence of non-whitespace characters
          (if (= pnt (point)) cnt 0)))
    #'forward-evil-empty-line))
 
-(evil-define-motion evil-cp-forward-symbol-begin (count)
-  "Copy of `evil-forward-word-begin' using 'evil-symbol for the
-movement."
-  :type exclusive
-  (let ((thing (if evil-cleverparens-move-skip-delimiters
-                   'evil-cp-symbol
-                 'evil-symbol))
-        (orig (point))
-        (count (or count 1)))
+;; incomplete
+(defun forward-evil-cp-word (&optional count)
+  "TODO: This is exactly the same as `forward-evil-word' and not used
+for anything right now. It would be nice to skip delimiters on
+the small-word movements as well but I couldn't figure out how to
+change this to make it work. Pull requests welcome."
+  (evil-forward-nearest
+   count
+   #'(lambda (&optional cnt)
+       (let ((word-separating-categories evil-cjk-word-separating-categories)
+             (word-combining-categories evil-cjk-word-combining-categories)
+             (pnt (point)))
+         (forward-word cnt)
+         (if (= pnt (point)) cnt 0)))
+   #'(lambda (&optional cnt)
+       (evil-forward-chars "^[:word:]\n\r\t\f " cnt))
+   #'forward-evil-empty-line))
+
+(defun evil-cp--forward-X-begin (thing count)
+  "TODO: see `forward-evil-cp-word' which is currently not
+working. Could be used to implement a future
+`evil-cp-forward-word-begin' the same way that
+`evil-cp-forward-symbol-begin' is defined."
+  (let ((orig (point)))
     (evil-signal-at-bob-or-eob count)
     (cond ((not (evil-operator-state-p))
            (evil-forward-beginning thing count))
@@ -1185,23 +1200,42 @@ movement."
                    (evil-move-end-of-line 0))
                  (when (bolp) (forward-char))))))))
 
+(evil-define-motion evil-cp-forward-symbol-begin (count)
+  :type exclusive
+  (evil-cp--forward-X-begin (if evil-cleverparens-move-skip-delimiters
+                                'evil-cp-symbol
+                              'evil-symbol)
+                            (or count 1)))
+
+(defun evil-cp--forward-X-end (thing count)
+  (evil-signal-at-bob-or-eob count)
+  (unless (and (evil-operator-state-p)
+               (= 1 count)
+               (let ((bnd (bounds-of-thing-at-point thing)))
+                 (and bnd
+                      (= (car bnd) (point))
+                      (= (cdr bnd) (1+ (point)))))
+               (looking-at "[[:word:]]"))
+    (evil-forward-end thing count)))
+
 (evil-define-motion evil-cp-forward-symbol-end (count)
   "Copy of `evil-forward-word-end' using 'evil-symbol for the
 movement."
   :type inclusive
+  (evil-cp--forward-X-end (if evil-cleverparens-move-skip-delimiters
+                              'evil-cp-symbol
+                            'evil-symbol)
+                          (or count 1)))
+
+(evil-define-motion evil-cp-backward-symbol-begin (count)
+  "Copy of `evil-backward-word-begin' using 'evil-symbol for the
+movement."
+  :type exclusive
   (let ((thing (if evil-cleverparens-move-skip-delimiters
                    'evil-cp-symbol
-                 'evil-symbol))
-        (count (or count 1)))
-    (evil-signal-at-bob-or-eob count)
-    (unless (and (evil-operator-state-p)
-                 (= 1 count)
-                 (let ((bnd (bounds-of-thing-at-point thing)))
-                   (and bnd
-                        (= (car bnd) (point))
-                        (= (cdr bnd) (1+ (point)))))
-                 (looking-at "[[:word:]]"))
-      (evil-forward-end thing count))))
+                 'evil-symbol)))
+    (evil-signal-at-bob-or-eob (- (or count 1)))
+    (evil-backward-beginning thing count)))
 
 (evil-define-motion evil-cp-backward-symbol-begin (count)
   "Copy of `evil-backward-word-begin' using 'evil-symbol for the
@@ -1983,7 +2017,7 @@ This is a feature copied from `evil-smartparens'."
   :group 'evil-cleverparens
   :type 'boolean)
 
-(defcustom evil-cleverparens-move-skip-delimiters true
+(defcustom evil-cleverparens-move-skip-delimiters t
   "Determines whether parentheses and other delimiters are
   considered symbols or not. The effect this has is that when
   enabled (default), the by-symbol navigation commands happily
