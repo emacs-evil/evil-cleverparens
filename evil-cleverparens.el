@@ -197,12 +197,14 @@ or a string."
 
 (defun evil-cp--top-level-form-p (&optional pos)
   "Predicate that returns true if point is inside a top-level sexp."
-  (evil-cp--guard-point
-   (let* ((ppss (syntax-ppss))
-          (n0   (nth 0 ppss))
-          (n3   (nth 3 ppss)))
-     (or (and (eq n0 1) (not n3)) ; top-level sexp
-         (and (eq n0 0) n3)))))    ; top-level string
+  (save-excursion
+    (when pos (goto-char pos))
+    (evil-cp--guard-point
+     (let* ((ppss (syntax-ppss))
+            (n0   (nth 0 ppss))
+            (n3   (nth 3 ppss)))
+       (or (and (eq n0 1) (not n3)) ; top-level sexp
+           (and (eq n0 0) n3))))))    ; top-level string
 
 (defun evil-cp--string-bounds (&optional pos)
   "Returns the location of the beginning and ending positions for
