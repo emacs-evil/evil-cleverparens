@@ -1793,9 +1793,11 @@ the top-level form and deletes the extra whitespace."
         (backward-char (- (point) pt-orig 1))))))
 
 (defun evil-cp-prefix-arg-count ()
-  "Gets the count for how many times the prefix argument was called with."
+  "Gets the count for how many times the prefix argument was
+invoked, i.e. for \\[universal-argument] \\[universal-argument]
+it would return 2."
   (when (consp current-prefix-arg)
-    (log (car current-prefix-arg) 4)))
+    (truncate (log (car current-prefix-arg) 4))))
 
 (evil-define-command evil-cp-wrap-next-round (count)
   "Wraps the next COUNT sexps inside parentheses. If the point is
@@ -1808,7 +1810,7 @@ many times the \\[universal-argument] was invoked."
   (interactive "<c>")
   (setq count (or count 1))
   (if (consp current-prefix-arg)
-      (let ((count (1+ (evil-cp-prefix-arg-count))))
+      (let ((count (evil-cp-prefix-arg-count)))
         (save-excursion
           (sp-backward-up-sexp)
           (evil-cp--wrap-next "(" count)))
@@ -1825,7 +1827,7 @@ many times the \\[universal-argument] was invoked."
   (interactive "<c>")
   (setq count (or count 1))
   (if (consp current-prefix-arg)
-      (let ((count (1+ (evil-cp-prefix-arg-count))))
+      (let ((count (evil-cp-prefix-arg-count)))
         (save-excursion
           (sp-up-sexp)
           (evil-cp--wrap-previous "(" count)))
@@ -1842,7 +1844,7 @@ many times the \\[universal-argument] was invoked."
   (interactive "<c>")
   (setq count (or count 1))
   (if (consp current-prefix-arg)
-      (let ((count (1+ (evil-cp-prefix-arg-count))))
+      (let ((count (evil-cp-prefix-arg-count)))
         (save-excursion
           (sp-backward-up-sexp)
           (evil-cp--wrap-next "[" count)))
@@ -1859,7 +1861,7 @@ many times the \\[universal-argument] was invoked."
   (interactive "<c>")
   (setq count (or count 1))
   (if (consp current-prefix-arg)
-      (let ((count (1+ (evil-cp-prefix-arg-count))))
+      (let ((count (evil-cp-prefix-arg-count)))
         (save-excursion
           (sp-up-sexp)
           (evil-cp--wrap-previous "[" count)))
@@ -1876,7 +1878,7 @@ many times the \\[universal-argument] was invoked."
   (interactive "<c>")
   (setq count (or count 1))
   (if (consp current-prefix-arg)
-      (let ((count (1+ (evil-cp-prefix-arg-count))))
+      (let ((count (evil-cp-prefix-arg-count)))
         (save-excursion
           (sp-backward-up-sexp)
           (evil-cp--wrap-next "{" count)))
@@ -1893,7 +1895,7 @@ how many times the \\[universal-argument] was invoked."
   (interactive "<c>")
   (setq count (or count 1))
   (if (consp current-prefix-arg)
-      (let ((count (1+ (evil-cp-prefix-arg-count))))
+      (let ((count (evil-cp-prefix-arg-count)))
         (save-excursion
           (sp-up-sexp)
           (evil-cp--wrap-previous "{" count)))
