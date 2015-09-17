@@ -1060,8 +1060,9 @@ level sexp)."
     (if (evil-cp--looking-at-closing-p)
         (forward-char 2))
     (end-of-defun count)
-    (backward-char 2)))
+    (backward-char (if (eobp) 1 2))))
 
+;; TODO: this looks ugly
 (defun evil-cp--paren-navigation-helper (move-dir paren-side)
   (let ((move-fn (case move-dir
                    (:next 'forward-char)
