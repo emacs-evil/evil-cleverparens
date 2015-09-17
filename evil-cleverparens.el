@@ -679,48 +679,6 @@ Copied from `evil-smartparens'."
                     (end (evil-cp--new-ending beg end)))
                (evil-yank beg end type register yank-handler))))))
 
-(defun evil-yank-inner-sexp-line-handler (text)
-  (let* ((pcount  (or evil-paste-count 1))
-         (add-nls (cdr (-interleave (make-list pcount "\n")
-                                    (make-list pcount (s-trim text)))))
-         (text*    (apply #'concat add-nls))
-         (opoint))
-    (remove-list-of-text-properties
-     0 (length text*) yank-excluded-properties text*)
-    (cond
-     ((and (eq this-command 'evil-paste-before)
-           (evil-cp--inside-any-form-p))
-      (when (not (evil-cp--looking-at-any-opening-p))
-        (evil-cp-backward-up-sexp))
-      (setq opoint (point))
-      (insert text* "\n")
-      (goto-char opoint)
-      (indent-region
-       (point)
-       (save-excursion
-         (sp-forward-sexp (1+ pcount))
-         (point))))
-     ((and (eq this-command 'evil-paste-after)
-           (evil-cp--inside-any-form-p))
-      (when (evil-cp--looking-at-any-opening-p)
-        (forward-char))
-      (sp-up-sexp)
-      (setq opoint (point))
-      (insert "\n" text*)
-      (indent-region opoint (point)))
-     ((eq this-command 'evil-paste-after)
-      (end-of-line)
-      (insert "\n" text*)
-      (sp-backward-sexp pcount))
-     ((eq this-command 'evil-paste-before)
-      (beginning-of-line)
-      (setq opoint (point))
-      (insert text* "\n")
-      (indent-region opoint (point))
-      (sp-backward-sexp pcount))
-     (t
-      (insert text)))))
-
 (evil-define-operator evil-cp-yank (beg end type register yank-handler)
   "Saves the characters in motion into the kill-ring while
 respecting parentheses."
@@ -752,15 +710,11 @@ respecting parentheses."
      ((and (eq type 'line)
            evil-cleverparens-complete-parens-in-yanked-region)
       (evil-cp--yank-characters beg end register
-                                (if evil-cleverparens-paste-lines-back-as-forms
-                                    #'evil-yank-inner-sexp-line-handler
-                                  #'evil-yank-line-handler)))
+                                'evil-yank-line-handler))
 
      ((eq type 'line)
       (evil-cp--ignoring-yank beg end type register
-                              (if evil-cleverparens-paste-lines-back-as-forms
-                                  #'evil-yank-inner-sexp-line-handler
-                                #'evil-yank-line-handler)))
+                              'evil-yank-line-handler))
 
      ;; unbalanced, fill missing
      (evil-cleverparens-complete-parens-in-yanked-region
@@ -2131,17 +2085,6 @@ This is a feature copied from `evil-smartparens'."
   unbalanced expressions. If this value is non-nil, a yanked
   region containing missing parentheses will include the missing
   parens appended to the end."
-  :group 'evil-cleverparens
-  :type 'boolean)
-
-(defcustom evil-cleverparens-paste-lines-back-as-forms t
-  "Controls the behavior of pasting back line-wise yanks of
-  incomplete forms. Pasting as forms means that the form in
-  kill-ring gets inserted before / after the form the point is
-  currently in. This is different from `evil' where the position
-  of the point does not matter on line-wise operations. Setting
-  this to nil will restore a more traditional `evil' like
-  behavior."
   :group 'evil-cleverparens
   :type 'boolean)
 
