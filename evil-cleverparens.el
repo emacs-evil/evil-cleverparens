@@ -218,6 +218,75 @@ point to that location."
             (forward-char)
             (sp-get-quoted-string-bounds))))))
 
+(defun evil-cp--skip-whitespace-and-comments ()
+  "Skips whitespace and comments forward."
+  (let ((ws-regex "[ \n\r\t]"))
+    (while (or (looking-at ws-regex))
+      (skip-chars-forward ws-regex)
+      (when (looking-at sp-comment-char)
+        (forward-line)))))
+
+(defun evil-cp--backward-up-list (&optional ignore-strings-p)
+  "Workaround for `backward-up-list' not working inside strings.
+If IGNORE-STRINGS-P is t then strings are ignored when moving up.
+Otherwise they are treated as lists. Returns the location of
+point when the operation was successful."
+  (interactive)
+  (when (let ((sppss (syntax-ppss)))
+          (or (not (zerop (car sppss)))
+              (nth 3 sppss)))
+    (if (not (in-string-p))
+        (progn
+          (backward-up-list)
+          (point))
+      (when (not (and ignore-strings-p (evil-cp--top-level-form-p)))
+        (while (in-string-p)
+          (backward-char))
+        (when ignore-strings-p
+          (backward-up-list))
+        (point)))))
+
+(defun evil-cp--up-list (&optional ignore-strings-p)
+  "Workaround for `up-list' not working inside strings. If
+IGNORE-STRINGS-P is t then strings are ignored when moving up.
+Otherwise they are treated as lists. Returns the location of
+point when the operation was successful."
+  (interactive)
+  (when (let ((sppss (syntax-ppss)))
+          (or (not (zerop (car sppss)))
+              (nth 3 sppss)))
+    (if (not (in-string-p))
+        (progn
+          (up-list)
+          (point))
+      (when (not (and ignore-strings-p (evil-cp--top-level-form-p)))
+        (while (in-string-p)
+          (forward-char))
+        (when ignore-strings-p
+          (up-list))
+        (point)))))
+
+(defun evil-cp--top-level-bounds (&optional pos)
+  "Returns the bounds for the top-level form point is in, or POS
+if given. Note that this is different from defun-bounds, as defun
+would ignore top-level forms that are on the same line."
+  (save-excursion
+    (when pos (goto-char pos))
+    (when (evil-cp--inside-form-p)
+      (catch 'done
+        (while t
+          (evil-cp--backward-up-list)
+          (when (evil-cp--top-level-form-p)
+            (throw 'done (cons (point) (forward-list)))))))))
+
+(defun evil-cp--beginning-of-top-level ()
+  (when (evil-cp--inside-form-p)
+    (goto-char (car (evil-cp--top-level-bounds)))))
+
+(defun evil-cp--end-of-top-level ()
+  (when (evil-cp--inside-form-p)
+    (goto-char (cdr (evil-cp--top-level-bounds)))))
+
 (defun evil-cp--matching-paren-pos (&optional pos)
   "Finds the location of the matching paren for where point is
 located. Also works for strings. Takes an optional POS argument
@@ -280,6 +349,12 @@ balanced parentheses."
             (sp-get-string t)
           (sp-get-enclosing-sexp)))))))
 
+(defun evil-cp--next-sexp-bounds (&optional pos)
+  (save-excursion
+    (when pos (goto-char pos))
+    (when (or (evil-cp--looking-at-any-opening-p)
+              (looking-at-p "\\b"))
+      (evil-cp--movement-bounds (forward-sexp)))))
 
 (evil-define-text-object evil-cp-a-form (count &optional beg end type)
   "Smartparens sexp object."
@@ -508,8 +583,12 @@ region."
       (unless (eq register ?_)
         (kill-new text)))))
 
-(defun evil-cp--point-after (&rest actions)
-  "Return POINT after performing ACTIONS.
+(defmacro evil-cp--point-after (&rest body)
+  "Return location of point after performing body."
+  `(save-excursion
+     ,@body
+     (point)))
+
 
 An action is either the symbol of a function or a two element
 list of (fn args) to pass to `apply''"
@@ -519,6 +598,24 @@ list of (fn args) to pass to `apply''"
             (args (if (listp fn-and-args) (cdr fn-and-args) nil)))
         (apply f args)))
     (point)))
+(defmacro evil-cp--movement-bounds (movement)
+  (let ((beg (gensym))
+        (end (gensym)))
+    `(let ((,beg (point))
+           (,end (evil-cp--point-after ,movement)))
+       (when (not (= ,beg ,end))
+         (cons ,beg ,end)))))
+
+(defmacro evil-cp--safe-line-bounds (&rest body)
+  "Performs the actions in BODY and checks if the line where
+point lands is a safe region, in which case its bounds are
+returned."
+  `(save-excursion
+     ,@body
+     (let ((pbol (point-at-bol))
+           (peol (point-at-eol)))
+       (when (and (sp-region-ok-p pbol peol))
+         (cons pbol peol)))))
 
 (defun evil-cp--new-beginning (beg end &optional shrink)
   "Return a new value for BEG if POINT is inside an empty sexp.
@@ -530,7 +627,8 @@ Copied from `evil-smartparens'."
   (if (not shrink)
       (min beg
            (if (sp-point-in-empty-sexp)
-               (evil-cp--point-after 'sp-backward-up-sexp)
+               (evil-cp--point-after
+                (sp-backward-up-sexp))
              (point-max)))
 
     (let ((region (string-trim (buffer-substring-no-properties beg end))))
