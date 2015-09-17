@@ -171,7 +171,7 @@ an empty form."
    (or (sp-point-in-empty-sexp)
        (sp-point-in-empty-string))))
 
-(defun evil-cp--inside-sexp-p (&optional pos)
+(defun evil-cp--inside-form-p (&optional pos)
   "Predicate for checking if point is inside a sexp."
   (save-excursion
     (when pos (goto-char pos))
@@ -189,13 +189,13 @@ an empty form."
               (forward-char)
               (nth 3 (syntax-ppss))))))))
 
-(defun evil-cp--inside-form-p (&optional pos)
+(defun evil-cp--inside-any-form-p (&optional pos)
   "Predicate that returns true if point is either inside a sexp
 or a string."
-  (or (evil-cp--inside-sexp-p pos)
+  (or (evil-cp--inside-form-p pos)
       (evil-cp--inside-string-p pos)))
 
-(defun evil-cp--top-level-sexp-p ()
+(defun evil-cp--top-level-form-p (&optional pos)
   "Predicate that returns true if point is inside a top-level sexp."
   (evil-cp--guard-point
    (let* ((ppss (syntax-ppss))
@@ -263,33 +263,37 @@ balanced parentheses."
 
 ;; The symbol text object already exists at "o"
 
-(defun evil-cp--get-form-range (&optional pos)
+(defun evil-cp--sp-obj-bounds (thing)
+  (sp-get thing
+    (when :beg (cons :beg :end))))
+
+(defun evil-cp--get-enclosing-bounds (&optional pos)
   "Returns a tuple of start/end positions for the surrounding sexp."
-  (when (evil-cp--inside-form-p)
+  (when (evil-cp--inside-any-form-p)
+    (when pos (goto-char pos))
     (save-excursion
       (evil-cp--guard-point
-       (let ((pos (or pos (point))))
-         (let* ((obj (if (sp-point-in-string pos)
-                         (sp-get-string t)
-                       (sp-get-enclosing-sexp))))
-           (list (sp-get obj :beg)
-                 (sp-get obj :end))))))))
+       (evil-cp--sp-obj-bounds
+        (if (sp-point-in-string (point))
+            (sp-get-string t)
+          (sp-get-enclosing-sexp)))))))
+
 
 (evil-define-text-object evil-cp-a-form (count &optional beg end type)
   "Smartparens sexp object."
-  (let* ((bounds (evil-cp--get-form-range)))
+  (let* ((bounds (evil-cp--get-enclosing-bounds)))
     (if (not bounds)
         (error "No surrounding form found.")
       ;; I'm not sure what difference 'inclusive / 'exclusive makes here
-      (evil-range (car bounds) (cadr bounds) 'inclusive :expanded t))))
+      (evil-range (car bounds) (cdr bounds) 'inclusive :expanded t))))
 
 (evil-define-text-object evil-cp-inner-form (count &optional beg end type)
   "Smartparens inner sexp object."
-  (let ((range (evil-cp--get-form-range)))
+  (let ((range (evil-cp--get-enclosing-bounds)))
     (if (not range)
         (error "No surrounding form found.")
       (let ((beg (car range))
-            (end (cadr range)))
+            (end (cdr range)))
         (evil-range (1+ beg) (1- end) 'inclusive :expanded t)))))
 
 (evil-define-text-object evil-cp-a-comment (count &optional beg end type)
@@ -319,24 +323,16 @@ balanced parentheses."
 
 (evil-define-text-object evil-cp-a-defun (count &optional beg end type)
   "An outer text object for a top level sexp (defun)."
-  (if (evil-cp--inside-sexp-p)
-      (let ((bounds
-             (save-excursion
-               (evil-cp--guard-point
-                (beginning-of-defun)
-                (sp-get (sp-get-sexp) (list :beg :end))))))
-        (evil-range (car bounds) (cadr bounds) 'inclusive :expanded t))
+  (if (evil-cp--inside-form-p)
+      (let ((bounds (evil-cp--top-level-bounds)))
+        (evil-range (car bounds) (cdr bounds) 'inclusive :expanded t))
     (error "Not inside a sexp.")))
 
 (evil-define-text-object evil-cp-inner-defun (count &optional beg end type)
   "An inner text object for a top level sexp (defun)."
-  (if (evil-cp--inside-sexp-p)
-      (let ((bounds
-             (save-excursion
-               (when (evil-cp--inside-sexp-p)
-                 (beginning-of-defun)
-                 (sp-get (sp-get-sexp) (list :beg :end-in))))))
-        (evil-range (1+ (car bounds)) (cadr bounds) 'inclusive :expanded t))
+  (if (evil-cp--inside-form-p)
+      (let ((bounds (evil-cp--top-level-bounds)))
+        (evil-range (1+ (car bounds)) (1- (cdr bounds)) 'inclusive :expanded t))
     (error "Not inside a sexp.")))
 
 
@@ -594,7 +590,7 @@ Copied from `evil-smartparens'."
      0 (length text*) yank-excluded-properties text*)
     (cond
      ((and (eq this-command 'evil-paste-before)
-           (evil-cp--inside-form-p))
+           (evil-cp--inside-any-form-p))
       (when (not (evil-cp--looking-at-any-opening-p))
         (evil-cp-backward-up-sexp))
       (setq opoint (point))
@@ -606,7 +602,7 @@ Copied from `evil-smartparens'."
          (sp-forward-sexp (1+ pcount))
          (point))))
      ((and (eq this-command 'evil-paste-after)
-           (evil-cp--inside-form-p))
+           (evil-cp--inside-any-form-p))
       (when (evil-cp--looking-at-any-opening-p)
         (forward-char))
       (sp-up-sexp)
@@ -1149,7 +1145,7 @@ forward-barf."
   (interactive "p")
   (cond
 
-   ((not (evil-cp--inside-form-p))
+   ((not (evil-cp--inside-any-form-p))
     nil)
 
    ((evil-cp--looking-at-any-opening-p)
@@ -1196,7 +1192,7 @@ If you are having problems with this function, make sure that the
 parentheses in your buffer are balanced overall."
   (interactive "p")
   (cond
-   ((not (evil-cp--inside-form-p))
+   ((not (evil-cp--inside-any-form-p))
     nil)
 
    ((and (evil-cp--looking-at-any-opening-p)
@@ -1393,9 +1389,10 @@ of the top level form."
 
 (defun evil-cp--defun-bounds ()
   (save-excursion
-    (beginning-of-defun)
-    (forward-char)
-    (sp-get (sp-get-enclosing-sexp) (list :beg :end))))
+    (when (not (and (evil-cp--looking-at-any-opening-p)
+                    (evil-cp--top-level-form-p)))
+      (beginning-of-defun))
+    (evil-cp--sp-obj-bounds (sp-get-sexp))))
 
 (defun evil-cp-copy-paste-form (&optional arg)
   "Copies the surrounding form and inserts it below itself. If
@@ -1406,15 +1403,13 @@ sexp regardless of what level the point is currently at."
          (bounds
           (if prefixp
               (evil-cp--defun-bounds)
-            (evil-cp--guard-point
-             (sp-get (sp-get-enclosing-sexp)
-               (list :beg :end)))))
+            (evil-cp--get-enclosing-bounds)))
          (beg (car bounds))
-         (end (cadr bounds))
-         (offset (- end (point)))
+         (end (cdr bounds))
+         (offset (1+ (- end (point))))
          (text (buffer-substring-no-properties beg end)))
     (when (and beg end)
-      (if (or prefixp (evil-cp--top-level-sexp-p))
+      (if (or prefixp (evil-cp--top-level-form-p))
           (progn
             (end-of-defun)
             (insert "\n" text "\n"))
@@ -1437,7 +1432,7 @@ times that the inserted text gets output into the buffer, unlike
 in `evil-open-below'."
   (interactive "<c>")
   (setq count (or count 1))
-  (if (not (evil-cp--inside-form-p))
+  (if (not (evil-cp--inside-any-form-p))
       (progn
         (insert "\n\n")
         (forward-line -1)
@@ -1445,7 +1440,7 @@ in `evil-open-below'."
     (sp-up-sexp count)
     (if (save-excursion
           (backward-char)
-          (evil-cp--top-level-sexp-p))
+          (evil-cp--top-level-form-p))
         (insert "\n\n")
       (insert "\n"))
     (indent-according-to-mode)
@@ -1463,7 +1458,7 @@ in `evil-open-below'."
   (setq count (or count 1))
   (sp-backward-up-sexp count)
   (save-excursion
-    (if (evil-cp--top-level-sexp-p)
+    (if (evil-cp--top-level-form-p)
         (insert "\n\n")
       (insert "\n"))
     (indent-according-to-mode)
@@ -1471,13 +1466,13 @@ in `evil-open-below'."
 
 (defun evil-cp--kill-sexp-range (count)
   (save-excursion
-    (when (not (evil-cp--inside-form-p))
+    (when (not (evil-cp--inside-any-form-p))
       (sp-forward-whitespace))
     (let* ((beg       (point))
            (end       (point))
-           (enc-range (evil-cp--get-form-range))
+           (enc-range (evil-cp--get-enclosing-bounds))
            (e-beg     (or (car enc-range) (point)))
-           (e-end     (or (cadr enc-range) (point)))
+           (e-end     (or (cdr enc-range) (point)))
            (n         (or count 1))
            (ok        t))
       (while (and (> n 0) ok)
@@ -1502,7 +1497,7 @@ called with \\[universal-argument], copies everything from point
 to the end of the the current form."
   (interactive "<c><x>")
   (if (and (equal current-prefix-arg '(4))
-           (evil-cp--inside-form-p))
+           (evil-cp--inside-any-form-p))
       (sp-get (sp-get-enclosing-sexp)
         (evil-yank-characters (point) (1- :end)))
     (let* ((range (evil-cp--kill-sexp-range count))
@@ -1517,7 +1512,7 @@ version of `evil-cp-delete-line'. When called with
 of the the current form."
   (interactive "<c><x>")
   (if (and (equal current-prefix-arg '(4))
-           (evil-cp--inside-form-p))
+           (evil-cp--inside-any-form-p))
       (sp-get (sp-get-enclosing-sexp)
         (evil-cp--del-characters (point) (1- :end)))
     (let* ((range (evil-cp--kill-sexp-range count))
@@ -1545,7 +1540,7 @@ yanks the top-level form and deletes the leftover whitespace,
 while adding a yank-handler that inserts two newlines at the end
 and beginning of the copied top-level form."
   (interactive "<c><x>")
-  (when (evil-cp--inside-form-p)
+  (when (evil-cp--inside-any-form-p)
     (save-excursion
       (if (equal current-prefix-arg '(4))
           (progn
@@ -1566,7 +1561,7 @@ and beginning of the copied top-level form."
 upwards instead. When called with a raw prefix argument, kills
 the top-level form and deletes the extra whitespace."
   (interactive "<c><x>")
-  (when (evil-cp--inside-form-p)
+  (when (evil-cp--inside-any-form-p)
     (if (equal current-prefix-arg '(4))
         (progn
           (beginning-of-defun)
@@ -1588,7 +1583,7 @@ the top-level form and deletes the extra whitespace."
 (evil-define-command evil-cp-change-enclosing (count &optional register)
   "Calls `evil-cp-delete-enclosing' and enters insert-state."
   (interactive "<c><x>")
-  (when (evil-cp--inside-form-p)
+  (when (evil-cp--inside-any-form-p)
     (evil-cp-delete-enclosing count register)
     (when (equal current-prefix-arg '(4))
       (insert "\n\n")
@@ -1601,7 +1596,7 @@ the top-level form and deletes the extra whitespace."
   (interactive "P")
   (let ((count (or count 1)))
     (dotimes (_ count)
-      (when (evil-cp--inside-form-p)
+      (when (evil-cp--inside-any-form-p)
         (save-excursion
           (evil-cp--guard-point
            (sp-beginning-of-sexp))
