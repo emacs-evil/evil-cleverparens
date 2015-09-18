@@ -19,6 +19,9 @@
 ;; otherwise be destructive.
 
 ;; TODO: text-objects break when they contain strings with delimiters
+;; TODO: dragging: restore visual-state if it was used
+;; TODO: move by evil-cp-word should work by skipping delimiters as well
+;; TODO: separate out the text-objects into a separate file
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1542,7 +1545,6 @@ that start with whitespace or a comment)."
         (cons beg end)))))
 
 (evil-define-command evil-cp-drag-forward (count)
-  ;; TODO: write better doc-strings
   "Drags the thing under point forward. The thing can be either a
 symbol, a form, a line or a comment block. Does not mess with the
 depth of expressions by slurping or barfing. If the thing under
@@ -1550,13 +1552,11 @@ point is at the end of a form then tries to drag its \"parent\"
 thing forward instead. Maintains the location of point relative
 to the thing being dragged."
   (interactive "<c>")
-  ;; TODO: do something with universal-argument?
   (if (evil-visual-state-p)
       (let* ((v-range (evil-visual-range))
              (linep   (eq 'line (evil-visual-type)))
              (beg     (car v-range))
              (end     (if linep (1- (cadr v-range)) (cadr v-range))))
-        ;; TODO: restore visual-state
         (when (sp-region-ok-p beg end)
           (evil-cp--swap-with-next (cons beg end) linep)))
     (let (drag-by-line-p)
@@ -1592,7 +1592,6 @@ point relative to the thing being dragged."
              (linep   (eq 'line (evil-visual-type)))
              (beg     (car v-range))
              (end     (if linep (1- (cadr v-range)) (cadr v-range))))
-        ;; TODO: restore visual-state
         (when (sp-region-ok-p beg end)
           (evil-cp--swap-with-previous (cons beg end) linep)))
     (let (drag-by-line-p)
@@ -1627,7 +1626,6 @@ point relative to the thing being dragged."
     (evil-insert 1))
    (t (evil-substitute beg end type register))))
 
-
 (evil-define-command evil-cp-insert-at-end-of-form (count)
   "Move point COUNT times with `sp-forward-sexp' and enter insert
 mode at the end of form. Using an arbitrarily large COUNT is
@@ -1647,7 +1645,6 @@ insert mode at the beginning of the form. Using an arbitrarily
 large COUNT is guaranteened to take the point to the beginning
 of the top level form."
   (interactive "<c>")
-  ;; TODO: fails if the sexp contains a string with an open paren
   (let ((defun-beginning
           (save-excursion
             (beginning-of-defun)
