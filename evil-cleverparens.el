@@ -1244,9 +1244,65 @@ movement."
     (evil-signal-at-bob-or-eob (- (or count 1)))
     (evil-backward-end thing count)))
 
+
 ;;; Additional Operations ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun evil-cp-< (n)
+;; This is a lot slower than the approach below, but should behave correctly
+;; with modes that use `sp-sexp-prefix'. Might be worth re-writing in the
+;; future.
+(defun evil-cp--slurp-backward-from-opening ()
+  (catch 'abort
+    (let ((depth 1))
+      (save-excursion
+        (while (evil-cp--first-form-of-form-p)
+          (evil-cp--backward-up-list)
+          (cl-incf depth))
+        (when (= (evil-cp--point-after (backward-sexp)) 1)
+          (throw 'abort nil)))
+      (forward-char)
+      (dotimes (_ depth)
+        (sp-backward-slurp-sexp))
+      (backward-sexp)
+      (backward-char))))
+
+(defun evil-cp--slurp-forward-from-closing ()
+  (let* ((pt (point))
+         (next-thing
+          (save-excursion
+            (while (evil-cp--last-form-of-form-p)
+              (evil-cp--up-list))
+            (evil-cp--up-list)
+            (when (not (eq :eobp (evil-cp--skip-whitespace-and-comments)))
+              (evil-cp--movement-bounds (forward-sexp)))))
+         delims)
+    (when next-thing
+      (save-excursion
+        (goto-char (1- (car next-thing)))
+        (while (<= pt (point))
+          (when (and (evil-cp--looking-at-any-closing-p)
+                     (not (evil-cp--point-in-string-or-comment)))
+            (push (following-char) delims)
+            (delete-char 1))
+          (backward-char)))
+      (evil-cp--skip-whitespace-and-comments)
+      (forward-sexp)
+      (insert (apply #'string delims))
+      (backward-char (length delims))
+      (save-excursion
+        (goto-char pt)
+        (evil-cp--backward-up-list)
+        (indent-sexp)))))
+
+(defun evil-cp--singleton-list-p ()
+  "Checks that the list the point is in contains more than one
+sexp inside it. Should not be called in an empty list."
+  (when (evil-cp--inside-any-form-p)
+    (save-excursion
+      (goto-char (1+ (car (evil-cp--get-enclosing-bounds))))
+      (forward-sexp)
+      (evil-cp--cant-forward-sexp-p))))
+
+(evil-define-command evil-cp-< (count)
   "Slurping/barfing operation that acts differently based on the points
 location in the form.
 
@@ -1264,82 +1320,49 @@ in the original delimiter.
 
 When point is in the middle of a form, it will act as a regular
 forward-barf."
-  (interactive "p")
-  (cond
+  (interactive "<c>")
+  (setq count (or count 1))
+  (when (evil-cp--inside-any-form-p)
+    (dotimes (_ count)
+      (cond
+       ((evil-cp--looking-at-any-opening-p)
+        (evil-cp--slurp-backward-from-opening))
+       ((evil-cp--looking-at-any-closing-p)
+        (when (not (sp-point-in-empty-sexp))
+          (when (not (evil-cp--singleton-list-p))
+            (sp-forward-barf-sexp)
+            (sp-backward-sexp)
+            (evil-cp-previous-closing))))
+       ((evil-cp--singleton-list-p)
+        (save-excursion
+          (while (and (evil-cp--singleton-list-p)
+                      (not (evil-cp--outside-form-p)))
+            (evil-cp--backward-up-list))
+          (when (not (evil-cp--singleton-list-p))
+            (forward-char)
+            (sp-forward-barf-sexp))))
+       (t
+        (sp-forward-barf-sexp)
+        (sp-backward-sexp)
+        (evil-cp-previous-closing))))))
 
-   ((not (evil-cp--inside-any-form-p))
-    nil)
-
-   ((evil-cp--looking-at-any-opening-p)
-    (condition-case nil
-        (dotimes (_ n)
-          (evil-cp--guard-point (sp-backward-slurp-sexp))
-          (sp-backward-sexp)
-          (evil-cp-previous-opening))
-      (error nil)))
-
-   ((and (evil-cp--looking-at-closing-p)
-         (sp-point-in-empty-sexp))
-    nil)
-
-   ((evil-cp--looking-at-any-closing-p)
-    (condition-case nil
-        (dotimes (_ n)
-          (sp-forward-barf-sexp)
-          (sp-backward-sexp)
-          (evil-cp-previous-closing))
-      (error nil)))
-
-   (t (sp-forward-barf-sexp n))))
-
-(defun evil-cp-> (n)
-  "Slurping/barfing operation that acts differently based on the points
-location in the form.
-
-When point is on the opening delimiter of the form boundary, it will
-bafr the first element of the sexp out while maintaining the location of the
-point in the delimiter where the command was called from.
-
-  [(]foo bar baz) -> foo [(]bar baz)
-
-When point is on the closing delimiter, it will slurp the next element
-forward while maintaining the location of point in the original delimiter.
-
-  (bar baz[)] foo -> (bar baz foo[)]
-
-When point is in the middle of a form, it will act as a regular
-forward-slurp.
-
-If you are having problems with this function, make sure that the
-parentheses in your buffer are balanced overall."
-  (interactive "p")
-  (cond
-   ((not (evil-cp--inside-any-form-p))
-    nil)
-
-   ((and (evil-cp--looking-at-any-opening-p)
-         (evil-cp--looking-at-empty-form))
-    nil)
-
-   ((evil-cp--looking-at-any-opening-p)
-    (condition-case nil
-        (dotimes (_ n)
-          (evil-cp--guard-point (sp-backward-barf-sexp))
+(evil-define-command evil-cp-> (count)
+  (interactive "<c>")
+  (setq count (or count 1))
+  (when (evil-cp--inside-any-form-p)
+    (dotimes (_ count)
+      (cond
+       ((evil-cp--looking-at-any-closing-p)
+        (evil-cp--slurp-forward-from-closing))
+       ((evil-cp--looking-at-any-opening-p)
+        (when (not (or (evil-cp--looking-at-empty-form)
+                       (evil-cp--singleton-list-p)))
+          (forward-char)
+          (sp-backward-barf-sexp)
           (sp-forward-sexp)
-          ;; in case we end up with empty sexp
-          (when (not (evil-cp--looking-at-empty-form))
-            (evil-cp-next-opening)))
-      (error nil)))
-
-   ((evil-cp--looking-at-any-closing-p)
-    (condition-case nil
-        (dotimes (_ n)
-          (sp-forward-slurp-sexp)
-          (evil-cp-up-sexp))
-      (error nil)))
-
-   (t
-    (dotimes (_ n) (sp-forward-slurp-sexp)))))
+          (evil-cp-next-opening)))
+       (t
+        (sp-forward-slurp-sexp))))))
 
 
 (defun evil-cp--symbol-bounds ()
