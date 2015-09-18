@@ -1666,31 +1666,43 @@ of the top level form."
       (beginning-of-defun))
     (evil-cp--sp-obj-bounds (sp-get-sexp))))
 
-(defun evil-cp-copy-paste-form (&optional arg)
+(evil-define-command evil-cp-copy-paste-form (count)
   "Copies the surrounding form and inserts it below itself. If
 called with a single prefix-argument, will copy the top-level
 sexp regardless of what level the point is currently at."
-  (interactive "P")
-  (let* ((prefixp (equal arg '(4)))
-         (bounds
-          (if prefixp
-              (evil-cp--defun-bounds)
-            (evil-cp--get-enclosing-bounds)))
-         (beg (car bounds))
-         (end (cdr bounds))
-         (offset (1+ (- end (point))))
-         (text (buffer-substring-no-properties beg end)))
-    (when (and beg end)
-      (if (or prefixp (evil-cp--top-level-form-p))
-          (progn
-            (end-of-defun)
-            (insert "\n" text "\n"))
-        (when (evil-cp--looking-at-any-opening-p) (forward-char))
-        (sp-up-sexp)
-        (insert "\n")
-        (indent-according-to-mode)
-        (insert text))
-      (backward-char offset))))
+  (interactive "<c>")
+  (setq count (or count 1))
+  (if (evil-cp--inside-any-form-p)
+      (let* ((prefixp (equal current-prefix-arg '(4)))
+             (bounds
+              (if prefixp
+                  (evil-cp--defun-bounds)
+                (evil-cp--get-enclosing-bounds)))
+             (beg (car bounds))
+             (end (cdr bounds))
+             (offset (1+ (- end (point))))
+             (text (buffer-substring-no-properties beg end)))
+        (when (and beg end)
+          (if (or prefixp (evil-cp--top-level-form-p))
+              (progn
+                (end-of-defun)
+                (insert "\n" text "\n"))
+            (when (evil-cp--looking-at-any-opening-p)
+              (forward-char))
+            (sp-up-sexp)
+            (dotimes (_ count)
+              (insert "\n")
+              (indent-according-to-mode)
+              (insert text)))
+          (backward-char offset)))
+    (when (not (eobp))
+      (let* ((col-pos (column-number-at-pos (point)))
+             (end     (point-at-eol))
+             (line    (buffer-substring-no-properties (point-at-bol) end)))
+        (goto-char end)
+        (insert "\n" line)
+        (beginning-of-line)
+        (forward-char col-pos)))))
 
 
 (evil-define-command evil-cp-open-below-form (count)
