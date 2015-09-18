@@ -2049,19 +2049,14 @@ how many times the \\[universal-argument] was invoked."
 
 
 (defun evil-cp-insert (count &optional vcount skip-empty-lines)
-  "Like `evil-insert', but tries to be helpful and not annoying
-by automatically inserting a space in situations where the need
-for it is highly likely, and cleaning after itself in the case
-where the space wasn't actually needed.
-
-Currently this hapens in two situations:
+  "Like `evil-insert', but tries to be helpful by automatically
+inserting a space in situations where the need for it is highly
+likely, and cleaning after itself in the case where the space
+wasn't actually needed:
 
 - When point is at an open parentheses (but not in an empty
   list), a space gets inserted but the point still remains where
   it used to.
-
-- When the point is between two closing delimiters, a space is
-  inserted in front of the point.
 
 Can be disabled by setting `evil-cleverparens-use-regular-insert'
 to true."
@@ -2081,31 +2076,18 @@ to true."
     (insert " ")
     (backward-char)
     (evil-insert count))
-   ((and (evil-cp--looking-at-any-closing-p)
-         (evil-cp--looking-at-any-closing-p (1- (point))))
-    (setq evil-cp--inserted-space-between-closings t)
-    (insert " ")
-    (evil-insert count))
    (t
     (call-interactively 'evil-insert))))
 
 (defun evil-cp-insert-exit-hook ()
   "Deletes the extra space left by `evil-cp-insert' if nothing was inserted."
-  (cond
-   ((and evil-cp--inserted-space-after-round-open
-         (looking-at-p "[[:space:]]"))
-    (when (or (not evil-current-insertion)
-              (= (car evil-current-insertion)
-                 (cdr evil-current-insertion)))
-      (delete-char 1)))
-   ((and evil-cp--inserted-space-between-closings
-         (looking-back "[[:space:]]"))
-    (when (or (not evil-current-insertion)
-              (= (car evil-current-insertion)
-                 (cdr evil-current-insertion)))
-      (delete-char -1))))
-  (setq evil-cp--inserted-space-after-round-open nil)
-  (setq evil-cp--inserted-space-between-closings nil))
+  (if (and evil-cp--inserted-space-after-round-open
+           (looking-at-p "[[:space:]]"))
+      (when (or (not evil-current-insertion)
+                (= (car evil-current-insertion)
+                   (cdr evil-current-insertion)))
+        (delete-char 1)))
+  (setq evil-cp--inserted-space-after-round-open nil))
 
 
 (defun evil-cp-toggle-balanced-yank (&optional forcep)
@@ -2192,9 +2174,6 @@ and/or beginning."
   "Should the next command skip region checks?")
 
 (defvar evil-cp--inserted-space-after-round-open nil
-  "Helper var for `evil-cp-insert'.")
-
-(defvar evil-cp--inserted-space-between-closings nil
   "Helper var for `evil-cp-insert'.")
 
 (defcustom evil-cleverparens-use-additional-bindings t
