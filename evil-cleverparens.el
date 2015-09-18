@@ -67,6 +67,13 @@ This is a feature copied from `evil-smartparens'."
   '(("(" . ")") ("[" . "]") ("{" . "}") ("\"" . "\""))
   "List of parentheses pairs recognized by evil-cleverparens.")
 
+(defvar evil-cp--ws-regexp "[ \n\r\t]")
+
+(defun evil-cp--looking-at-whitespace-p (&optional pos)
+  (save-excursion
+    (when pos (goto-char pos))
+    (looking-at-p evil-cp--ws-regexp)))
+
 (defun evil-cp--pair-for (pair pairs)
   (cond
    ((not pairs)
@@ -204,6 +211,13 @@ or a string."
        (or (and (eq n0 1) (not n3)) ; top-level sexp
            (and (eq n0 0) n3))))))    ; top-level string
 
+(defun evil-cp--outside-form-p (&optional pos)
+  "Prediacate for checking if the point is outside any form or
+string."
+  (let ((sppss (syntax-ppss pos)))
+    (and (zerop (car sppss))
+         (not (nth 3 sppss)))))
+
 (defun evil-cp--string-bounds (&optional pos)
   "Returns the location of the beginning and ending positions for
 a string form. Accepts an optional argument POS for moving the
@@ -216,13 +230,34 @@ point to that location."
             (forward-char)
             (sp-get-quoted-string-bounds))))))
 
-(defun evil-cp--skip-whitespace-and-comments ()
+(defun evil-cp--point-in-comment (&optional pos)
+  "Slightly cheaper to check version of `sp-point-in-comment'. Does not
+support comments with open/closing delimiters."
+  (setq pos (or pos (point)))
+  (save-excursion
+    (nth 4 (syntax-ppss pos))))
+
+(defun evil-cp--point-in-string-or-comment (&optional pos)
+  "Slightly cheaper to check version of
+`sp-point-in-string-or-comment'. Does not support comments with
+open/closing delimiters."
+  (or (evil-cp--point-in-comment pos)
+      (sp-point-in-string pos)))
+
+(defun evil-cp--skip-whitespace-and-comments (&optional reversep)
   "Skips whitespace and comments forward."
-  (let ((ws-regex "[ \n\r\t]"))
-    (while (or (looking-at ws-regex))
-      (skip-chars-forward ws-regex)
-      (when (looking-at sp-comment-char)
-        (forward-line)))))
+  (catch 'stop
+    (if reversep
+        (while (or (looking-back evil-cp--ws-regexp)
+                   (evil-cp--point-in-comment (1- (point))))
+          (backward-char)
+          (when (bobp) (throw 'stop :bobp)))
+      (while (or (looking-at evil-cp--ws-regexp)
+                 (evil-cp--point-in-comment))
+        (forward-char)
+        (when (looking-at sp-comment-char)
+          (forward-line))
+        (when (eobp) (throw 'stop :eobp))))))
 
 (defun evil-cp--backward-up-list (&optional ignore-strings-p)
   "Workaround for `backward-up-list' not working inside strings.
@@ -434,8 +469,7 @@ contained within the region."
   (let ((chars-left (- end beg)))
     (while (> chars-left 0)
       (cond
-       ((or (sp-point-in-comment)
-            (sp-point-in-string))
+       ((evil-cp--point-in-string-or-comment)
         (let* ((ending (cdr (or (sp-get-comment-bounds)
                                 (sp-get-quoted-string-bounds))))
                (diff (- (min end ending) (point))))
@@ -793,7 +827,7 @@ delimiters in the region defined by BEG and END."
     (goto-char beg)
     (while (> chars-left 0)
       (cond
-       ((or (sp-point-in-comment)
+       ((or (evil-cp--point-in-comment)
             (sp-point-in-string))
         (let* ((ending (cdr (or (sp-get-comment-bounds)
                                 (sp-get-quoted-string-bounds))))
@@ -1506,7 +1540,7 @@ to the thing being dragged."
       (evil-cp--swap-with-next
        (let ((sym-bounds (evil-cp--symbol-bounds)))
          (if (and sym-bounds
-                  (not (sp-point-in-string-or-comment))
+                  (not (evil-cp--point-in-string-or-comment))
                   (not (evil-cp--last-symbol-of-form-p)))
              sym-bounds
            (if (evil-cp--inside-any-form-p)
@@ -1542,7 +1576,7 @@ point relative to the thing being dragged."
       (evil-cp--swap-with-previous
        (let ((sym-bounds (evil-cp--symbol-bounds)))
          (if (and sym-bounds
-                  (not (sp-point-in-string-or-comment))
+                  (not (evil-cp--point-in-string-or-comment))
                   (not (evil-cp--first-symbol-of-form-p)))
              sym-bounds
            (if (evil-cp--inside-any-form-p)
@@ -2005,7 +2039,7 @@ to true."
         (looking-at-p "[\n\t ]+")
         (bobp)
         (eobp)
-        (sp-point-in-string-or-comment)
+        (evil-cp--point-in-string-or-comment)
         (evil-cp--looking-at-empty-form))
     (call-interactively 'evil-insert))
    ((and (looking-back "(")
