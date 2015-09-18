@@ -63,7 +63,7 @@ This is a feature copied from `evil-smartparens'."
   (and (looking-at (sp--get-stringlike-regexp))
        (not (paredit-in-string-escape-p))))
 
-(defvar evil-cp--pair-list
+(defvar evil-cp-pair-list
   '(("(" . ")") ("[" . "]") ("{" . "}") ("\"" . "\""))
   "List of parentheses pairs recognized by evil-cleverparens.")
 
@@ -77,13 +77,13 @@ This is a feature copied from `evil-smartparens'."
     (evil-cp--pair-for pair (cdr pairs)))))
 
 (defun evil-cp-pair-for (pair)
-  (evil-cp--pair-for pair evil-cp--pair-list))
+  (evil-cp--pair-for pair evil-cp-pair-list))
 
 (defun evil-cp--get-opening-regexp ()
-  (sp--strict-regexp-opt (--map (car it) evil-cp--pair-list)))
+  (sp--strict-regexp-opt (--map (car it) evil-cp-pair-list)))
 
 (defun evil-cp--get-closing-regexp ()
-  (sp--strict-regexp-opt (--map (cdr it) evil-cp--pair-list)))
+  (sp--strict-regexp-opt (--map (cdr it) evil-cp-pair-list)))
 
 (defun evil-cp--looking-at-opening-p (&optional pos)
   "Predicate that returns true if point is looking at an opening
