@@ -938,6 +938,11 @@ kill-ring is determined by the
                    (beginning-of-line)
                    (sp-forward-whitespace t)))
               (1- end)))
+           (when (and evil-cleverparens-indent-afterwards
+                      (evil-cp--inside-any-form-p))
+             (save-excursion
+               (evil-cp--backward-up-list)
+               (indent-sexp)))
            (evil-cp-first-non-blank-non-opening)
            (if (evil-cp--looking-at-any-closing-p)
                (progn
