@@ -374,16 +374,20 @@ balanced parentheses."
   (sp-get thing
     (when :beg (cons :beg :end))))
 
-(defun evil-cp--get-enclosing-bounds (&optional pos)
-  "Returns a tuple of start/end positions for the surrounding sexp."
+(defun evil-cp--get-enclosing-bounds (&optional prefixp)
+  "Returns a tuple of start/end positions for the surrounding
+sexp. If PREFIXP is true, then the beginning bound starts from
+the beginning of the prefix as defined by `sp-sexp-prefix'."
   (when (evil-cp--inside-any-form-p)
-    (when pos (goto-char pos))
     (save-excursion
       (evil-cp--guard-point
-       (evil-cp--sp-obj-bounds
-        (if (sp-point-in-string (point))
-            (sp-get-string t)
-          (sp-get-enclosing-sexp)))))))
+       (sp-get (if (sp-point-in-string (point))
+                   (sp-get-string t)
+                 (sp-get-enclosing-sexp))
+         (cons (if (and prefixp (not (string-empty-p :prefix)))
+                   (- :beg (length :prefix))
+                 :beg)
+               :end))))))
 
 (defun evil-cp--next-sexp-bounds (&optional pos)
   (save-excursion
@@ -394,7 +398,7 @@ balanced parentheses."
 
 (evil-define-text-object evil-cp-a-form (count &optional beg end type)
   "Smartparens sexp object."
-  (let* ((bounds (evil-cp--get-enclosing-bounds)))
+  (let* ((bounds (evil-cp--get-enclosing-bounds t)))
     (if (not bounds)
         (error "No surrounding form found.")
       ;; I'm not sure what difference 'inclusive / 'exclusive makes here
@@ -1614,7 +1618,7 @@ to the thing being dragged."
                    (when (evil-cp--looking-at-any-opening-p)
                      (forward-char))
                    (evil-cp--up-list))
-                 (evil-cp--get-enclosing-bounds))
+                 (evil-cp--get-enclosing-bounds t))
              (setq drag-by-line-p t)
              (if (evil-cp--comment-block?)
                  (evil-cp--comment-block-bounds)
@@ -1649,7 +1653,7 @@ point relative to the thing being dragged."
                    (evil-cp--backward-up-list))
                  (while (evil-cp--first-form-of-form-p)
                    (evil-cp--backward-up-list))
-                 (evil-cp--next-sexp-bounds))
+                 (evil-cp--get-enclosing-bounds t))
              (setq drag-by-line-p t)
              (if (evil-cp--comment-block?)
                  (evil-cp--comment-block-bounds)
@@ -1716,7 +1720,7 @@ sexp regardless of what level the point is currently at."
              (bounds
               (if prefixp
                   (evil-cp--defun-bounds)
-                (evil-cp--get-enclosing-bounds)))
+                (evil-cp--get-enclosing-bounds t)))
              (beg (car bounds))
              (end (cdr bounds))
              (offset (1+ (- end (point))))
