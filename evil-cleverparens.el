@@ -2200,7 +2200,8 @@ and/or beginning."
   :type 'boolean)
 
 (defcustom evil-cleverparens-drag-ignore-lines nil
-  ""
+  "Controls whether top-level sexps should be swapped with other
+sexps or should lines be considered as well."
   :group 'evil-cleverparens
   :type 'boolean)
 
