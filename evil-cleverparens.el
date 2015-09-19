@@ -716,6 +716,48 @@ Copied from `evil-smartparens'."
                     (end (evil-cp--new-ending beg end)))
                (evil-yank beg end type register yank-handler))))))
 
+;; ufgh this feels really dumb
+(defun evil-cp-yank-line-handler (text)
+  "Copy of `evil-yank-line-handler' that doesn't delete the
+missing newline when `this-command' is `evil-paste-after'."
+  (let ((text (apply #'concat (make-list (or evil-paste-count 1) text)))
+        (opoint (point)))
+    (remove-list-of-text-properties
+     0 (length text) yank-excluded-properties text)
+    (cond
+     ((eq this-command 'evil-paste-before)
+      (evil-move-beginning-of-line)
+      (evil-move-mark (point))
+      (insert text)
+      (setq evil-last-paste
+            (list 'evil-paste-before
+                  evil-paste-count
+                  opoint
+                  (mark t)
+                  (point)))
+      (evil-set-marker ?\[ (mark))
+      (evil-set-marker ?\] (1- (point)))
+      (evil-exchange-point-and-mark)
+      (back-to-indentation))
+     ((eq this-command 'evil-paste-after)
+      (evil-move-end-of-line)
+      (evil-move-mark (point))
+      (insert "\n")
+      (insert text)
+      (evil-set-marker ?\[ (1+ (mark)))
+      (evil-set-marker ?\] (1- (point)))
+      (setq evil-last-paste
+            (list 'evil-paste-after
+                  evil-paste-count
+                  opoint
+                  (mark t)
+                  (point)))
+      (evil-move-mark (1+ (mark t)))
+      (evil-exchange-point-and-mark)
+      (back-to-indentation))
+     (t
+      (insert text)))))
+
 (evil-define-operator evil-cp-yank (beg end type register yank-handler)
   "Saves the characters in motion into the kill-ring while
 respecting parentheses."
@@ -747,7 +789,7 @@ respecting parentheses."
      ((and (eq type 'line)
            evil-cleverparens-complete-parens-in-yanked-region)
       (evil-cp--yank-characters beg end register
-                                'evil-yank-line-handler))
+                                'evil-cp-yank-line-handler))
 
      ((eq type 'line)
       (evil-cp--ignoring-yank beg end type register
