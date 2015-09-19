@@ -2013,7 +2013,8 @@ many times the \\[universal-argument] was invoked."
       (let ((count (evil-cp-universal-invoke-arg-count)))
         (save-excursion
           (sp-backward-up-sexp)
-          (evil-cp--wrap-next "(" count)))
+          (evil-cp--wrap-next "(" count))
+        (evil-cp--backward-up-list))
     (evil-cp--wrap-next "(" count)))
 
 (evil-define-command evil-cp-wrap-previous-round (count)
@@ -2030,7 +2031,8 @@ many times the \\[universal-argument] was invoked."
       (let ((count (evil-cp-universal-invoke-arg-count)))
         (save-excursion
           (sp-up-sexp)
-          (evil-cp--wrap-previous "(" count)))
+          (evil-cp--wrap-previous "(" count))
+        (evil-cp--up-list))
     (evil-cp--wrap-previous "(" count)))
 
 (evil-define-command evil-cp-wrap-next-square (count)
@@ -2047,7 +2049,8 @@ many times the \\[universal-argument] was invoked."
       (let ((count (evil-cp-universal-invoke-arg-count)))
         (save-excursion
           (sp-backward-up-sexp)
-          (evil-cp--wrap-next "[" count)))
+          (evil-cp--wrap-next "[" count))
+        (evil-cp--backward-up-list))
     (evil-cp--wrap-next "[" count)))
 
 (evil-define-command evil-cp-wrap-previous-square (count)
@@ -2064,7 +2067,8 @@ many times the \\[universal-argument] was invoked."
       (let ((count (evil-cp-universal-invoke-arg-count)))
         (save-excursion
           (sp-up-sexp)
-          (evil-cp--wrap-previous "[" count)))
+          (evil-cp--wrap-previous "[" count))
+        (evil-cp--up-list))
     (evil-cp--wrap-previous "[" count)))
 
 (evil-define-command evil-cp-wrap-next-curly (count)
@@ -2081,7 +2085,8 @@ many times the \\[universal-argument] was invoked."
       (let ((count (evil-cp-universal-invoke-arg-count)))
         (save-excursion
           (sp-backward-up-sexp)
-          (evil-cp--wrap-next "{" count)))
+          (evil-cp--wrap-next "{" count))
+        (evil-cp--backward-up-list))
     (evil-cp--wrap-next "{" count)))
 
 (evil-define-command evil-cp-wrap-previous-curly (count)
@@ -2098,7 +2103,8 @@ how many times the \\[universal-argument] was invoked."
       (let ((count (evil-cp-universal-invoke-arg-count)))
         (save-excursion
           (sp-up-sexp)
-          (evil-cp--wrap-previous "{" count)))
+          (evil-cp--wrap-previous "{" count))
+        (evil-cp--up-list))
     (evil-cp--wrap-previous "{" count)))
 
 
