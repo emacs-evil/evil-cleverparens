@@ -720,19 +720,22 @@ Copied from `evil-smartparens'."
                     (end (evil-cp--new-ending beg end)))
                (evil-yank beg end type register yank-handler))))))
 
-;; ufgh this feels really dumb
-(defun evil-cp-yank-line-handler (text)
-  "Copy of `evil-yank-line-handler' that doesn't delete the
-missing newline when `this-command' is `evil-paste-after'."
-  (let ((text (apply #'concat (make-list (or evil-paste-count 1) text)))
-        (opoint (point)))
+(defun evil-cp-yank-form-handler (text)
+  "Copy of `evil-yank-line-handler' that handles the lack of
+newlines at the end of forms."
+  (let* ((pcount (or evil-paste-count 1))
+         (text (apply #'concat
+                      (cdr (-interleave
+                            (make-list pcount "\n")
+                            (make-list pcount (s-trim text))))))
+         (opoint (point)))
     (remove-list-of-text-properties
      0 (length text) yank-excluded-properties text)
     (cond
      ((eq this-command 'evil-paste-before)
       (evil-move-beginning-of-line)
       (evil-move-mark (point))
-      (insert text)
+      (insert text "\n")
       (setq evil-last-paste
             (list 'evil-paste-before
                   evil-paste-count
@@ -793,7 +796,7 @@ respecting parentheses."
      ((and (eq type 'line)
            evil-cleverparens-complete-parens-in-yanked-region)
       (evil-cp--yank-characters beg end register
-                                'evil-cp-yank-line-handler))
+                                'evil-cp-yank-form-handler))
 
      ((eq type 'line)
       (evil-cp--ignoring-yank beg end type register
