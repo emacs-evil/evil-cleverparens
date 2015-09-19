@@ -2331,6 +2331,7 @@ sexps or should lines be considered as well."
     ("M-q" . sp-indent-defun)
     ("M-o" . evil-cp-open-below-form)
     ("M-O" . evil-cp-open-above-form)
+    ("M-v" . sp-convolute-sexp)
     ("M-(" . evil-cp-wrap-next-round)
     ("M-)" . evil-cp-wrap-previous-round)
     ("M-[" . evil-cp-wrap-next-square)
