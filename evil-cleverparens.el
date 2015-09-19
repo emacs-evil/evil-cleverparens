@@ -1716,7 +1716,7 @@ sexp regardless of what level the point is currently at."
   (interactive "<c>")
   (setq count (or count 1))
   (if (evil-cp--inside-any-form-p)
-      (let* ((prefixp (equal current-prefix-arg '(4)))
+      (let* ((prefixp (consp current-prefix-arg))
              (bounds
               (if prefixp
                   (evil-cp--defun-bounds)
@@ -1823,7 +1823,7 @@ Essentially a less greedy version of `evil-cp-yank-line'. When
 called with \\[universal-argument], copies everything from point
 to the end of the the current form."
   (interactive "<c><x>")
-  (if (and (equal current-prefix-arg '(4))
+  (if (and (consp current-prefix-arg)
            (evil-cp--inside-any-form-p))
       (sp-get (sp-get-enclosing-sexp)
         (evil-yank-characters (point) (1- :end)))
@@ -1838,7 +1838,7 @@ version of `evil-cp-delete-line'. When called with
 \\[universal-argument], deletes everything from point to the end
 of the the current form."
   (interactive "<c><x>")
-  (if (and (equal current-prefix-arg '(4))
+  (if (and (consp current-prefix-arg)
            (evil-cp--inside-any-form-p))
       (sp-get (sp-get-enclosing-sexp)
         (evil-cp--del-characters (point) (1- :end)))
@@ -1869,7 +1869,7 @@ and beginning of the copied top-level form."
   (interactive "<c><x>")
   (when (evil-cp--inside-any-form-p)
     (save-excursion
-      (if (equal current-prefix-arg '(4))
+      (if (consp current-prefix-arg)
           (progn
             (beginning-of-defun)
             (sp-get (sp-get-sexp)
@@ -1889,7 +1889,7 @@ upwards instead. When called with a raw prefix argument, kills
 the top-level form and deletes the extra whitespace."
   (interactive "<c><x>")
   (when (evil-cp--inside-any-form-p)
-    (if (equal current-prefix-arg '(4))
+    (if (consp current-prefix-arg)
         (progn
           (beginning-of-defun)
           (sp-get (sp-get-sexp)
@@ -1912,7 +1912,7 @@ the top-level form and deletes the extra whitespace."
   (interactive "<c><x>")
   (when (evil-cp--inside-any-form-p)
     (evil-cp-delete-enclosing count register)
-    (when (equal current-prefix-arg '(4))
+    (when (consp current-prefix-arg)
       (insert "\n\n")
       (backward-char 1))
     (evil-insert-state)))
@@ -1984,10 +1984,10 @@ the top-level form and deletes the extra whitespace."
         (indent-region beg start)
         (backward-char (- (point) pt-orig 1))))))
 
-(defun evil-cp-prefix-arg-count ()
-  "Gets the count for how many times the prefix argument was
-invoked, i.e. for \\[universal-argument] \\[universal-argument]
-it would return 2."
+(defun evil-cp-universal-invoke-arg-count ()
+  "Gets the count for how many times the universal prefix
+argument was invoked, i.e. for \\[universal-argument]
+\\[universal-argument] it would return 2."
   (when (consp current-prefix-arg)
     (truncate (log (car current-prefix-arg) 4))))
 
@@ -2002,7 +2002,7 @@ many times the \\[universal-argument] was invoked."
   (interactive "<c>")
   (setq count (or count 1))
   (if (consp current-prefix-arg)
-      (let ((count (evil-cp-prefix-arg-count)))
+      (let ((count (evil-cp-universal-invoke-arg-count)))
         (save-excursion
           (sp-backward-up-sexp)
           (evil-cp--wrap-next "(" count)))
@@ -2019,7 +2019,7 @@ many times the \\[universal-argument] was invoked."
   (interactive "<c>")
   (setq count (or count 1))
   (if (consp current-prefix-arg)
-      (let ((count (evil-cp-prefix-arg-count)))
+      (let ((count (evil-cp-universal-invoke-arg-count)))
         (save-excursion
           (sp-up-sexp)
           (evil-cp--wrap-previous "(" count)))
@@ -2036,7 +2036,7 @@ many times the \\[universal-argument] was invoked."
   (interactive "<c>")
   (setq count (or count 1))
   (if (consp current-prefix-arg)
-      (let ((count (evil-cp-prefix-arg-count)))
+      (let ((count (evil-cp-universal-invoke-arg-count)))
         (save-excursion
           (sp-backward-up-sexp)
           (evil-cp--wrap-next "[" count)))
@@ -2053,7 +2053,7 @@ many times the \\[universal-argument] was invoked."
   (interactive "<c>")
   (setq count (or count 1))
   (if (consp current-prefix-arg)
-      (let ((count (evil-cp-prefix-arg-count)))
+      (let ((count (evil-cp-universal-invoke-arg-count)))
         (save-excursion
           (sp-up-sexp)
           (evil-cp--wrap-previous "[" count)))
@@ -2070,7 +2070,7 @@ many times the \\[universal-argument] was invoked."
   (interactive "<c>")
   (setq count (or count 1))
   (if (consp current-prefix-arg)
-      (let ((count (evil-cp-prefix-arg-count)))
+      (let ((count (evil-cp-universal-invoke-arg-count)))
         (save-excursion
           (sp-backward-up-sexp)
           (evil-cp--wrap-next "{" count)))
@@ -2087,7 +2087,7 @@ how many times the \\[universal-argument] was invoked."
   (interactive "<c>")
   (setq count (or count 1))
   (if (consp current-prefix-arg)
-      (let ((count (evil-cp-prefix-arg-count)))
+      (let ((count (evil-cp-universal-invoke-arg-count)))
         (save-excursion
           (sp-up-sexp)
           (evil-cp--wrap-previous "{" count)))
