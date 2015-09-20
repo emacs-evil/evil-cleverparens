@@ -1200,7 +1200,7 @@ to the thing being dragged."
                    (evil-cp--up-list))
                  (evil-cp--get-enclosing-bounds t))
              (setq drag-by-line-p t)
-             (if (and evil-cleverparens-drag-command-blocks
+             (if (and evil-cleverparens-drag-comment-blocks
                       (evil-cp--comment-block?))
                  (evil-cp--comment-block-bounds)
                (evil-cp--safe-line-bounds)))))
@@ -1236,7 +1236,7 @@ point relative to the thing being dragged."
                    (evil-cp--backward-up-list))
                  (evil-cp--get-enclosing-bounds t))
              (setq drag-by-line-p t)
-             (if (and evil-cleverparens-drag-command-blocks
+             (if (and evil-cleverparens-drag-comment-blocks
                       (evil-cp--comment-block?))
                  (evil-cp--comment-block-bounds)
                (evil-cp--safe-line-bounds)))))
@@ -1806,7 +1806,7 @@ sexps or should lines be considered as well."
   :group 'evil-cleverparens
   :type 'boolean)
 
-(defcustom evil-cleverparens-drag-command-blocks t
+(defcustom evil-cleverparens-drag-comment-blocks t
   "Controls whether to drag by top-level comment block or a
   single line when point is inside a multi-line top-level command
   block."
