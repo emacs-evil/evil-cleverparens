@@ -1891,6 +1891,13 @@ and beginning of the copied top-level form."
          (sp-get (sp-get-enclosing-sexp)
            (evil-yank-characters :beg :end register)))))))
 
+(defun evil-cp--should-join-line-p ()
+  (save-excursion
+    (beginning-of-line)
+    (skip-chars-forward "\s")
+    (or (evil-cp--looking-at-any-closing-p)
+        (= (point) (point-at-eol)))))
+
 (evil-define-command evil-cp-delete-enclosing (count &optional register)
   "Kills the enclosing form. With COUNT, kills the nth form
 upwards instead. When called with a raw prefix argument, kills
@@ -1913,7 +1920,13 @@ the top-level form and deletes the extra whitespace."
       (evil-cp-backward-up-sexp count)
       (evil-cp--guard-point
        (sp-get (sp-get-enclosing-sexp)
-         (evil-cp--del-characters :beg :end register))))))
+         (evil-cp--del-characters :beg :end register)))
+      (when (evil-cp--should-join-line-p)
+        (forward-line -1)
+        (join-line 1)
+        (end-of-line))
+      (when (looking-back "\s")
+        (delete-backward-char 1)))))
 
 (evil-define-command evil-cp-change-enclosing (count &optional register)
   "Calls `evil-cp-delete-enclosing' and enters insert-state."
