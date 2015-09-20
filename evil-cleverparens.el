@@ -18,10 +18,6 @@
 ;; of your code. Tries to offer useful alternatives for behavior which would
 ;; otherwise be destructive.
 
-;; TODO: text-objects break when they contain strings with delimiters
-;; TODO: dragging: restore visual-state if it was used
-;; TODO: move by evil-cp-word should work by skipping delimiters as well
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; Code:
