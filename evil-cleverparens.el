@@ -1256,12 +1256,15 @@ mode at the end of form. Using an arbitrarily large COUNT is
 guaranteened to take the point to the beginning of the top level
 form."
   (interactive "<c>")
-  (let ((defun-end (save-excursion (end-of-defun) (point)))
-        target)
-    (when (not (sp-up-sexp count))
-      (goto-char defun-end))
-    (backward-char)
-    (evil-insert 1)))
+  (let ((line-end (point-at-eol)))
+    (when (or (when (sp-up-sexp count) (backward-char) t)
+              (-when-let (enc-end (cdr (evil-cp--top-level-bounds)))
+                (goto-char (1- enc-end))))
+      (if (<= (point) line-end)
+          (evil-insert 1)
+        (insert "\n")
+        (indent-according-to-mode)
+        (evil-insert 1)))))
 
 (evil-define-command evil-cp-insert-at-beginning-of-form (count)
   "Move point COUNT times with `sp-backward-up-sexp' and enter
@@ -1269,16 +1272,10 @@ insert mode at the beginning of the form. Using an arbitrarily
 large COUNT is guaranteened to take the point to the beginning
 of the top level form."
   (interactive "<c>")
-  (let ((defun-beginning
-          (save-excursion
-            (beginning-of-defun)
-            (point)))
-        target)
-    (when (not (sp-backward-up-sexp count))
-      (goto-char defun-beginning))
-    (forward-char)
+  (when (or (when (sp-backward-up-sexp count) (forward-char) t)
+            (-when-let (enc-beg (car (evil-cp--top-level-bounds)))
+              (goto-char (1+ enc-beg))))
     (evil-insert 1)))
-
 
 (defun evil-cp--defun-bounds ()
   (save-excursion
