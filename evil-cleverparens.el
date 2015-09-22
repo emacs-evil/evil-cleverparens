@@ -1277,13 +1277,6 @@ of the top level form."
               (goto-char (1+ enc-beg))))
     (evil-insert 1)))
 
-(defun evil-cp--defun-bounds ()
-  (save-excursion
-    (when (not (and (evil-cp--looking-at-any-opening-p)
-                    (evil-cp--top-level-form-p)))
-      (beginning-of-defun))
-    (evil-cp--sp-obj-bounds (sp-get-sexp))))
-
 (evil-define-command evil-cp-copy-paste-form (count)
   "Copies the surrounding form and inserts it below itself. If
 called with a single prefix-argument, will copy the top-level
