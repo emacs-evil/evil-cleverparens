@@ -105,7 +105,7 @@ If for some reason `evil-cleverparens` messes up, or you would just like to tort
 - On lines with unmatched opening delimiters, the range of the operation extends all the way to the end of those forms, spanning multiple lines.
 - On lines with unmatched closing delimiters, the range of operation extends from *point* to the *end-of-line*.
 
-#### `M-y`, `M-d` and `M-d`
+#### `M-y`, `M-d` and `M-c`
 
 - These act from *point* to the end of the current or next sexp similar to how `paredit-kill-sexp` works.
 - Calling them at the end of a form will act on the whole form.
