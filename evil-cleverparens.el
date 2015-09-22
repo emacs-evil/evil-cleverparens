@@ -942,23 +942,24 @@ sexp inside it. Should not be called in an empty list."
       (evil-cp--cant-forward-sexp-p))))
 
 (evil-define-command evil-cp-< (count)
-  "Slurping/barfing operation that acts differently based on the points
-location in the form.
+  "Slurping/barfing operation that acts differently based on the
+points location in the form.
 
-When point is on the opening delimiter of the form boundary, it will
-slurp the next element backwards while maintaining the location of the
-point in the original delimiter.
+When point is on the opening delimiter of the form boundary, it
+will slurp the next element backwards while maintaining the
+location of the point in the original delimiter.
 
   foo [(]bar baz) -> [(]foo bar baz)
 
-When point is on the closing delimiter, it will barf the rightmost
-element of the form forward, again maintaining the location of the point
-in the original delimiter.
+When point is on the closing delimiter, it will barf the
+rightmost element of the form forward, again maintaining the
+location of the point in the original delimiter. Only works if
+the form has more than one element.
 
   (bar baz foo[)] -> (bar baz[)] foo
 
-When point is in the middle of a form, it will act as a regular
-forward-barf."
+When point is in the middle of a form, it will act as like a
+regular forward-barf."
   (interactive "<c>")
   (setq count (or count 1))
   (when (evil-cp--inside-any-form-p)
@@ -986,6 +987,25 @@ forward-barf."
         (evil-cp-previous-closing))))))
 
 (evil-define-command evil-cp-> (count)
+  "Slurping/barfing operation that acts differently based on the
+points location in the form.
+
+When cursor is on the opening delimiter of the form boundary, it
+will barf the first element of the form while maintaining the
+location of the cursor on the original delimiter.
+
+  [(]foo bar baz) -> foo [(]bar baz)
+
+When the cursor is on a closing delimiter, it will slurp the
+first sexp after the last closing delimiter from point moving it
+inside the form of which the cursor is currently on top of while
+maintaining the location of the cursor on the current closing
+delimiter.
+
+  (((bar baz[)])) foo -> (((bar baz foo[)]))
+
+When point is in the middle of a form, it will act as like a
+regular forward-slurp."
   (interactive "<c>")
   (setq count (or count 1))
   (when (evil-cp--inside-any-form-p)
