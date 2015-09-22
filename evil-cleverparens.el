@@ -1294,7 +1294,7 @@ sexp regardless of what level the point is currently at."
       (let* ((prefixp (consp current-prefix-arg))
              (bounds
               (if prefixp
-                  (evil-cp--defun-bounds)
+                  (evil-cp--top-level-bounds)
                 (evil-cp--get-enclosing-bounds t)))
              (beg (car bounds))
              (end (cdr bounds))
@@ -1311,7 +1311,9 @@ sexp regardless of what level the point is currently at."
             (dotimes (_ count)
               (insert "\n")
               (indent-according-to-mode)
-              (insert text)))
+              (insert text)
+              (when (looking-at "\\b")
+                (insert " "))))
           (backward-char offset)))
     (when (not (eobp))
       (let* ((col-pos (column-number-at-pos (point)))
