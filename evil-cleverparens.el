@@ -1728,6 +1728,7 @@ to true."
         (evil-cp--looking-at-empty-form))
     (call-interactively 'evil-insert))
    ((and (looking-back "(")
+         ;; should I use `sp-sexp-prefix' here?
          (not (looking-back "'("))
          (not (looking-back "#(")))
     (setq evil-cp--inserted-space-after-round-open t)
@@ -1736,6 +1737,38 @@ to true."
     (evil-insert count))
    (t
     (call-interactively 'evil-insert))))
+
+(defun evil-cp-append (count &optional vcount skip-empty-lines)
+  "Like `evil-append', but tries to be helpful by automatically
+inserting a space in situations where the need for it is highly
+likely, and cleaning after itself in the case where the space
+wasn't actually needed:
+
+- When point is before an open parentheses (but not in an empty
+  list), a space gets inserted but the point still remains where
+  it used to.
+
+Can be disabled by setting `evil-cleverparens-use-regular-insert'
+to true."
+  (interactive "p")
+  (cond
+   ((or (evil-visual-state-p)
+        (looking-at-p "[\n\t ]+")
+        (bobp)
+        (eobp)
+        (evil-cp--point-in-string-or-comment)
+        (evil-cp--looking-at-empty-form))
+    (call-interactively 'evil-append))
+   ((and (looking-at-p "(\\b")
+         (not (looking-back "'"))
+         (not (looking-back "#")))
+    (setq evil-cp--inserted-space-after-round-open t)
+    (forward-char)
+    (insert " ")
+    (backward-char)
+    (evil-insert count))
+   (t
+    (call-interactively 'evil-append))))
 
 (defun evil-cp-insert-exit-hook ()
   "Deletes the extra space left by `evil-cp-insert' if nothing was inserted."
@@ -1984,7 +2017,8 @@ in question."
         (remove-hook 'evil-insert-state-exit-hook
                      'evil-cp-insert-exit-hook))
     (evil-define-key 'normal evil-cleverparens-mode-map
-      "i" 'evil-cp-insert)
+      "i" 'evil-cp-insert
+      "a" 'evil-cp-append)
     (add-hook 'evil-insert-state-exit-hook
               'evil-cp-insert-exit-hook)))
 
