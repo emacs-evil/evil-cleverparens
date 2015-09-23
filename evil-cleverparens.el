@@ -1309,10 +1309,10 @@ sexp regardless of what level the point is currently at."
                 (evil-cp--get-enclosing-bounds t)))
              (beg (car bounds))
              (end (cdr bounds))
-             (offset (1+ (- end (point))))
+             (offset (- end (point)))
              (text (buffer-substring-no-properties beg end)))
         (when (and beg end)
-          (if (or prefixp (evil-cp--top-level-form-p))
+          (if prefixp
               (progn
                 (end-of-defun)
                 (insert "\n" text "\n"))
@@ -1324,7 +1324,8 @@ sexp regardless of what level the point is currently at."
               (indent-according-to-mode)
               (insert text)
               (when (looking-at "\\b")
-                (insert " "))))
+                (insert " ")
+                (cl-incf offset))))
           (backward-char offset)))
     (when (not (eobp))
       (let* ((col-pos (column-number-at-pos (point)))
