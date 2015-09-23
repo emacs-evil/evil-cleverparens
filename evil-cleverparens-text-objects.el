@@ -24,7 +24,7 @@
 (require 'smartparens)
 (require 'evil-cleverparens-util)
 
-;;;###autoload
+;;;###autoload (autoload 'evil-cp-a-form "evil-cleverparens-text-objects" nil t)
 (evil-define-text-object evil-cp-a-form (count &optional beg end type)
   "Smartparens sexp object."
   (let* ((bounds (evil-cp--get-enclosing-bounds t)))
@@ -33,7 +33,7 @@
       ;; I'm not sure what difference 'inclusive / 'exclusive makes here
       (evil-range (car bounds) (cdr bounds) 'inclusive :expanded t))))
 
-;;;###autoload
+;;;###autoload (autoload 'evil-cp-inner-form "evil-cleverparens-text-objects" nil t)
 (evil-define-text-object evil-cp-inner-form (count &optional beg end type)
   "Smartparens inner sexp object."
   (let ((range (evil-cp--get-enclosing-bounds)))
@@ -43,7 +43,7 @@
             (end (cdr range)))
         (evil-range (1+ beg) (1- end) 'inclusive :expanded t)))))
 
-;;;###autoload
+;;;###autoload (autoload 'evil-cp-a-comment "evil-cleverparens-text-objects" nil t)
 (evil-define-text-object evil-cp-a-comment (count &optional beg end type)
   "An outer comment text object as defined by `sp-get-comment-bounds'."
   (let ((bounds (sp-get-comment-bounds)))
@@ -53,7 +53,7 @@
             (end (cdr bounds)))
         (evil-range beg end 'exclusive :expanded t)))))
 
-;;;###autoload
+;;;###autoload (autoload 'evil-cp-inner-comment "evil-cleverparens-text-objects" nil t)
 (evil-define-text-object evil-cp-inner-comment (count &optional beg end type)
   "An inner comment text object as defined by `sp-get-comment-bounds'."
   (let ((bounds (sp-get-comment-bounds)))
@@ -70,7 +70,7 @@
                    (point))))
         (evil-range beg end 'block :expanded t)))))
 
-;;;###autoload
+;;;###autoload (autoload 'evil-cp-a-defun "evil-cleverparens-text-objects" nil t)
 (evil-define-text-object evil-cp-a-defun (count &optional beg end type)
   "An outer text object for a top level sexp (defun)."
   (if (evil-cp--inside-form-p)
@@ -78,7 +78,7 @@
         (evil-range (car bounds) (cdr bounds) 'inclusive :expanded t))
     (error "Not inside a sexp.")))
 
-;;;###autoload
+;;;###autoload (autoload 'evil-cp-inner-defun "evil-cleverparens-text-objects" nil t)
 (evil-define-text-object evil-cp-inner-defun (count &optional beg end type)
   "An inner text object for a top level sexp (defun)."
   (if (evil-cp--inside-form-p)
