@@ -982,9 +982,7 @@ regular forward-barf."
             (forward-char)
             (sp-forward-barf-sexp))))
        (t
-        (sp-forward-barf-sexp)
-        (sp-backward-sexp)
-        (evil-cp-previous-closing))))))
+        (sp-forward-barf-sexp))))))
 
 (evil-define-command evil-cp-> (count)
   "Slurping/barfing operation that acts differently based on the
