@@ -1293,7 +1293,9 @@ of the top level form."
   (when (or (when (sp-backward-up-sexp count) (forward-char) t)
             (-when-let (enc-beg (car (evil-cp--top-level-bounds)))
               (goto-char (1+ enc-beg))))
-    (evil-cp-insert 1)))
+    (if evil-cleverparens-use-regular-insert
+        (evil-insert 1)
+      (evil-cp-insert 1))))
 
 (evil-define-command evil-cp-copy-paste-form (count)
   "Copies the surrounding form and inserts it below itself. If
