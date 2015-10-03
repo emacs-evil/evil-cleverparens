@@ -388,8 +388,7 @@ the beginning of the prefix as defined by `sp-sexp-prefix'."
 (defun evil-cp--next-sexp-bounds (&optional pos)
   (save-excursion
     (when pos (goto-char pos))
-    (when (or (evil-cp--looking-at-any-opening-p)
-              (looking-at-p "\\b"))
+    (when (not (evil-cp--looking-at-whitespace-p))
       (evil-cp--movement-bounds (forward-sexp)))))
 
 (provide 'evil-cleverparens-util)

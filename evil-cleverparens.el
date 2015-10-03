@@ -1211,23 +1211,30 @@ to the thing being dragged."
           (evil-cp--swap-with-next (cons beg end) linep)))
     (let (drag-by-line-p)
       (evil-cp--swap-with-next
-       (let ((sym-bounds (evil-cp--symbol-bounds)))
-         (if (and sym-bounds
-                  (not (evil-cp--point-in-string-or-comment))
-                  (not (evil-cp--last-symbol-of-form-p)))
-             sym-bounds
-           (if (evil-cp--inside-any-form-p)
-               (save-excursion
-                 (while (evil-cp--last-form-of-form-p)
-                   (when (evil-cp--looking-at-any-opening-p)
-                     (forward-char))
-                   (evil-cp--up-list))
-                 (evil-cp--get-enclosing-bounds t))
-             (setq drag-by-line-p t)
-             (if (and evil-cleverparens-drag-comment-blocks
-                      (evil-cp--comment-block?))
-                 (evil-cp--comment-block-bounds)
-               (evil-cp--safe-line-bounds)))))
+       (let ((sym-bounds (evil-cp--symbol-bounds))
+             (in-form-p (evil-cp--inside-any-form-p)))
+         (cond
+          ((and sym-bounds
+                (not (evil-cp--point-in-string-or-comment))
+                (not (evil-cp--last-symbol-of-form-p)))
+           sym-bounds)
+          ((and in-form-p (evil-cp--point-in-comment))
+           (save-excursion
+             (evil-cp--backward-up-list)
+             (evil-cp--next-sexp-bounds)))
+          (in-form-p
+           (save-excursion
+             (while (evil-cp--last-form-of-form-p)
+               (when (evil-cp--looking-at-any-opening-p)
+                 (forward-char))
+               (evil-cp--up-list))
+             (evil-cp--get-enclosing-bounds t)))
+          (t
+           (setq drag-by-line-p t)
+           (if (and evil-cleverparens-drag-comment-blocks
+                    (evil-cp--comment-block?))
+               (evil-cp--comment-block-bounds)
+             (evil-cp--safe-line-bounds)))))
        drag-by-line-p))))
 
 (evil-define-command evil-cp-drag-backward (count)
@@ -1247,23 +1254,30 @@ point relative to the thing being dragged."
           (evil-cp--swap-with-previous (cons beg end) linep)))
     (let (drag-by-line-p)
       (evil-cp--swap-with-previous
-       (let ((sym-bounds (evil-cp--symbol-bounds)))
-         (if (and sym-bounds
-                  (not (evil-cp--point-in-string-or-comment))
-                  (not (evil-cp--first-symbol-of-form-p)))
-             sym-bounds
-           (if (evil-cp--inside-any-form-p)
-               (save-excursion
-                 (when (not (evil-cp--looking-at-any-opening-p))
-                   (evil-cp--backward-up-list))
-                 (while (evil-cp--first-form-of-form-p)
-                   (evil-cp--backward-up-list))
-                 (evil-cp--get-enclosing-bounds t))
-             (setq drag-by-line-p t)
-             (if (and evil-cleverparens-drag-comment-blocks
-                      (evil-cp--comment-block?))
-                 (evil-cp--comment-block-bounds)
-               (evil-cp--safe-line-bounds)))))
+       (let ((sym-bounds (evil-cp--symbol-bounds))
+             (in-form-p (evil-cp--inside-any-form-p)))
+         (cond
+          ((and sym-bounds
+                (not (evil-cp--point-in-string-or-comment))
+                (not (evil-cp--first-symbol-of-form-p)))
+           sym-bounds)
+          ((and in-form-p (evil-cp--point-in-comment))
+           (save-excursion
+             (evil-cp--backward-up-list)
+             (evil-cp--next-sexp-bounds)))
+          (in-form-p
+           (save-excursion
+             (when (not (evil-cp--looking-at-any-opening-p))
+               (evil-cp--backward-up-list))
+             (while (evil-cp--first-form-of-form-p)
+               (evil-cp--backward-up-list))
+             (evil-cp--get-enclosing-bounds t)))
+          (t
+           (setq drag-by-line-p t)
+           (if (and evil-cleverparens-drag-comment-blocks
+                    (evil-cp--comment-block?))
+               (evil-cp--comment-block-bounds)
+             (evil-cp--safe-line-bounds)))))
        drag-by-line-p))))
 
 
