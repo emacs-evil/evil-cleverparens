@@ -461,8 +461,7 @@ delimiters in the region defined by BEG and END."
     (goto-char beg)
     (while (> chars-left 0)
       (cond
-       ((or (evil-cp--point-in-comment)
-            (sp-point-in-string))
+       ((evil-cp--point-in-comment)
         (let* ((ending (cdr (or (sp-get-comment-bounds)
                                 (sp-get-quoted-string-bounds))))
                (diff (- (min end ending) (point))))
