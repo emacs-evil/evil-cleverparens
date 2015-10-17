@@ -22,6 +22,7 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 (require 'dash)
 (require 'evil)
 (require 'paredit)
@@ -187,7 +188,7 @@ beginning."
 
 (defun evil-cp--region-has-unbalanced-string-p (beg end)
   "Predicate for checking if a region contains an unbalanced string."
-  (not (evenp (count-matches (sp--get-stringlike-regexp) beg end))))
+  (not (cl-evenp (count-matches (sp--get-stringlike-regexp) beg end))))
 
 (defun evil-cp--yank-characters
     (beg end &optional register yank-handler add-parens-p)
@@ -689,13 +690,13 @@ level sexp)."
 
 ;; TODO: this looks ugly
 (defun evil-cp--paren-navigation-helper (move-dir paren-side)
-  (let ((move-fn (case move-dir
+  (let ((move-fn (cl-case move-dir
                    (:next 'forward-char)
                    (:previous 'backward-char)))
-        (the-end (case move-dir
+        (the-end (cl-case move-dir
                    (:next 'point-max)
                    (:previous 'point-min)))
-        (paren-p (case paren-side
+        (paren-p (cl-case paren-side
                    (:opening 'evil-cp--looking-at-any-opening-p)
                    (:closing 'evil-cp--looking-at-any-closing-p)))
         (pt-orig (point))

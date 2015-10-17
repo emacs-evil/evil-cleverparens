@@ -18,6 +18,7 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 (require 'dash)
 (require 'evil)
 (require 'paredit)
@@ -155,8 +156,8 @@ string delimiter."
 (defmacro evil-cp--movement-bounds (movement)
   "Returns a cons-pair containing the range of motion that
 executing MOVEMENT performs or nil if point wasn't moved."
-  (let ((beg (gensym))
-        (end (gensym)))
+  (let ((beg (cl-gensym))
+        (end (cl-gensym)))
     `(let ((,beg (point))
            (,end (evil-cp--point-after ,movement)))
        (when (not (= ,beg ,end))
