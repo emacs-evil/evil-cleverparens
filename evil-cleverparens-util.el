@@ -29,6 +29,11 @@
   '(("(" . ")") ("[" . "]") ("{" . "}") ("\"" . "\""))
   "List of parentheses pairs recognized by evil-cleverparens.")
 
+(defvar evil-cp-sp-pair-list
+  (-filter (lambda (pair)
+             (not (string-equal (car pair) "`")))
+           sp-pair-list))
+
 (defvar evil-cp--ws-regexp "[ \n\r\t]")
 
 (defun evil-cp--looking-at-string-delimiter-p ()
@@ -122,6 +127,12 @@ parentheses or a string delimiter."
 parentheses or a string delimiter."
   (or (evil-cp--looking-at-closing-p pos)
       (evil-cp--looking-at-string-closing-p pos)))
+
+(defun evil-cp-region-ok-p (beg end)
+  "The same as `sp-region-ok-p' where `' are not treated as a
+valid pair."
+  (let ((sp-pair-list evil-cp-sp-pair-list))
+    (sp-region-ok-p beg end)))
 
 (defmacro evil-cp--guard-point (&rest body)
   "Evil/Vim and Emacs have different opinions on where the point

@@ -502,7 +502,7 @@ kill-ring is determined by the
 `evil-cleverparens-complete-parens-in-yanked-region' variable."
   :move-point nil
   (interactive "<R><x><y>")
-  (let ((safep (sp-region-ok-p beg end)))
+  (let ((safep (evil-cp-region-ok-p beg end)))
     (evil-cp-yank beg end type register yank-handler)
     (cond ((or (= beg end)
                (evil-cp--override)
