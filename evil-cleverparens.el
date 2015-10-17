@@ -310,7 +310,7 @@ newlines at the end of forms."
          (text (apply #'concat
                       (cdr (-interleave
                             (make-list pcount "\n")
-                            (make-list pcount (s-trim text))))))
+                            (make-list pcount (string-trim text))))))
          (opoint (point)))
     (remove-list-of-text-properties
      0 (length text) yank-excluded-properties text)
@@ -1473,7 +1473,7 @@ entering insert-state."
   (evil-insert-state))
 
 (defun evil-cp-top-level-yank-handler (text)
-  (insert (concat "\n" (s-trim text) "\n"))
+  (insert (concat "\n" (string-trim text) "\n"))
   (backward-char 1))
 
 (evil-define-command evil-cp-yank-enclosing (count &optional register)
