@@ -253,8 +253,9 @@ point to that location."
   "Slightly cheaper to check version of `sp-point-in-comment'. Does not
 support comments with open/closing delimiters."
   (setq pos (or pos (point)))
-  (save-excursion
-    (nth 4 (syntax-ppss pos))))
+  (or (looking-at "\\s<")
+      (save-excursion
+        (nth 4 (syntax-ppss pos)))))
 
 (defun evil-cp--point-in-string-or-comment (&optional pos)
   "Slightly cheaper to check version of
