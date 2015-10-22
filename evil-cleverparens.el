@@ -1355,7 +1355,7 @@ sexp regardless of what level the point is currently at."
                 (cl-incf offset))))
           (backward-char offset)))
     (when (not (eobp))
-      (let* ((col-pos (column-number-at-pos (point)))
+      (let* ((col-pos (current-column))
              (end     (point-at-eol))
              (line    (buffer-substring-no-properties (point-at-bol) end)))
         (goto-char end)
