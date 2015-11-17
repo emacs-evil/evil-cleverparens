@@ -480,6 +480,8 @@ delimiters in the region defined by BEG and END."
                 (setq chars-left (- chars-left char-count)))
             (forward-char)
             (cl-decf chars-left))))
+       ((and (evil-cp--looking-at-any-closing-p) (= chars-left 1))
+        (cl-decf chars-left))
        ((evil-cp--looking-at-any-closing-p)
         (forward-char 1)
         (cl-decf chars-left))
