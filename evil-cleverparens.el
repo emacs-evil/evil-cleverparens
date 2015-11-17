@@ -1561,11 +1561,14 @@ the top-level form and deletes the extra whitespace."
   (let ((count (or count 1)))
     (dotimes (_ count)
       (when (evil-cp--inside-any-form-p)
-        (save-excursion
+        (let ((orig (point)) offset)
           (evil-cp--guard-point
            (sp-beginning-of-sexp))
           (backward-char)
-          (sp-raise-sexp))))))
+          (setq offset (- orig (point)))
+          (sp-raise-sexp)
+          (forward-char offset))))))
+
 
 (defun evil-cp--wrap-region-with-pair (pair start end)
   "Helper that inserts a pair as indicated by PAIR at positions
