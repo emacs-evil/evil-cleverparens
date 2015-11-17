@@ -141,6 +141,12 @@ and deleting other characters. Can be overriden by
            (evil-yank beg end type register yank-handler))
          (evil-cp-delete-or-splice-region beg end))))
 
+(evil-define-command evil-cp-delete-backward-word ()
+  (if (evil-cp--looking-at-any-opening-p (1- (point)))
+      (let ((enc (evil-cp--get-enclosing-bounds)))
+        (delete-region (car enc) (cdr enc)))
+    (evil-delete-backward-word)))
+
 ;; Originally from:
 ;; http://emacs.stackexchange.com/questions/777/closing-all-pending-parenthesis
 (defun evil-cp--insert-missing-parentheses (backp)
@@ -2075,6 +2081,11 @@ true."
    'normal
    evil-cleverparens-use-additional-bindings))
 
+(defun evil-cp--enable-C-w-delete ()
+  (when evil-want-C-w-delete
+    (evil-define-key 'insert evil-cleverparens-mode-map
+      "\C-w" 'evil-cp-delete-backward-word)))
+
 (defun evil-cp--enable-text-objects ()
   "Enables text-objects defined in evil-cleverparens."
   (define-key evil-outer-text-objects-map "f" #'evil-cp-a-form)
@@ -2107,6 +2118,7 @@ for an advanced modal structural editing experience."
         (evil-cp--enable-text-objects)
         (evil-cp-set-additional-bindings)
         (evil-cp-set-additional-movement-keys)
+        (evil-cp--enable-C-w-delete)
         (if (bound-and-true-p evil-surround-mode)
             (evil-cp--enable-surround-operators)
           (add-hook 'evil-surround-mode-hook
