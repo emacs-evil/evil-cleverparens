@@ -2032,10 +2032,11 @@ in question."
 (defun evil-cp--enable-regular-bindings ()
   "Enables the regular evil-cleverparens bindings based on
 `evil-cp-regular-bindings'."
-  (evil-cp--populate-mode-bindings-for-state
-   evil-cp-regular-bindings
-   'normal
-   t)
+  (dolist (state '(normal visual))
+    (evil-cp--populate-mode-bindings-for-state
+     evil-cp-regular-bindings
+     state
+     t))
   (if evil-cleverparens-use-regular-insert
       ;; in case we change our mind
       (progn
