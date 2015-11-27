@@ -238,6 +238,9 @@ and deleting other characters. Can be overriden by
          (evil-cp-delete-or-splice-region beg end))))
 
 (evil-define-command evil-cp-delete-backward-word ()
+  "Like `evil-delete-backward-word' with added behavior when
+called in front of an opening delimiter, in which case the
+enclosing form gets deleted."
   (if (evil-cp--looking-at-any-opening-p (1- (point)))
       (let ((enc (evil-cp--get-enclosing-bounds)))
         (delete-region (car enc) (cdr enc)))
