@@ -237,6 +237,14 @@ and deleting other characters. Can be overriden by
            (evil-yank beg end type register yank-handler))
          (evil-cp-delete-or-splice-region beg end))))
 
+
+(evil-define-operator evil-cp-delete-char-or-splice-backwards
+  (beg end type register yank-handler)
+  "Just like `evil-cp-delete-char-or-splice' but acts on the preceding character."
+  :motion evil-backward-char
+  (interactive "<R><x>")
+  (evil-cp-delete-char-or-splice beg end type register yank-handler))
+
 (evil-define-command evil-cp-delete-backward-word ()
   "Like `evil-delete-backward-word' with added behavior when
 called in front of an opening delimiter, in which case the
@@ -1979,6 +1987,7 @@ and/or beginning."
     ("S"   . evil-cp-change-whole-line)
     ("Y"   . evil-cp-yank-line)
     ("x"   . evil-cp-delete-char-or-splice)
+    ("X"   . evil-cp-delete-char-or-splice-backwards)
     (">"   . evil-cp->)
     ("<"   . evil-cp-<)
     ("_"   . evil-cp-first-non-blank-non-opening)
