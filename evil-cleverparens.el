@@ -31,6 +31,102 @@
 (require 'evil-cleverparens-text-objects)
 (require 'evil-cleverparens-util)
 
+;;; Variables ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defgroup evil-cleverparens nil
+  "`evil-mode' for handling your parentheses with a mix of `smartparens' and `paredit'"
+  :group 'smartparens)
+
+(defcustom evil-cleverparens-threshold 1500
+  "If the region being operated on is larger than this we cop out.
+
+   Quite a bit of work gets done to ensure the region being worked
+   is in an safe state, so this lets us sarifice safety for a snappy
+   editor on slower computers.
+
+   Even on a large computer you shouldn't set this too high or your
+   computer will freeze when copying large files out of Emacs.
+
+   This is a feature copied from `evil-smartparens'."
+  :group 'evil-cleverparens
+  :type 'number)
+
+(defcustom evil-cleverparens-complete-parens-in-yanked-region nil
+  "Determines how to handle yanking a region containing
+  unbalanced expressions. If this value is non-nil, a yanked
+  region containing missing parentheses will include the missing
+  parens appended to the end."
+  :group 'evil-cleverparens
+  :type 'boolean)
+
+(defcustom evil-cleverparens-move-skip-delimiters t
+  "Determines whether parentheses and other delimiters are
+  considered symbols or not. The effect this has is that when
+  enabled (default), the by-symbol navigation commands happily
+  travel through these delimiters. This can be handy if you are
+  already used to using evil-cleverparenses parentheses navigation
+  commands."
+  :group 'evil-cleverparens
+  :type 'boolean)
+
+(defcustom evil-cleverparens-swap-move-by-word-and-symbol nil
+  "If true, the keys w, e, b, and ge will be bound to the
+  evil-cleverparens movement by symbol commands, and the regular
+  evil move by word commands will be bound to W, E, B and gE respectively."
+  :group 'evil-cleverparens
+  :type 'boolean)
+
+(defcustom evil-cleverparens-drag-ignore-lines nil
+  "Controls whether top-level sexps should be swapped with other
+sexps or should lines be considered as well."
+  :group 'evil-cleverparens
+  :type 'boolean)
+
+(defcustom evil-cleverparens-drag-comment-blocks t
+  "Controls whether to drag by top-level comment block or a
+  single line when point is inside a multi-line top-level command
+  block."
+  :group 'evil-cleverparens
+  :type 'boolean)
+
+(defcustom evil-cleverparens-indent-afterwards t
+  "Controls whether to automatically indent when performing
+  commands that alter the structure of the surrounding code.
+  Enabled by default."
+  :group 'evil-cleverparens
+  :type 'boolean)
+
+(defcustom evil-cleverparens-use-regular-insert nil
+  "Determines whether to use `evil-insert' or `evil-cp-insert'."
+  :group 'evil-cleverparens
+  :type 'boolean)
+
+(defvar evil-cp--override nil
+  "Should the next command skip region checks?")
+
+(defvar evil-cp--inserted-space-after-round-open nil
+  "Helper var for `evil-cp-insert'.")
+
+(defcustom evil-cleverparens-use-additional-bindings t
+  "Should additional bindings be enabled."
+  :type 'boolean
+  :group 'evil-cleverparens)
+
+(defcustom evil-cleverparens-use-additional-movement-keys t
+  "Should additional movement keys, mostly those related to
+  parentheses navigation, be enabled."
+  :type 'boolean
+  :group 'evil-cleverparens)
+
+(defcustom evil-cleverparens-enabled-hook nil
+  "Called after `evil-cleverparens-mode' is turned on."
+  :type 'hook
+  :group 'evil-cleverparens)
+
+(defcustom evil-cleverparens-disabled-hook nil
+  "Called after `evil-cleverparens-mode' is turned off."
+  :type 'hook
+  :group 'evil-cleverparens)
 
 ;;; Overriding ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1835,104 +1931,6 @@ and/or beginning."
    (t
     (message "Turned yank auto-balancing OFF.")
     (setq evil-cleverparens-complete-parens-in-yanked-region nil))))
-
-
-;;; Variables ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defgroup evil-cleverparens nil
-  "`evil-mode' for handling your parentheses with a mix of `smartparens' and `paredit'"
-  :group 'smartparens)
-
-(defcustom evil-cleverparens-threshold 1500
-  "If the region being operated on is larger than this we cop out.
-
-   Quite a bit of work gets done to ensure the region being worked
-   is in an safe state, so this lets us sarifice safety for a snappy
-   editor on slower computers.
-
-   Even on a large computer you shouldn't set this too high or your
-   computer will freeze when copying large files out of Emacs.
-
-   This is a feature copied from `evil-smartparens'."
-  :group 'evil-cleverparens
-  :type 'number)
-
-(defcustom evil-cleverparens-complete-parens-in-yanked-region nil
-  "Determines how to handle yanking a region containing
-  unbalanced expressions. If this value is non-nil, a yanked
-  region containing missing parentheses will include the missing
-  parens appended to the end."
-  :group 'evil-cleverparens
-  :type 'boolean)
-
-(defcustom evil-cleverparens-move-skip-delimiters t
-  "Determines whether parentheses and other delimiters are
-  considered symbols or not. The effect this has is that when
-  enabled (default), the by-symbol navigation commands happily
-  travel through these delimiters. This can be handy if you are
-  already used to using evil-cleverparenses parentheses navigation
-  commands."
-  :group 'evil-cleverparens
-  :type 'boolean)
-
-(defcustom evil-cleverparens-swap-move-by-word-and-symbol nil
-  "If true, the keys w, e, b, and ge will be bound to the
-  evil-cleverparens movement by symbol commands, and the regular
-  evil move by word commands will be bound to W, E, B and gE respectively."
-  :group 'evil-cleverparens
-  :type 'boolean)
-
-(defcustom evil-cleverparens-drag-ignore-lines nil
-  "Controls whether top-level sexps should be swapped with other
-sexps or should lines be considered as well."
-  :group 'evil-cleverparens
-  :type 'boolean)
-
-(defcustom evil-cleverparens-drag-comment-blocks t
-  "Controls whether to drag by top-level comment block or a
-  single line when point is inside a multi-line top-level command
-  block."
-  :group 'evil-cleverparens
-  :type 'boolean)
-
-(defcustom evil-cleverparens-indent-afterwards t
-  "Controls whether to automatically indent when performing
-  commands that alter the structure of the surrounding code.
-  Enabled by default."
-  :group 'evil-cleverparens
-  :type 'boolean)
-
-(defcustom evil-cleverparens-use-regular-insert nil
-  "Determines whether to use `evil-insert' or `evil-cp-insert'."
-  :group 'evil-cleverparens
-  :type 'boolean)
-
-(defvar evil-cp--override nil
-  "Should the next command skip region checks?")
-
-(defvar evil-cp--inserted-space-after-round-open nil
-  "Helper var for `evil-cp-insert'.")
-
-(defcustom evil-cleverparens-use-additional-bindings t
-  "Should additional bindings be enabled."
-  :type 'boolean
-  :group 'evil-cleverparens)
-
-(defcustom evil-cleverparens-use-additional-movement-keys t
-  "Should additional movement keys, mostly those related to
-  parentheses navigation, be enabled."
-  :type 'boolean
-  :group 'evil-cleverparens)
-
-(defcustom evil-cleverparens-enabled-hook nil
-  "Called after `evil-cleverparens-mode' is turned on."
-  :type 'hook
-  :group 'evil-cleverparens)
-
-(defcustom evil-cleverparens-disabled-hook nil
-  "Called after `evil-cleverparens-mode' is turned off."
-  :type 'hook
-  :group 'evil-cleverparens)
 
 ;;; Keys ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
