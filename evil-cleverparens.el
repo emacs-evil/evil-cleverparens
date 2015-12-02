@@ -642,7 +642,9 @@ kill-ring is determined by the
                (indent-sexp)))
            (evil-cp-first-non-blank-non-opening)
            (if (evil-cp--looking-at-any-closing-p)
-               (progn
+               (when (save-excursion
+                       (forward-line -1)
+                       (not (evil-cp--comment-block?)))
                  (forward-line -1)
                  (join-line 1)
                  (forward-line 1))
