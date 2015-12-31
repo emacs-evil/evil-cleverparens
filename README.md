@@ -200,7 +200,7 @@ The following commands have been lifted straight from `smartparens`:
 | `M-J` | `sp-join-sexp`      |
 | `M-s` | `sp-splice-sexp`    |
 | `M-S` | `sp-split-sexp`     |
-| `M-R` | `evil-cp-raise-form`|
+| `M-t` | `sp-transpose-sexp` |
 | `M-v` | `sp-convolute-sexp` |
 | `M-r` | `sp-raise-sexp`     |
 
