@@ -2116,6 +2116,13 @@ true."
   (add-to-list 'evil-surround-operator-alist '(evil-cp-delete . delete))
   (add-to-list 'evil-surround-operator-alist '(evil-cp-change . change)))
 
+;; Setup keymap
+(evil-cp-set-movement-keys)
+(evil-cp--enable-regular-bindings)
+(evil-cp-set-additional-bindings)
+(evil-cp-set-additional-movement-keys)
+(evil-cp--enable-C-w-delete)
+
 ;;;###autoload
 (define-minor-mode evil-cleverparens-mode
   "Minor mode for setting up evil with smartparens and paredit
@@ -2127,13 +2134,8 @@ for an advanced modal structural editing experience."
                        "/b" "/i")))
   :init-value nil
   (if evil-cleverparens-mode
+      (evil-cp--enable-text-objects)
       (progn
-        (evil-cp-set-movement-keys)
-        (evil-cp--enable-regular-bindings)
-        (evil-cp--enable-text-objects)
-        (evil-cp-set-additional-bindings)
-        (evil-cp-set-additional-movement-keys)
-        (evil-cp--enable-C-w-delete)
         (if (bound-and-true-p evil-surround-mode)
             (evil-cp--enable-surround-operators)
           (add-hook 'evil-surround-mode-hook
