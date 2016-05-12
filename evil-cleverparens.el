@@ -2118,6 +2118,7 @@ true."
   (add-to-list 'evil-surround-operator-alist '(evil-cp-change . change)))
 
 ;; Setup keymap
+(defvar evil-cleverparens-mode-map (make-sparse-keymap))
 (evil-cp-set-movement-keys)
 (evil-cp--enable-regular-bindings)
 (evil-cp-set-additional-bindings)
@@ -2129,7 +2130,7 @@ true."
   "Minor mode for setting up evil with smartparens and paredit
 for an advanced modal structural editing experience."
   :group 'evil-cleverparens
-  :keymap '()
+  :keymap evil-cleverparens-mode-map
   :lighter (" ecp"
             (:eval (if evil-cleverparens-complete-parens-in-yanked-region
                        "/b" "/i")))
