@@ -2066,13 +2066,13 @@ in question."
       (progn
         (evil-define-key 'normal evil-cleverparens-mode-map
           "i" 'evil-insert)
-        (remove-hook 'evil-insert-state-exit-hook
-                     'evil-cp-insert-exit-hook))
+        (remove-hook 'evil-insert-state-exit-hook 'evil-cp-insert-exit-hook)
+        (remove-hook 'evil-hybrid-state-exit-hook 'evil-cp-insert-exit-hook))
     (evil-define-key 'normal evil-cleverparens-mode-map
       "i" 'evil-cp-insert
       "a" 'evil-cp-append)
-    (add-hook 'evil-insert-state-exit-hook
-              'evil-cp-insert-exit-hook)))
+    (add-hook 'evil-insert-state-exit-hook 'evil-cp-insert-exit-hook)
+    (add-hook 'evil-hybrid-state-exit-hook 'evil-cp-insert-exit-hook)))
 
 ;;;###autoload
 (defun evil-cp-set-additional-movement-keys ()
