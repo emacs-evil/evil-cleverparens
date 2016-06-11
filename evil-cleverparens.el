@@ -1986,8 +1986,6 @@ and/or beginning."
     ("y"   . evil-cp-yank)
     ("D"   . evil-cp-delete-line)
     ("C"   . evil-cp-change-line)
-    ("s"   . evil-cp-substitute)
-    ("S"   . evil-cp-change-whole-line)
     ("Y"   . evil-cp-yank-line)
     ("x"   . evil-cp-delete-char-or-splice)
     ("X"   . evil-cp-delete-char-or-splice-backwards)
@@ -2072,7 +2070,13 @@ in question."
       "i" 'evil-cp-insert
       "a" 'evil-cp-append)
     (add-hook 'evil-insert-state-exit-hook
-              'evil-cp-insert-exit-hook)))
+              'evil-cp-insert-exit-hook))
+  ;; If evil-snipe is not present or does not want to use s and S bindings,
+  ;; then we can use them. To take effect, evil-snipe must be loaded before us.
+  (when (not (bound-and-true-p evil-snipe-auto-disable-substitute))
+    (evil-define-key 'normal evil-cleverparens-mode-map
+      "s" 'evil-cp-substitute
+      "S" 'evil-cp-change-whole-line)))
 
 ;;;###autoload
 (defun evil-cp-set-additional-movement-keys ()
