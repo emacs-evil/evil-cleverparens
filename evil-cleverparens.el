@@ -1019,7 +1019,7 @@ movement."
       (forward-char)
       (dotimes (_ depth)
         (sp-backward-slurp-sexp))
-      (while (looking-back " ")
+      (while (looking-back " " nil)
         (backward-delete-char 1))
       (insert " ")
       (backward-sexp)
@@ -1651,7 +1651,7 @@ the top-level form and deletes the extra whitespace."
         (forward-line -1)
         (join-line 1)
         (end-of-line))
-      (when (looking-back "\s")
+      (when (looking-back "\s" nil)
         (delete-backward-char 1)))))
 
 (evil-define-command evil-cp-change-enclosing (count &optional register)
@@ -1702,7 +1702,8 @@ the top-level form and deletes the extra whitespace."
           (open    (car this-pair))
           (close   (cdr this-pair))
           (enc-end (sp-get (sp-get-enclosing-sexp)
-                     (when :end (1- :end)))))
+                     (when :end (1- :end))))
+          end)
       (sp-forward-sexp count)
       (setq end (if enc-end (min (point) enc-end) (point)))
       (if (= end pt-orig)
@@ -1725,7 +1726,8 @@ the top-level form and deletes the extra whitespace."
           (open    (car this-pair))
           (close   (cdr this-pair))
           (enc-beg (sp-get (sp-get-enclosing-sexp)
-                     (when :beg (1+ :beg)))))
+                     (when :beg (1+ :beg))))
+          beg)
       (sp-backward-sexp count)
       (setq beg (if enc-beg (max (point) enc-beg) (point)))
       (when (not (= pt-orig beg))
@@ -1874,10 +1876,10 @@ to true."
         (evil-cp--point-in-string-or-comment)
         (evil-cp--looking-at-empty-form))
     (call-interactively 'evil-insert))
-   ((and (looking-back "(")
+   ((and (looking-back "(" nil)
          ;; should I use `sp-sexp-prefix' here?
-         (not (looking-back "'("))
-         (not (looking-back "#(")))
+         (not (looking-back "'(" nil))
+         (not (looking-back "#(" nil)))
     (setq evil-cp--inserted-space-after-round-open t)
     (insert " ")
     (backward-char)
@@ -1908,8 +1910,8 @@ to true."
     (call-interactively 'evil-append))
    ((and (or (looking-at-p "(\\b")
              (evil-cp--looking-at-any-opening-p))
-         (not (looking-back "'"))
-         (not (looking-back "#")))
+         (not (looking-back "'" nil))
+         (not (looking-back "#" nil)))
     (setq evil-cp--inserted-space-after-round-open t)
     (forward-char)
     (insert " ")
@@ -1948,163 +1950,97 @@ and/or beginning."
 
 ;;; Keys ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defvar evil-cp-regular-movement-keys
-  '(("w"  . evil-forward-word-begin)
-    ("e"  . evil-forward-word-end)
-    ("b"  . evil-backward-word-begin)
-    ("ge" . evil-backward-word-end)
-    ("W"  . evil-cp-forward-symbol-begin)
-    ("E"  . evil-cp-forward-symbol-end)
-    ("B"  . evil-cp-backward-symbol-begin)
-    ("gE" . evil-cp-backward-symbol-end)))
-
-(defvar evil-cp-swapped-movement-keys
-  '(("w"  . evil-cp-forward-symbol-begin)
-    ("e"  . evil-cp-forward-symbol-end)
-    ("b"  . evil-cp-backward-symbol-begin)
-    ("ge" . evil-cp-backward-symbol-end)
-    ("W"  . evil-forward-word-begin)
-    ("E"  . evil-forward-word-end)
-    ("B"  . evil-backward-word-begin)
-    ("gE" . evil-backward-word-end)))
-
-(defvar evil-cp-additional-movement-keys
-  '(("L"   . evil-cp-forward-sexp)
-    ("H"   . evil-cp-backward-sexp)
-    ("M-l" . evil-cp-end-of-defun)
-    ("M-h" . evil-cp-beginning-of-defun)
-    ("["   . evil-cp-previous-opening)
-    ("]"   . evil-cp-next-closing)
-    ("{"   . evil-cp-next-opening)
-    ("}"   . evil-cp-previous-closing)
-    ("("   . evil-cp-backward-up-sexp)
-    (")"   . evil-cp-up-sexp)))
-
-(defvar evil-cp-regular-bindings
-  '(("d"   . evil-cp-delete)
-    ("c"   . evil-cp-change)
-    ("y"   . evil-cp-yank)
-    ("D"   . evil-cp-delete-line)
-    ("C"   . evil-cp-change-line)
-    ("Y"   . evil-cp-yank-line)
-    ("x"   . evil-cp-delete-char-or-splice)
-    ("X"   . evil-cp-delete-char-or-splice-backwards)
-    (">"   . evil-cp->)
-    ("<"   . evil-cp-<)
-    ("_"   . evil-cp-first-non-blank-non-opening)
-    ("M-T" . evil-cp-toggle-balanced-yank)
-    ("M-z" . evil-cp-override))
-  "Alist containing the regular evil-cleverparens bindings that
-  override evil's bindings in normal mode.")
-
-(defvar evil-cp-additional-bindings
-  '(("M-t" . sp-transpose-sexp)
-    ("M-k" . evil-cp-drag-backward)
-    ("M-j" . evil-cp-drag-forward)
-    ("M-J" . sp-join-sexp)
-    ("M-s" . sp-splice-sexp)
-    ("M-S" . sp-split-sexp)
-    ("M-R" . evil-cp-raise-form)
-    ("M-r" . sp-raise-sexp)
-    ("M-a" . evil-cp-insert-at-end-of-form)
-    ("M-i" . evil-cp-insert-at-beginning-of-form)
-    ("M-w" . evil-cp-copy-paste-form)
-    ("M-y" . evil-cp-yank-sexp)
-    ("M-d" . evil-cp-delete-sexp)
-    ("M-c" . evil-cp-change-sexp)
-    ("M-Y" . evil-cp-yank-enclosing)
-    ("M-D" . evil-cp-delete-enclosing)
-    ("M-C" . evil-cp-change-enclosing)
-    ("M-q" . sp-indent-defun)
-    ("M-o" . evil-cp-open-below-form)
-    ("M-O" . evil-cp-open-above-form)
-    ("M-v" . sp-convolute-sexp)
-    ("M-(" . evil-cp-wrap-next-round)
-    ("M-)" . evil-cp-wrap-previous-round)
-    ("M-[" . evil-cp-wrap-next-square)
-    ("M-]" . evil-cp-wrap-previous-square)
-    ("M-{" . evil-cp-wrap-next-curly)
-    ("M-}" . evil-cp-wrap-previous-curly))
-  "Alist containing additional functionality for
-  evil-cleverparens via a modifier key (using the meta-key by
-  default). Only enabled in evil's normal mode.")
-
-(defun evil-cp--populate-mode-bindings-for-state (bindings state addp)
-  "Helper function that defines BINDINGS for the evil-state
-STATE when ADDP is true. If ADDP is false, then the keys in
-BINDINGS are set to nil instead, effectively disabling the keys
-in question."
-  (--each bindings
-    (evil-define-key state evil-cleverparens-mode-map
-      (read-kbd-macro (car it))
-      (if addp (cdr it) nil))))
-
-;;;###autoload
-(defun evil-cp-set-movement-keys ()
-  "Sets the movement keys in
-`evil-cleverparens-regular-movement-keys' or
-`evil-cp-swapped-movement-keys' based on the value of
-`evil-cleverparens-swap-move-by-word-and-symbol'."
-  (interactive)
-  (let ((keys (if evil-cleverparens-swap-move-by-word-and-symbol
-                  evil-cp-swapped-movement-keys
-                evil-cp-regular-movement-keys)))
-    (evil-cp--populate-mode-bindings-for-state keys 'normal t)))
-
-(defun evil-cp--enable-regular-bindings ()
-  "Enables the regular evil-cleverparens bindings based on
-`evil-cp-regular-bindings'."
-  (dolist (state '(normal visual))
-    (evil-cp--populate-mode-bindings-for-state
-     evil-cp-regular-bindings
-     state
-     t))
-  (if evil-cleverparens-use-regular-insert
-      ;; in case we change our mind
-      (progn
-        (evil-define-key 'normal evil-cleverparens-mode-map
-          "i" 'evil-insert)
-        (remove-hook 'evil-insert-state-exit-hook
-                     'evil-cp-insert-exit-hook))
-    (evil-define-key 'normal evil-cleverparens-mode-map
-      "i" 'evil-cp-insert
-      "a" 'evil-cp-append)
-    (add-hook 'evil-insert-state-exit-hook
-              'evil-cp-insert-exit-hook))
-  ;; If evil-snipe is not present or does not want to use s and S bindings,
-  ;; then we can use them. To take effect, evil-snipe must be loaded before us.
-  (when (not (bound-and-true-p evil-snipe-auto-disable-substitute))
-    (evil-define-key 'normal evil-cleverparens-mode-map
-      "s" 'evil-cp-substitute
-      "S" 'evil-cp-change-whole-line)))
-
-;;;###autoload
-(defun evil-cp-set-additional-movement-keys ()
-  "Sets the movement keys is `evil-cp-additional-movement-keys'
-for normal, visual and operator states if
-`evil-cleverparens-use-additional-movement-keys' is true."
-  (interactive)
-  (dolist (state '(normal visual operator))
-    (evil-cp--populate-mode-bindings-for-state
-     evil-cp-additional-movement-keys
-     state
-     evil-cleverparens-use-additional-movement-keys)))
-
-;;;###autoload
-(defun evil-cp-set-additional-bindings ()
-  "Sets the movement keys is `evil-cp-additional-bindings' for
-normal-state if `evil-cleverparens-use-additional-bindings' is
-true."
-  (interactive)
-  (evil-cp--populate-mode-bindings-for-state
-   evil-cp-additional-bindings
-   'normal
-   evil-cleverparens-use-additional-bindings))
-
-(defun evil-cp--enable-C-w-delete ()
-  (when evil-want-C-w-delete
-    (evil-define-key 'insert evil-cleverparens-mode-map
-      "\C-w" 'evil-cp-delete-backward-word)))
+(defvar evil-cleverparens-mode-map
+  (let ((map (make-sparse-keymap)))
+    (evil-define-key '(normal visual) map
+      "d"    'evil-cp-delete
+      "c"    'evil-cp-change
+      "y"    'evil-cp-yank
+      "D"    'evil-cp-delete-line
+      "C"    'evil-cp-change-line
+      "Y"    'evil-cp-yank-line
+      "x"    'evil-cp-delete-char-or-splice
+      "X"    'evil-cp-delete-char-or-splice-backwards
+      ">"    'evil-cp->
+      "<"    'evil-cp-<
+      "_"    'evil-cp-first-non-blank-non-opening
+      "\M-T" 'evil-cp-toggle-balanced-yank
+      "\M-z" 'evil-cp-override)
+    (unless evil-cleverparens-use-regular-insert
+      (evil-define-key 'normal map
+        "i" 'evil-cp-insert
+        "a" 'evil-cp-append))
+    ;; If evil-snipe is not present or does not want to use s and S bindings,
+    ;; then we can use them. To take effect, evil-snipe must be loaded before us.
+    (when (not (bound-and-true-p evil-snipe-auto-disable-substitute))
+      (evil-define-key 'normal map
+        "s" 'evil-cp-substitute
+        "S" 'evil-cp-change-whole-line))
+    (if evil-cleverparens-swap-move-by-word-and-symbol
+        (evil-define-key 'normal map
+          "w"  'evil-cp-forward-symbol-begin
+          "e"  'evil-cp-forward-symbol-end
+          "b"  'evil-cp-backward-symbol-begin
+          "ge" 'evil-cp-backward-symbol-end
+          "W"  'evil-forward-word-begin
+          "E"  'evil-forward-word-end
+          "B"  'evil-backward-word-begin
+          "gE" 'evil-backward-word-end)
+      (evil-define-key 'normal map
+        "w"  'evil-forward-word-begin
+        "e"  'evil-forward-word-end
+        "b"  'evil-backward-word-begin
+        "ge" 'evil-backward-word-end
+        "W"  'evil-cp-forward-symbol-begin
+        "E"  'evil-cp-forward-symbol-end
+        "B"  'evil-cp-backward-symbol-begin
+        "gE" 'evil-cp-backward-symbol-end))
+    (when evil-cleverparens-use-additional-movement-keys
+      (evil-define-key '(normal visual operator) map
+        "L"    'evil-cp-forward-sexp
+        "H"    'evil-cp-backward-sexp
+        "\M-l" 'evil-cp-end-of-defun
+        "\M-h" 'evil-cp-beginning-of-defun
+        "["    'evil-cp-previous-opening
+        "]"    'evil-cp-next-closing
+        "{"    'evil-cp-next-opening
+        "}"    'evil-cp-previous-closing
+        "("    'evil-cp-backward-up-sexp
+        ")"    'evil-cp-up-sexp))
+    (when evil-cleverparens-use-additional-bindings
+      (evil-define-key 'normal map
+        "\M-t" 'sp-transpose-sexp
+        "\M-k" 'evil-cp-drag-backward
+        "\M-j" 'evil-cp-drag-forward
+        "\M-J" 'sp-join-sexp
+        "\M-s" 'sp-splice-sexp
+        "\M-S" 'sp-split-sexp
+        "\M-R" 'evil-cp-raise-form
+        "\M-r" 'sp-raise-sexp
+        "\M-a" 'evil-cp-insert-at-end-of-form
+        "\M-i" 'evil-cp-insert-at-beginning-of-form
+        "\M-w" 'evil-cp-copy-paste-form
+        "\M-y" 'evil-cp-yank-sexp
+        "\M-d" 'evil-cp-delete-sexp
+        "\M-c" 'evil-cp-change-sexp
+        "\M-Y" 'evil-cp-yank-enclosing
+        "\M-D" 'evil-cp-delete-enclosing
+        "\M-C" 'evil-cp-change-enclosing
+        "\M-q" 'sp-indent-defun
+        "\M-o" 'evil-cp-open-below-form
+        "\M-O" 'evil-cp-open-above-form
+        "\M-v" 'sp-convolute-sexp
+        "\M-(" 'evil-cp-wrap-next-round
+        "\M-)" 'evil-cp-wrap-previous-round
+        "\M-[" 'evil-cp-wrap-next-square
+        "\M-]" 'evil-cp-wrap-previous-square
+        "\M-{" 'evil-cp-wrap-next-curly
+        "\M-}" 'evil-cp-wrap-previous-curly))
+    (when evil-want-C-w-delete
+      (evil-define-key 'insert map
+        "\C-w" 'evil-cp-delete-backward-word))
+      map)
+  "evil-cleverparens mode map.")
 
 (defun evil-cp--enable-text-objects ()
   "Enables text-objects defined in evil-cleverparens."
@@ -2121,14 +2057,6 @@ true."
   (add-to-list 'evil-surround-operator-alist '(evil-cp-delete . delete))
   (add-to-list 'evil-surround-operator-alist '(evil-cp-change . change)))
 
-;; Setup keymap
-(defvar evil-cleverparens-mode-map (make-sparse-keymap))
-(evil-cp-set-movement-keys)
-(evil-cp--enable-regular-bindings)
-(evil-cp-set-additional-bindings)
-(evil-cp-set-additional-movement-keys)
-(evil-cp--enable-C-w-delete)
-
 ;;;###autoload
 (define-minor-mode evil-cleverparens-mode
   "Minor mode for setting up evil with smartparens and paredit
@@ -2140,8 +2068,13 @@ for an advanced modal structural editing experience."
                        "/b" "/i")))
   :init-value nil
   (if evil-cleverparens-mode
-      (evil-cp--enable-text-objects)
       (progn
+        (evil-cp--enable-text-objects)
+        (if evil-cleverparens-use-regular-insert
+            (remove-hook 'evil-insert-state-exit-hook
+                         'evil-cp-insert-exit-hook)
+          (add-hook 'evil-insert-state-exit-hook
+                    'evil-cp-insert-exit-hook))
         (if (bound-and-true-p evil-surround-mode)
             (evil-cp--enable-surround-operators)
           (add-hook 'evil-surround-mode-hook
