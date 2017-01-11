@@ -1987,7 +1987,7 @@ and/or beginning."
     ("D"   . evil-cp-delete-line)
     ("C"   . evil-cp-change-line)
     ("Y"   . evil-cp-yank-line)
-    ("x"   . evil-cp-delete-char-or-splice)
+    ("x"   . evil-delete-char)
     ("X"   . evil-cp-delete-char-or-splice-backwards)
     (">"   . evil-cp->)
     ("<"   . evil-cp-<)
