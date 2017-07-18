@@ -122,7 +122,7 @@ If for some reason `evil-cleverparens` messes up, or you would just like to tort
 
 #### `s` and `S`
 
-- `s` is identical to `evil`'s, but skips over delimiteres.
+- `s` is identical to `evil`'s, but skips over delimiters.
 - `S` is the same as `C` but always starts from the beginning of the line and skips over any unmatched delimiters.
 - `evil-cleverparens-use-s-and-S` (defaults to `t`) controls whether s and S will be overridden as described above. If you decide to set this to `nil`, do it **before** loading `evil-cleverparens`!
 
@@ -170,11 +170,11 @@ The behavior of the command with respect to top-level sexps and lines can be cus
 - On a closing delimiter `>` will *slurp forwards* as many times as there are closing delimiters behind.
 - When inside a form `<` will *barf* and `>` will *slurp* *forwards*.
 
-While the specifics of the dragging, slurping and barfing behavior may seem complicated when spelt out, a lot of thought has been put to make their use feel intuitive and fluid.
+While the specifics of the dragging, slurping and barfing behavior may seem complicated when spelled out, a lot of thought has been put to make their use feel intuitive and fluid.
 
 #### Wrapping
 
-While `evil-cleverparens` editing operations work well with [evil-surround](https://github.com/timcharper/evil-surround), the following specialised wrapping commands are also provided:
+While `evil-cleverparens` editing operations work well with [evil-surround](https://github.com/timcharper/evil-surround), the following specialized wrapping commands are also provided:
 
 | Key   | Behavior                                     |
 |-------|----------------------------------------------|
@@ -221,7 +221,7 @@ Some of the commands in `evil-cleverparens` optionally accept the `universal-arg
 
 `evil-cleverparens` relies on `smartparens` to identify forms where the opening delimiter contains a prefix, such as quoted lists or the anonymous function literals in Clojure. If you are having problems with such prefixed forms, make sure that the variable `sp-sexp-prefix` is correctly configured for the mode you are using.
 
-#### Hilighting Parentheses
+#### Highlighting Parentheses
 
 Using [highlight-parentheses.el](https://github.com/tsdh/highlight-parentheses.el) to highlight three of the closest delimiters from the location of the point with fixed colors makes it very easy to quickly identify the range of many of the operations of `evil-cleverparens.`
 
