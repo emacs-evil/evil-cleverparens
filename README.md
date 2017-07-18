@@ -24,7 +24,7 @@ To enable `evil-cleverparens` with your favorite lispy-mode use:
 (add-hook '<your-lispy-mode> #'evil-cleverparens-mode)
 ```
 
-If you are using `evil` with `evil-move-cursor-back` as `t` and `evil-move-beyond-eol` as `nil` (the defaults), I would recommend putting `(setq evil-move-beyond-eol t)` in your config so that certain movement commands don't break at the end of the lines (see [issue #29](luxbock/evil-cleverparens#29) for details).
+If you are using `evil` with `evil-move-cursor-back` as `t` and `evil-move-beyond-eol` as `nil` (the defaults), I would recommend putting `(setq evil-move-beyond-eol t)` in your config so that certain movement commands don't break at the end of the lines (see [issue #29](https://github.com/luxbock/evil-cleverparens/issues/29) for details).
 
 # Features
 
