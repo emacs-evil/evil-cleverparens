@@ -2128,6 +2128,7 @@ true."
 (evil-cp-set-additional-bindings)
 (evil-cp-set-additional-movement-keys)
 (evil-cp--enable-C-w-delete)
+(evil-cp--enable-text-objects)
 
 ;;;###autoload
 (define-minor-mode evil-cleverparens-mode
@@ -2140,7 +2141,6 @@ for an advanced modal structural editing experience."
                        "/b" "/i")))
   :init-value nil
   (if evil-cleverparens-mode
-      (evil-cp--enable-text-objects)
       (progn
         (if (bound-and-true-p evil-surround-mode)
             (evil-cp--enable-surround-operators)
