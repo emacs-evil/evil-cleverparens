@@ -124,6 +124,7 @@ If for some reason `evil-cleverparens` messes up, or you would just like to tort
 
 - `s` is identical to `evil`'s, but skips over delimiteres.
 - `S` is the same as `C` but always starts from the beginning of the line and skips over any unmatched delimiters.
+- `evil-cleverparens-use-s-and-S` (defaults to `t`) controls whether s and S will be overridden as described above. If you decide to set this to `nil`, do it **before** loading `evil-cleverparens`!
 
 #### `x` deletes and splices
 

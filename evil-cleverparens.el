@@ -118,6 +118,12 @@ sexps or should lines be considered as well."
   :type 'boolean
   :group 'evil-cleverparens)
 
+(defcustom evil-cleverparens-use-s-and-S t
+  "Should we bind s and S, thus shadowing any existing bindings
+to these keys."
+  :type 'boolean
+  :group 'evil-cleverparens)
+
 (defcustom evil-cleverparens-enabled-hook nil
   "Called after `evil-cleverparens-mode' is turned on."
   :type 'hook
@@ -2073,7 +2079,8 @@ in question."
               'evil-cp-insert-exit-hook))
   ;; If evil-snipe is not present or does not want to use s and S bindings,
   ;; then we can use them. To take effect, evil-snipe must be loaded before us.
-  (when (not (bound-and-true-p evil-snipe-auto-disable-substitute))
+  (when (and evil-cleverparens-use-s-and-S
+             (not (bound-and-true-p evil-snipe-auto-disable-substitute)))
     (evil-define-key 'normal evil-cleverparens-mode-map
       "s" 'evil-cp-substitute
       "S" 'evil-cp-change-whole-line)))
