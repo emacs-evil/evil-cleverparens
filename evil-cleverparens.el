@@ -735,7 +735,6 @@ kill-ring is determined by the
 
 (evil-define-operator evil-cp-change (beg end type register yank-handler delete-func)
   "Call `evil-change' while keeping parentheses balanced."
-  :move-point nil
   (interactive "<R><x><y>")
   (if (or (= beg end)
           (evil-cp--override)
