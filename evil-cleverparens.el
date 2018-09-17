@@ -266,7 +266,7 @@ enclosing form gets deleted."
   "Calling this function in a buffer with unbalanced parentheses
 will have the missing parentheses be inserted at the end of the
 buffer if BACKP is nil and at the beginning if it is true."
-  (let ((closing nil))
+  (let ((matching nil))
     ;; fix for the degenerate case of nothing but closing parens
     (when backp (save-excursion (insert " ")))
     (save-excursion
@@ -281,15 +281,19 @@ buffer if BACKP is nil and at the beginning if it is true."
                           (head   (car syntax)))
                      (cond
                       ((eq head (if backp 5 4))
-                       (setq closing (cons (cdr syntax) closing)))
+                       ;; character is an opening or closing paren -> get its matching pair from the cdr
+                       (setq matching (cons (cdr syntax) matching)))
                       ((member head '(7 8))
-                       (setq closing (cons (char-after (point)) closing)))))
+                       ;; character is a quote or delimiter -> use the same char to match
+                       (setq matching (cons (char-after (point)) matching)))))
                    t)
                ((scan-error) nil))))
-    (when backp (goto-char (point-min)))
-    (apply #'insert (nreverse closing))
-    ;; see above
-    (when backp (delete-char 1))))
+    (if (not backp)
+        (apply #'insert (nreverse matching))
+      (goto-char (point-min))
+      (apply #'insert matching)
+      ;; see above
+      (delete-char 1))))
 
 (defun evil-cp--close-missing-parens (text)
   "Takes a text object and inserts missing parentheses first at
