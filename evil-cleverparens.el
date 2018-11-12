@@ -187,11 +187,15 @@ contained within the region."
     (while (> chars-left 0)
       (cond
        ((evil-cp--point-in-string-or-comment)
-        (let* ((ending (cdr (or (sp-get-comment-bounds)
-                                (sp-get-quoted-string-bounds))))
-               (diff (- (min end ending) (point))))
-          (delete-char diff)
-          (setq chars-left (- chars-left diff))))
+        (if (sp-get-comment-bounds)
+            (let* ((ending (cdr (or (sp-get-comment-bounds)
+                                    (sp-get-quoted-string-bounds))))
+                   (diff (- (min end ending) (point))))
+              (delete-char diff)
+              (setq chars-left (- chars-left diff)))
+          (progn
+            (evil-cp--splice-form)
+            (cl-decf chars-left))))
 
        ((evil-cp--looking-at-opening-p)
         (let ((other-paren (evil-cp--matching-paren-pos)))
@@ -208,7 +212,9 @@ contained within the region."
               (let ((char-count (sp-get (sp-get-string) (- :end :beg))))
                 (delete-char char-count)
                 (setq chars-left (- chars-left char-count)))
-            (forward-char)
+            (if (= 1 (- end (point)))
+                (evil-cp--splice-form)
+              (forward-char))
             (cl-decf chars-left))))
 
        ((evil-cp--looking-at-paren-p)
@@ -216,7 +222,7 @@ contained within the region."
         (cl-decf chars-left))
 
        ((evil-cp--looking-at-string-delimiter-p)
-        (forward-char)
+        (delete-char 1)
         (cl-decf chars-left))
 
        (t
