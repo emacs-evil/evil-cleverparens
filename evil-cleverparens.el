@@ -829,10 +829,10 @@ level sexp)."
     (when (funcall paren-p) (funcall move-fn))
     (while (not done-p)
       (cond
-       ((= (point) (funcall the-end))
-        (setq done-p t)
-        (goto-char pt-orig))
        ((funcall paren-p)
+        (setq done-p t))
+       ((= (point) (funcall the-end))
+        (goto-char pt-orig)
         (setq done-p t))
        (t
         (funcall move-fn))))))
