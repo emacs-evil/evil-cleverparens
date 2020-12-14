@@ -501,8 +501,11 @@ respecting parentheses."
                                 'evil-cp-yank-form-handler))
 
      ((eq type 'line)
-      (evil-cp--ignoring-yank beg end type register
-                              'evil-yank-line-handler))
+      (let ((beg (+ beg (save-excursion ; skip preceding whitespace
+                          (beginning-of-line)
+                          (sp-forward-whitespace t)))))
+        (evil-cp--ignoring-yank beg end type register
+                                'evil-yank-line-handler)))
 
      ;; unbalanced, fill missing
      (evil-cleverparens-complete-parens-in-yanked-region
