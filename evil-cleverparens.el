@@ -936,7 +936,7 @@ working. Could be used to implement a future
            (evil-forward-beginning thing count))
 
           ((and evil-want-change-word-to-end
-                (eq evil-this-operator #'evil-change)
+                (memq evil-this-operator evil-change-commands)
                 (< orig (or (cdr-safe (bounds-of-thing-at-point thing)) orig)))
            (forward-thing thing count))
 
@@ -2065,6 +2065,9 @@ in question."
      evil-cp-regular-bindings
      state
      t))
+  ;; Enable `evil-cp-change' as an `evil-change command'.
+  (add-to-list 'evil-change-commands #'evil-cp-change)
+
   (if evil-cleverparens-use-regular-insert
       ;; in case we change our mind
       (progn
