@@ -3,7 +3,7 @@
 ;; Copyright (C) 2015 Olli Piepponen
 ;;
 ;; Author: Olli Piepponen <opieppo@gmail.com>
-;; URL: https://github.com/luxbock/evil-cleverparens
+;; URL: https://github.com/emacs-evil/evil-cleverparens
 ;; Keywords: cleverparens, parentheses, evil, paredit, smartparens
 ;; Version: 0.1.0
 ;; Package-Requires: ((evil "1.0") (smartparens "1.6.1"))
