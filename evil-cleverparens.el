@@ -187,11 +187,15 @@ contained within the region."
     (while (> chars-left 0)
       (cond
        ((evil-cp--point-in-string-or-comment)
-        (let* ((ending (cdr (or (sp-get-comment-bounds)
-                                (sp-get-quoted-string-bounds))))
-               (diff (- (min end ending) (point))))
-          (delete-char diff)
-          (setq chars-left (- chars-left diff))))
+        (if (sp-get-comment-bounds)
+            (let* ((ending (cdr (or (sp-get-comment-bounds)
+                                    (sp-get-quoted-string-bounds))))
+                   (diff (- (min end ending) (point))))
+              (delete-char diff)
+              (setq chars-left (- chars-left diff)))
+          (progn
+            (evil-cp--splice-form)
+            (cl-decf chars-left))))
 
        ((evil-cp--looking-at-opening-p)
         (let ((other-paren (evil-cp--matching-paren-pos)))
@@ -208,7 +212,9 @@ contained within the region."
               (let ((char-count (sp-get (sp-get-string) (- :end :beg))))
                 (delete-char char-count)
                 (setq chars-left (- chars-left char-count)))
-            (forward-char)
+            (if (= 1 (- end (point)))
+                (evil-cp--splice-form)
+              (forward-char))
             (cl-decf chars-left))))
 
        ((evil-cp--looking-at-paren-p)
@@ -216,7 +222,7 @@ contained within the region."
         (cl-decf chars-left))
 
        ((evil-cp--looking-at-string-delimiter-p)
-        (forward-char)
+        (delete-char 1)
         (cl-decf chars-left))
 
        (t
@@ -501,8 +507,11 @@ respecting parentheses."
                                 'evil-cp-yank-form-handler))
 
      ((eq type 'line)
-      (evil-cp--ignoring-yank beg end type register
-                              'evil-yank-line-handler))
+      (let ((beg (+ beg (save-excursion ; skip preceding whitespace
+                          (beginning-of-line)
+                          (sp-forward-whitespace t)))))
+        (evil-cp--ignoring-yank beg end type register
+                                'evil-yank-line-handler)))
 
      ;; unbalanced, fill missing
      (evil-cleverparens-complete-parens-in-yanked-region
@@ -732,7 +741,6 @@ kill-ring is determined by the
 
 (evil-define-operator evil-cp-change (beg end type register yank-handler delete-func)
   "Call `evil-change' while keeping parentheses balanced."
-  :move-point nil
   (interactive "<R><x><y>")
   (if (or (= beg end)
           (evil-cp--override)
@@ -827,10 +835,10 @@ level sexp)."
     (when (funcall paren-p) (funcall move-fn))
     (while (not done-p)
       (cond
-       ((= (point) (funcall the-end))
-        (setq done-p t)
-        (goto-char pt-orig))
        ((funcall paren-p)
+        (setq done-p t))
+       ((= (point) (funcall the-end))
+        (goto-char pt-orig)
         (setq done-p t))
        (t
         (funcall move-fn))))))
@@ -936,7 +944,7 @@ working. Could be used to implement a future
            (evil-forward-beginning thing count))
 
           ((and evil-want-change-word-to-end
-                (eq evil-this-operator #'evil-change)
+                (memq evil-this-operator evil-change-commands)
                 (< orig (or (cdr-safe (bounds-of-thing-at-point thing)) orig)))
            (forward-thing thing count))
 
@@ -2065,6 +2073,9 @@ in question."
      evil-cp-regular-bindings
      state
      t))
+  ;; Enable `evil-cp-change' as an `evil-change command'.
+  (add-to-list 'evil-change-commands #'evil-cp-change)
+
   (if evil-cleverparens-use-regular-insert
       ;; in case we change our mind
       (progn
