@@ -169,8 +169,8 @@ point lands is a safe region, in which case its bounds are
 returned."
   `(save-excursion
      ,@body
-     (let ((pbol (point-at-bol))
-           (peol (point-at-eol)))
+     (let ((pbol (line-beginning-position))
+           (peol (line-end-position)))
        (when (and (sp-region-ok-p pbol peol))
          (cons pbol peol)))))
 
