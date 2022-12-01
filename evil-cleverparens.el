@@ -634,7 +634,6 @@ kill-ring is determined by the
   :move-point nil
   (interactive "<R><x><y>")
   (let ((safep (evil-cp-region-ok-p beg end)))
-    (evil-cp-yank beg end type register yank-handler)
     (cond ((or (= beg end)
                (evil-cp--override)
                (and (eq type 'block) (evil-cp--balanced-block-p beg end))
@@ -642,6 +641,7 @@ kill-ring is determined by the
            (evil-delete beg end type register yank-handler))
 
           ((eq type 'line)
+           (evil-cp-yank beg end type register yank-handler)
            (goto-char beg)
            (save-excursion
              (evil-cp--delete-characters
@@ -665,7 +665,8 @@ kill-ring is determined by the
                  (forward-line 1))
              (join-line 1)))
 
-          (t (evil-cp--delete-characters beg end)))))
+          (t (evil-cp-yank beg end type register yank-handler)
+             (evil-cp--delete-characters beg end)))))
 
 (evil-define-operator evil-cp-delete-line (beg end type register yank-handler)
   "Kills the balanced expressions on the line until the eol."
