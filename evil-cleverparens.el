@@ -2043,6 +2043,12 @@ and/or beginning."
   evil-cleverparens via a modifier key (using the meta-key by
   default). Only enabled in evil's normal mode.")
 
+(defvar evil-cp-insert-key "i"
+  "Key to use to switch to insert mode")
+
+(defvar evil-cp-append-key "a"
+  "Key to use to switch to append mode")
+
 (defun evil-cp--populate-mode-bindings-for-state (bindings state addp)
   "Helper function that defines BINDINGS for the evil-state
 STATE when ADDP is true. If ADDP is false, then the keys in
@@ -2080,12 +2086,12 @@ in question."
       ;; in case we change our mind
       (progn
         (evil-define-key 'normal evil-cleverparens-mode-map
-          "i" 'evil-insert)
+          evil-cp-insert-key 'evil-insert)
         (remove-hook 'evil-insert-state-exit-hook
                      'evil-cp-insert-exit-hook))
     (evil-define-key 'normal evil-cleverparens-mode-map
-      "i" 'evil-cp-insert
-      "a" 'evil-cp-append)
+      evil-cp-insert-key 'evil-cp-insert
+      evil-cp-append-key 'evil-cp-append)
     (add-hook 'evil-insert-state-exit-hook
               'evil-cp-insert-exit-hook))
   ;; If evil-snipe is not present or does not want to use s and S bindings,
