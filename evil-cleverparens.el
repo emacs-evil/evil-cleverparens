@@ -995,16 +995,6 @@ movement."
     (evil-signal-at-bob-or-eob (- (or count 1)))
     (evil-backward-beginning thing count)))
 
-(evil-define-motion evil-cp-backward-symbol-begin (count)
-  "Copy of `evil-backward-word-begin' using 'evil-symbol for the
-movement."
-  :type exclusive
-  (let ((thing (if evil-cleverparens-move-skip-delimiters
-                   'evil-cp-symbol
-                 'evil-symbol)))
-    (evil-signal-at-bob-or-eob (- (or count 1)))
-    (evil-backward-beginning thing count)))
-
 (evil-define-motion evil-cp-backward-symbol-end (count)
   "Copy of `evil-backward-word-end' using 'evil-symbol for the
 movement."
