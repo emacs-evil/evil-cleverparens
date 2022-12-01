@@ -528,12 +528,12 @@ respecting parentheses."
   (interactive "<R><x>")
   (cond
    ((evil-visual-state-p)
-    (let ((beg (point-at-bol))
+    (let ((beg (line-beginning-position))
           (end (if (eq type 'line)
                    (1- end)
                  (save-excursion
                    (goto-char end)
-                   (point-at-eol)))))
+                   (line-end-position)))))
       (evil-exit-visual-state)
       (evil-cp--yank-characters beg end type register)))
 
@@ -543,26 +543,26 @@ respecting parentheses."
       (when (paredit-in-string-escape-p)
         (backward-char))
       (evil-yank-characters (point)
-                            (min (point-at-eol)
+                            (min (line-end-position)
                                  (cdr (paredit-string-start+end-points)))
                             register)))
 
    ((paredit-in-comment-p)
-    (evil-yank-characters (point) (point-at-eol) register))
+    (evil-yank-characters (point) (line-end-position) register))
 
-   ((save-excursion (paredit-skip-whitespace t (point-at-eol))
+   ((save-excursion (paredit-skip-whitespace t (line-end-position))
                     (or (eolp) (eq (char-after) ?\; )))
     (save-excursion
       (if (paredit-in-char-p)
           (backward-char)))
-    (evil-yank-characters (point) (point-at-eol) register))
+    (evil-yank-characters (point) (line-end-position) register))
 
    (t
     (save-excursion
       (if (paredit-in-char-p)
           (backward-char 2))
       (let ((beginning (point))
-            (eol (point-at-eol)))
+            (eol (line-end-position)))
         (let ((end-of-list-p (paredit-forward-sexps-to-kill beginning eol)))
           (when end-of-list-p
             (up-list)
@@ -575,9 +575,9 @@ respecting parentheses."
                    (paredit-skip-whitespace t)
                    (and (not (eq (char-after) ?\; ))
                         (point)))
-                 (point-at-eol)))
+                 (line-end-position)))
             ((and (not end-of-list-p)
-                  (eq (point-at-eol) eol))
+                  (eq (line-end-position) eol))
              eol)
             (t
              (point)))
@@ -623,7 +623,7 @@ and string delimiters."
   (interactive)
   (evil-first-non-blank)
   (while (and (evil-cp--looking-at-any-opening-p)
-             (<= (point) (point-at-eol)))
+             (<= (point) (line-end-position)))
     (forward-char)))
 
 (evil-define-operator evil-cp-delete (beg end type register yank-handler)
@@ -685,18 +685,18 @@ kill-ring is determined by the
            (when (paredit-in-string-escape-p)
              (backward-char))
            (let ((beg (point))
-                 (end (min (point-at-eol)
+                 (end (min (line-end-position)
                            (cdr (paredit-string-start+end-points)))))
              (evil-yank-characters beg end register)
              (delete-region beg end))))
 
         ((paredit-in-comment-p)
          (let ((beg (point))
-               (end (point-at-eol)))
+               (end (line-end-position)))
            (evil-yank-characters beg end register)
            (delete-region beg end)))
 
-        ((save-excursion (paredit-skip-whitespace t (point-at-eol))
+        ((save-excursion (paredit-skip-whitespace t (line-end-position))
                          (or (eolp) (eq (char-after) ?\; )))
          (when (paredit-in-char-p) (backward-char))
          ;; `kill-line' inlined from from `simple.el'
@@ -721,7 +721,7 @@ kill-ring is determined by the
          (save-excursion
            (when (paredit-in-char-p) (backward-char 2))
            (let* ((beg (point))
-                  (eol (point-at-eol))
+                  (eol (line-end-position))
                   (end-of-list-p (paredit-forward-sexps-to-kill beg eol)))
              (when end-of-list-p (up-list) (backward-char))
              (let ((end (cond
@@ -730,9 +730,9 @@ kill-ring is determined by the
                                 (paredit-skip-whitespace t)
                                 (and (not (eq (char-after) ?\; ))
                                      (point)))
-                              (point-at-eol)))
+                              (line-end-position)))
                          ((and (not end-of-list-p)
-                               (eq (point-at-eol) eol))
+                               (eq (line-end-position) eol))
                           eol)
                          (t
                           (point)))))
@@ -1220,7 +1220,7 @@ regular forward-slurp."
             (evil-cp--skip-whitespace-and-comments)
             (evil-cp--movement-bounds (forward-sexp))))
          (next-line
-          (or (when (not (= (point-at-eol) (point-max)))
+          (or (when (not (= (line-end-position) (point-max)))
                 (save-excursion
                   (forward-line)
                   (evil-cp--comment-block-bounds)))
@@ -1246,7 +1246,7 @@ regular forward-slurp."
            (when (not (bobp))
              (evil-cp--next-sexp-bounds))))
         (prev-line
-         (when (not (= (point-at-bol) (point-min)))
+         (when (not (= (line-beginning-position) (point-min)))
            (or (save-excursion
                  (forward-line -1)
                  (evil-cp--comment-block-bounds))
@@ -1266,7 +1266,7 @@ from the end of THIS-BOUNDS."
     (let ((that-bounds (evil-cp--next-thing-bounds
                         (goto-char (cdr this-bounds))
                         by-line-p)))
-      (if (not (= (point) (point-at-eol)))
+      (if (not (= (point) (line-end-position)))
           (evil-cp--swap-regions this-bounds that-bounds)
         (progn
           (backward-char)
@@ -1286,7 +1286,7 @@ thing from the beginning of of THIS-BOUNDS."
                         (goto-char (car this-bounds))
                         by-line-p)))
       (when that-bounds
-        (if (not (= (point) (point-at-eol)))
+        (if (not (= (point) (line-end-position)))
             (evil-cp--swap-regions this-bounds that-bounds)
           (backward-char)
           (evil-cp--swap-regions this-bounds that-bounds)
@@ -1430,7 +1430,7 @@ mode at the end of form. Using an arbitrarily large COUNT is
 guaranteened to take the point to the beginning of the top level
 form."
   (interactive "<c>")
-  (let ((line-end (point-at-eol)))
+  (let ((line-end (line-end-position)))
     (when (or (when (sp-up-sexp count) (backward-char) t)
               (-when-let (enc-end (cdr (evil-cp--top-level-bounds)))
                 (goto-char (1- enc-end))))
@@ -1488,8 +1488,8 @@ sexp regardless of what level the point is currently at."
           (backward-char offset)))
     (when (not (eobp))
       (let* ((col-pos (current-column))
-             (end     (point-at-eol))
-             (line    (buffer-substring-no-properties (point-at-bol) end)))
+             (end     (line-end-position))
+             (line    (buffer-substring-no-properties (line-beginning-position) end)))
         (goto-char end)
         (insert "\n" line)
         (beginning-of-line)
@@ -1636,7 +1636,7 @@ and beginning of the copied top-level form."
     (beginning-of-line)
     (skip-chars-forward "\s")
     (or (evil-cp--looking-at-any-closing-p)
-        (= (point) (point-at-eol)))))
+        (= (point) (line-end-position)))))
 
 (evil-define-command evil-cp-delete-enclosing (count &optional register)
   "Kills the enclosing form. With COUNT, kills the nth form
