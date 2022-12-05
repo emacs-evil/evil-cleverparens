@@ -268,7 +268,7 @@ open/closing delimiters."
   "Skips whitespace and comments forward."
   (catch 'stop
     (if reversep
-        (while (or (looking-back evil-cp--ws-regexp)
+        (while (or (looking-back evil-cp--ws-regexp (1- (point)))
                    (evil-cp--point-in-comment (1- (point))))
           (backward-char)
           (when (bobp) (throw 'stop :bobp)))
@@ -288,12 +288,12 @@ point when the operation was successful."
   (when (let ((sppss (syntax-ppss)))
           (or (not (zerop (car sppss)))
               (nth 3 sppss)))
-    (if (not (in-string-p))
+    (if (not (nth 3 (syntax-ppss)))
         (progn
           (backward-up-list)
           (point))
       (when (not (and ignore-strings-p (evil-cp--top-level-form-p)))
-        (while (in-string-p)
+        (while (nth 3 (syntax-ppss))
           (backward-char))
         (when ignore-strings-p
           (backward-up-list))
@@ -308,12 +308,12 @@ point when the operation was successful."
   (when (let ((sppss (syntax-ppss)))
           (or (not (zerop (car sppss)))
               (nth 3 sppss)))
-    (if (not (in-string-p))
+    (if (not (nth 3 (syntax-ppss)))
         (progn
           (up-list)
           (point))
       (when (not (and ignore-strings-p (evil-cp--top-level-form-p)))
-        (while (in-string-p)
+        (while (nth 3 (syntax-ppss))
           (forward-char))
         (when ignore-strings-p
           (up-list))

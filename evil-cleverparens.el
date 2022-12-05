@@ -1024,7 +1024,7 @@ movement."
       (forward-char)
       (dotimes (_ depth)
         (sp-backward-slurp-sexp))
-      (while (looking-back " ")
+      (while (looking-back " " (1- (point)))
         (backward-delete-char 1))
       (insert " ")
       (backward-sexp)
@@ -1656,8 +1656,8 @@ the top-level form and deletes the extra whitespace."
         (forward-line -1)
         (join-line 1)
         (end-of-line))
-      (when (looking-back "\s")
-        (delete-backward-char 1)))))
+      (when (looking-back "\s" (1- (point)))
+        (delete-char -1)))))
 
 (evil-define-command evil-cp-change-enclosing (count &optional register)
   "Calls `evil-cp-delete-enclosing' and enters insert-state."
@@ -1699,7 +1699,8 @@ the top-level form and deletes the extra whitespace."
 
 (defun evil-cp--wrap-next (pair count)
   (let ((pt-orig (point))
-        (this-pair (evil-cp-pair-for pair)))
+        (this-pair (evil-cp-pair-for pair))
+        end)
     (when (sp-point-in-symbol)
       (sp-get (sp-get-symbol)
         (goto-char :beg)))
@@ -1722,7 +1723,8 @@ the top-level form and deletes the extra whitespace."
 
 (defun evil-cp--wrap-previous (pair count)
   (let ((pt-orig (point))
-        (this-pair (evil-cp-pair-for pair)))
+        (this-pair (evil-cp-pair-for pair))
+        beg)
     (when (and (sp-point-in-symbol) (not (eobp))) ; bug in `sp-point-in-symbol'?
       (sp-get (sp-get-symbol)
         (goto-char :end)))
@@ -1879,10 +1881,10 @@ to true."
         (evil-cp--point-in-string-or-comment)
         (evil-cp--looking-at-empty-form))
     (call-interactively 'evil-insert))
-   ((and (looking-back "(")
+   ((and (looking-back "(" (1- (point)))
          ;; should I use `sp-sexp-prefix' here?
-         (not (looking-back "'("))
-         (not (looking-back "#(")))
+         (not (looking-back "'(" (- (point) 2)))
+         (not (looking-back "#(" (- (point) 2))))
     (setq evil-cp--inserted-space-after-round-open t)
     (insert " ")
     (backward-char)
@@ -1913,8 +1915,8 @@ to true."
     (call-interactively 'evil-append))
    ((and (or (looking-at-p "(\\b")
              (evil-cp--looking-at-any-opening-p))
-         (not (looking-back "'"))
-         (not (looking-back "#")))
+         (not (looking-back "'" (1- (point))))
+         (not (looking-back "#" (1- (point)))))
     (setq evil-cp--inserted-space-after-round-open t)
     (forward-char)
     (insert " ")
@@ -2133,8 +2135,9 @@ true."
 (defun evil-cp--enable-surround-operators ()
   "Enables the use of `evil-cp-delete' and `evil-cp-change' with
 `evil-surround-mode'"
-  (add-to-list 'evil-surround-operator-alist '(evil-cp-delete . delete))
-  (add-to-list 'evil-surround-operator-alist '(evil-cp-change . change)))
+  (when (boundp 'evil-surround-operator-alist)
+    (add-to-list 'evil-surround-operator-alist '(evil-cp-delete . delete))
+    (add-to-list 'evil-surround-operator-alist '(evil-cp-change . change))))
 
 ;; Setup keymap
 (defvar evil-cleverparens-mode-map (make-sparse-keymap))
