@@ -4,7 +4,7 @@
 ;;
 ;; Author: Olli Piepponen <opieppo@gmail.com>
 ;; URL: https://github.com/emacs-evil/evil-cleverparens
-;; Keywords: cleverparens, parentheses, evil, paredit, smartparens
+;; Keywords: convenience, emulations
 ;; Version: 0.1.0
 ;; Package-Requires: ((evil "1.0") (paredit "1") (smartparens "1.6.1") (emacs "24.4") (dash "2.12.0"))
 ;;
@@ -14,8 +14,8 @@
 
 ;;; Commentary:
 
-;; Use Vim/evil like modal editing with lisp without screwing up the structure
-;; of your code. Tries to offer useful alternatives for behavior which would
+;; Use Vim/evil like modal editing with Lisp without screwing up the structure
+;; of your code.  Tries to offer useful alternatives for behavior which would
 ;; otherwise be destructive.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -628,7 +628,7 @@ and string delimiters."
 
 (evil-define-operator evil-cp-delete (beg end type register yank-handler)
   "A version of `evil-delete' that attempts to leave the region
-its acting on with balanced parentheses. The behavior of
+it's acting on with balanced parentheses. The behavior of
 kill-ring is determined by the
 `evil-cleverparens-complete-parens-in-yanked-region' variable."
   :move-point nil
@@ -2164,7 +2164,9 @@ for an advanced modal structural editing experience."
             (evil-cp--enable-surround-operators)
           (add-hook 'evil-surround-mode-hook
                     'evil-cp--enable-surround-operators))
-        (run-hooks 'evil-cleverparens-enabled-hook))
+        (run-hooks 'evil-cleverparens-enabled-hook)
+        (sp-update-local-pairs nil)
+        (evil-normalize-keymaps))
     (run-hooks 'evil-cleverparens-disabled-hook)))
 
 (provide 'evil-cleverparens)

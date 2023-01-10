@@ -4,9 +4,9 @@
 ;;
 ;; Author: Olli Piepponen <opieppo@gmail.com>
 ;; URL: https://github.com/emacs-evil/evil-cleverparens
-;; Keywords: cleverparens, parentheses, evil, paredit, smartparens
+;; Keywords: convenience, emulations
 ;; Version: 0.1.0
-;; Package-Requires: ((evil "1.0") (smartparens "1.6.1"))
+;; Package-Requires: ((evil "1.0") (paredit "1") (smartparens "1.6.1") (emacs "24.4") (dash "2.12.0"))
 ;;
 ;; This file is NOT part of GNU Emacs.
 ;;
