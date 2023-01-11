@@ -249,7 +249,6 @@ and deleting other characters. Can be overriden by
            (evil-yank beg end type register yank-handler))
          (evil-cp-delete-or-splice-region beg end))))
 
-
 (evil-define-operator evil-cp-delete-char-or-splice-backwards
   (beg end type register yank-handler)
   "Just like `evil-cp-delete-char-or-splice' but acts on the preceding character."
