@@ -149,6 +149,34 @@ golf foxtrot deltahotel india"))
       ("Yjj$p")
       "alpha bravo (charlie\ndelta) echo\nfoxtrot bravo (charlie\ndelta)")))
 
+(ert-deftest evil-cp-delete-test ()
+  (ert-info ("Can delete unbalanced line")
+    (evil-cp-test-buffer
+      "alpha (b[r]avo\ncharlie) delta\necho"
+      ("dd")
+      "(charlie) delta\necho"))
+  (ert-info ("Can delete unbalanced region")
+    (evil-cp-test-buffer
+      "alpha [b]ravo (charlie delta) echo"
+      ("dte")
+      "alpha ([e] delta) echo")
+    (evil-cp-test-buffer
+      "alpha [b]ravo (charlie delta) echo"
+      ("dfe")
+      "alpha [ ]echo"))) ;; TODO is this desired?
+
+(ert-deftest evil-cp-delete-line-test ()
+  (ert-info ("Can delete rest of balanced line")
+    (evil-cp-test-buffer
+      "alpha [b]ravo (charlie) delta\necho"
+      ("D")
+      "alpha[ ]\necho"))
+  (ert-info ("Can delete rest of unbalanced line")
+    (evil-cp-test-buffer
+      "alpha [b]ravo (charlie\ndelta) echo\nfoxtrot"
+      ("D")
+      ("alpha [ ]echo\nfoxtrot")))) ;; TODO is this desired?
+
 (provide 'evil-cleverparens-tests)
 
 ;;; evil-cleverparens-tests.el ends here
