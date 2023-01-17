@@ -175,7 +175,62 @@ golf foxtrot deltahotel india"))
     (evil-cp-test-buffer
       "alpha [b]ravo (charlie\ndelta) echo\nfoxtrot"
       ("D")
-      ("alpha [ ]echo\nfoxtrot")))) ;; TODO is this desired?
+      ("alpha [ ]echo\nfoxtrot"))) ;; TODO is this desired?
+  (ert-info ("Can delete rest of unbalanced line in visual state")
+    (evil-cp-test-buffer
+      "alpha <brav[o]> (charlie\ndelta) echo\nfoxtrot"
+      ("D")
+      "[d]elta) echo\nfoxtrot"))) ;; TODO surely not desired?
+
+(ert-deftest evil-cp-change-test ()
+  (ert-info ("Can change unbalanced line")
+    (evil-cp-test-buffer
+      "alpha (b[r]avo\ncharlie) delta\necho"
+      ("cc" "zulu")
+      "(zulu\ncharlie) delta\necho"))
+  (ert-info ("Can change unbalanced region")
+    (evil-cp-test-buffer
+      "alpha [b]ravo (charlie delta) echo"
+      ("cte" "zulu")
+      "alpha (zulue delta) echo")
+    (evil-cp-test-buffer
+      "alpha [b]ravo (charlie delta) echo"
+      ("cfe" "zulu")
+      "alpha zulu echo"))) ;; TODO is this desired? (c.f. delete)
+
+(ert-deftest evil-cp-change-line-test ()
+  (ert-info ("Can change rest of balanced line")
+    (evil-cp-test-buffer
+      "alpha [b]ravo (charlie) delta\necho"
+      ("C" "zulu")
+      "alpha zulu\necho"))
+  (ert-info ("Can change rest of unbalanced line")
+    (evil-cp-test-buffer
+      "alpha [b]ravo (charlie\ndelta) echo\nfoxtrot"
+      ("C" "zulu")
+      ("alpha zulu echo\nfoxtrot")))
+  (ert-info ("Changes whole line when balanced line in visual state")
+    (evil-cp-test-buffer
+      "alpha <brav[o]> (charlie delta)\necho"
+      ("C" "zulu")
+      "zuluecho")) ;; TODO definitely not desired (should act like evil C)
+  (ert-info ("Changes whole line when unbalanced line in visual state")
+    (evil-cp-test-buffer
+      "alpha <brav[o]> (charlie\ndelta) echo\nfoxtrot"
+      ("C" "zulu")
+      "zuludelta) echo\nfoxtrot"))) ;; TODO surely not desired?
+
+(ert-deftest evil-cp-change-whole-line-test ()
+  (ert-info ("Can change whole line when balanced")
+    (evil-cp-test-buffer
+      "alpha [b]ravo (charlie) delta\necho"
+      ("S" "zulu")
+      "zulu\necho"))
+  (ert-info ("Can change whole line when unbalanced")
+    (evil-cp-test-buffer
+      "alpha [b]ravo (charlie\ndelta) echo\nfoxtrot"
+      ("S" "zulu")
+      "zuluecho\nfoxtrot"))) ;; TODO why is the proceeding space missing?
 
 (provide 'evil-cleverparens-tests)
 
