@@ -232,6 +232,66 @@ golf foxtrot deltahotel india"))
       ("S" "zulu")
       "zuluecho\nfoxtrot"))) ;; TODO why is the proceeding space missing?
 
+(ert-deftest evil-cp-end-of-defun-test ()
+  (ert-info ("Can move to end of defun")
+    (evil-test-buffer ;; As we need to enable evil-cp later anyway
+     "(defun function-1 ()
+  (p[r]int \"Hello, World!\"))
+(defun function-2 () 42)"
+     (emacs-lisp-mode)
+     (evil-cleverparens-mode t)
+     (evil-cp-set-additional-movement-keys)
+     ("\M-l")
+     "(defun function-1 ()
+  (print \"Hello, World!\")[)]
+(defun function-2 () 42)"
+     ("\M-l")
+     "(defun function-1 ()
+  (print \"Hello, World!\"))
+(defun function-2 () 42[)]"))
+  (ert-info ("Can move to end of line-consecutive defun")
+    (evil-test-buffer ;; As we need to enable evil-cp later anyway
+     "(de[f]un foo () bar)  (defun bar () foo)"
+     (emacs-lisp-mode)
+     (evil-cleverparens-mode t)
+     (evil-cp-set-additional-movement-keys)
+     ("\M-l")
+     "(defun foo () bar[)]  (defun bar () foo)")))
+
+(ert-deftest evil-cp-paren-navigation-test ()
+  (ert-info ("Can move to next open paren or string delimiter")
+    (evil-cp-test-buffer
+      "[a]lpha \"bravo (charlie) delta\" echo (foxtrot) golf"
+      (evil-cp-set-additional-movement-keys)
+      ("{")
+      "alpha [\"]bravo (charlie) delta\" echo (foxtrot) golf"
+      ("{")
+      "alpha \"bravo (charlie) delta\" echo [(]foxtrot) golf"))
+  (ert-info ("Can move to previous open paren or string delimiter")
+    (evil-cp-test-buffer
+      "alpha \"bravo (charlie) delta\" echo (foxtrot) [g]olf"
+      (evil-cp-set-additional-movement-keys)
+      ("[")
+      "alpha \"bravo (charlie) delta\" echo [(]foxtrot) golf"
+      ("[")
+      "alpha [\"]bravo (charlie) delta\" echo (foxtrot) golf"))
+  (ert-info ("Can move to next closing paren or string delimiter")
+    (evil-cp-test-buffer
+      "[a]lpha \"bravo (charlie) delta\" echo (foxtrot) golf"
+      (evil-cp-set-additional-movement-keys)
+      ("]")
+      "alpha \"bravo (charlie) delta[\"] echo (foxtrot) golf"
+      ("]")
+      "alpha \"bravo (charlie) delta\" echo (foxtrot[)] golf"))
+  (ert-info ("Can move to previous closing paren or string delimiter")
+    (evil-cp-test-buffer
+      "alpha \"bravo (charlie) delta\" echo (foxtrot) [g]olf"
+      (evil-cp-set-additional-movement-keys)
+      ("}")
+      "alpha \"bravo (charlie) delta\" echo (foxtrot[)] golf"
+      ("}")
+      "alpha \"bravo (charlie) delta[\"] echo (foxtrot) golf")))
+
 (provide 'evil-cleverparens-tests)
 
 ;;; evil-cleverparens-tests.el ends here
