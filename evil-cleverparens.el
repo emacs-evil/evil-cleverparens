@@ -817,7 +817,8 @@ level sexp)."
     (if (evil-cp--looking-at-closing-p)
         (forward-char 2))
     (end-of-defun count)
-    (backward-char (if (eobp) 1 2))))
+    (if (looking-back "[ \t\n]" 1) (skip-chars-backward " \t\n"))
+    (backward-char 1)))
 
 ;; TODO: this looks ugly
 (defun evil-cp--paren-navigation-helper (move-dir paren-side)

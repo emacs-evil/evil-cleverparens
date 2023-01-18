@@ -8,3 +8,6 @@
 (eldev-use-plugin 'autoloads)
 
 (setf eldev-project-main-file "evil-cleverparens.el")
+
+(push "--eval=(progn (with-eval-after-load \"evil\" (evil-mode)) (with-eval-after-load \"evil-cleverparens\" (evil-cleverparens-mode)))"
+      eldev-emacs-default-command-line)
