@@ -276,7 +276,7 @@ open/closing delimiters."
       (while (or (looking-at evil-cp--ws-regexp)
                  (evil-cp--point-in-comment))
         (forward-char)
-        (when (looking-at sp-comment-char)
+        (when (and sp-comment-char (looking-at sp-comment-char))
           (forward-line))
         (when (eobp) (throw 'stop :eobp))))))
 

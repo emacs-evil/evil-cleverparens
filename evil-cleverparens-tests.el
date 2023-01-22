@@ -380,6 +380,50 @@ golf foxtrot deltahotel india"))
       ("gE")
       "(alpha (bravo (charlie delt[a]) echo) foxtrot)"))))
 
+(ert-deftest evil-cp-<-test ()
+  (ert-info ("Can do regular forward barf")
+    (evil-cp-test-buffer
+      "alpha bravo (charlie [d]elta echo) foxtrot golf"
+      ("<")
+      "alpha bravo (charlie [d]elta) echo foxtrot golf"))
+  (ert-info ("Can slurp backwards when on opening delimiter")
+    (evil-cp-test-buffer
+      "alpha bravo [(]charlie delta echo) foxtrot golf"
+      ("<")
+      "alpha [(]bravo charlie delta echo) foxtrot golf"))
+  (ert-info ("Can barf forwards when on closing delimiter")
+    (evil-cp-test-buffer
+      "alpha bravo (charlie delta echo[)] foxtrot golf"
+      ("<")
+      "alpha bravo (charlie delta[)] echo foxtrot golf"))
+  (ert-info ("No barfing forwards when <= 1 element")
+    (evil-cp-test-buffer
+      "alpha bravo (cha[r]lie) delta echo"
+      ("<")
+      "alpha bravo (cha[r]lie) delta echo")))
+
+(ert-deftest evil-cp->-test ()
+  (ert-info ("Can do regular forward slurp")
+    (evil-cp-test-buffer
+      "alpha bravo (charlie [d]elta echo) foxtrot golf"
+      (">")
+      "alpha bravo (charlie [d]elta echo foxtrot) golf"))
+  (ert-info ("Can barf backwards when on opening delimiter")
+    (evil-cp-test-buffer
+      "alpha bravo [(]charlie delta echo) foxtrot golf"
+      (">")
+      "alpha bravo charlie [(]delta echo) foxtrot golf"))
+  (ert-info ("No barfing backwards when <= 1 element")
+    (evil-cp-test-buffer
+      "alpha bravo [(]charlie) delta echo"
+      (">")
+      "alpha bravo [(]charlie) delta echo"))
+  (ert-info ("Can slurp forwards when on closing delimiter")
+    (evil-cp-test-buffer
+      "alpha bravo (charlie delta echo[)] foxtrot golf"
+      (">")
+      "alpha bravo (charlie delta echo foxtrot[)] golf")))
+
 (provide 'evil-cleverparens-tests)
 
 ;;; evil-cleverparens-tests.el ends here
