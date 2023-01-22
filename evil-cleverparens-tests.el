@@ -292,6 +292,94 @@ golf foxtrot deltahotel india"))
       ("}")
       "alpha \"bravo (charlie) delta[\"] echo (foxtrot) golf")))
 
+(ert-deftest evil-cp-backward-up-sexp-test ()
+  (ert-info ("Can move up a level of sexp nesting, backwards")
+    (evil-cp-test-buffer
+      "(alpha (bravo (charlie [d]elta) echo) foxtrot)"
+      (evil-cp-set-additional-movement-keys)
+      ("(")
+      "(alpha (bravo [(]charlie delta) echo) foxtrot)"
+      ("(")
+      "(alpha [(]bravo (charlie delta) echo) foxtrot)")))
+
+(ert-deftest evil-cp-up-sexp-test ()
+  (ert-info ("Can move up a level of sexp nesting, forwards")
+    (evil-cp-test-buffer
+      "(alpha (bravo (charlie [d]elta) echo) foxtrot)"
+      (evil-cp-set-additional-movement-keys)
+      (")")
+      "(alpha (bravo (charlie delta[)] echo) foxtrot)"
+      (")")
+      "(alpha (bravo (charlie delta) echo[)] foxtrot)")))
+
+(ert-deftest evil-cp-forward-symbol-begin-test ()
+  (ert-info ("Can move forward to the beginning of the next symbol")
+    (evil-cp-test-buffer
+      "(alpha (b[r]avo (charlie delta) echo) foxtrot)"
+      ("W")
+      "(alpha (bravo ([c]harlie delta) echo) foxtrot)"
+      ("W")
+      "(alpha (bravo (charlie [d]elta) echo) foxtrot)")
+    (let ((evil-cleverparens-move-skip-delimiters nil))
+      (evil-cp-test-buffer
+      "(alpha (b[r]avo (charlie delta) echo) foxtrot)"
+      ("W")
+      "(alpha (bravo [(]charlie delta) echo) foxtrot)"
+      ("W")
+      "(alpha (bravo ([c]harlie delta) echo) foxtrot)"))))
+
+(ert-deftest evil-cp-forward-symbol-end-test ()
+  (ert-info ("Can move forward to the end of the next symbol")
+    (evil-cp-test-buffer
+      "(alpha (bravo (cha[r]lie delta) echo) foxtrot)"
+      ("E")
+      "(alpha (bravo (charli[e] delta) echo) foxtrot)"
+      ("E")
+      "(alpha (bravo (charlie delt[a]) echo) foxtrot)"
+      ("E")
+      "(alpha (bravo (charlie delta) ech[o]) foxtrot)")
+    (let ((evil-cleverparens-move-skip-delimiters nil))
+      (evil-cp-test-buffer
+      "(alpha (bravo (cha[r]lie delta) echo) foxtrot)"
+      ("E")
+      "(alpha (bravo (charli[e] delta) echo) foxtrot)"
+      ("E")
+      "(alpha (bravo (charlie delt[a]) echo) foxtrot)"
+      ("E")
+      "(alpha (bravo (charlie delta[)] echo) foxtrot)"))))
+
+(ert-deftest evil-cp-backward-symbol-begin-test ()
+  (ert-info ("Can move backward to the beginning of the previous symbol")
+    (evil-cp-test-buffer
+      "(alpha (bravo (char[l]ie delta) echo) foxtrot)"
+      ("B")
+      "(alpha (bravo ([c]harlie delta) echo) foxtrot)"
+      ("B")
+      "(alpha ([b]ravo (charlie delta) echo) foxtrot)")
+    (let ((evil-cleverparens-move-skip-delimiters nil))
+      (evil-cp-test-buffer
+      "(alpha (bravo (charlie [d]elta) echo) foxtrot)"
+      ("B")
+      "(alpha (bravo ([c]harlie delta) echo) foxtrot)"
+      ("B")
+      "(alpha (bravo [(]charlie delta) echo) foxtrot)"))))
+
+(ert-deftest evil-cp-backward-symbol-end-test ()
+  (ert-info ("Can move backward to the end of the previous symbol")
+    (evil-cp-test-buffer
+      "(alpha (bravo (charlie delta) ec[h]o) foxtrot)"
+      ("gE")
+      "(alpha (bravo (charlie delt[a]) echo) foxtrot)"
+      ("gE")
+      "(alpha (bravo (charli[e] delta) echo) foxtrot)")
+    (let ((evil-cleverparens-move-skip-delimiters nil))
+      (evil-cp-test-buffer
+      "(alpha (bravo (charlie delta) ec[h]o) foxtrot)"
+      ("gE")
+      "(alpha (bravo (charlie delta[)] echo) foxtrot)"
+      ("gE")
+      "(alpha (bravo (charlie delt[a]) echo) foxtrot)"))))
+
 (provide 'evil-cleverparens-tests)
 
 ;;; evil-cleverparens-tests.el ends here
