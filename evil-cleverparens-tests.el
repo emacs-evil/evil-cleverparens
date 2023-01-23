@@ -424,6 +424,124 @@ golf foxtrot deltahotel india"))
       (">")
       "alpha bravo (charlie delta echo foxtrot[)] golf")))
 
+(ert-deftest evil-cp-drag-forward-test ()
+  (ert-info ("Can drag symbol or parent form forward")
+    (evil-cp-test-buffer
+      "alpha (bravo [c]harlie delta) echo foxtrot"
+      (evil-cp-set-additional-bindings)
+      ("\M-j")
+      "alpha (bravo delta [c]harlie) echo foxtrot"
+      ("\M-j")
+      "alpha echo (bravo delta [c]harlie) foxtrot"))
+  (ert-info ("Can drag line forward")
+    (evil-cp-test-buffer
+      "alpha bravo
+cha[r]lie delta
+echo foxtrot
+golf hotel"
+      ("V" "\M-j")
+      "alpha bravo
+echo foxtrot
+cha[r]lie delta
+golf hotel"))
+  (ert-info ("Can drag comment block forward")
+    (evil-test-buffer ;; As we need to enable evil-cp later anyway
+     "alpha bravo
+;; Comment [1]
+charlie delta
+echo foxtrot"
+     (emacs-lisp-mode)
+     (evil-cleverparens-mode t)
+     (call-interactively #'evil-cp-drag-forward)
+     "alpha bravo
+charlie delta
+;; Comment [1]
+echo foxtrot"))) ;; TODO - multiple contiguous comment blocks throw error
+
+(ert-deftest evil-cp-drag-backward-test ()
+  (ert-info ("Can drag symbol or parent form backward")
+    (evil-cp-test-buffer
+      "alpha bravo (charlie [d]elta echo) foxtrot"
+      (evil-cp-set-additional-bindings)
+      ("\M-k")
+      "alpha bravo ([d]elta charlie echo) foxtrot"
+      ("\M-k")
+      "alpha ([d]elta charlie echo) bravo foxtrot"))
+  (ert-info ("Can drag line backward")
+    (evil-cp-test-buffer
+      "alpha bravo
+charlie delta
+ec[h]o foxtrot
+golf hotel"
+      ("V" "\M-k")
+      "alpha bravo
+ec[h]o foxtrot
+charlie delta
+golf hotel"))
+  (ert-info ("Can drag comment block backward")
+    (evil-test-buffer ;; As we need to enable evil-cp later anyway
+     "alpha bravo
+charlie delta
+;; Comment [1]
+echo foxtrot"
+     (emacs-lisp-mode)
+     (evil-cleverparens-mode t)
+     (call-interactively #'evil-cp-drag-backward)
+     "alpha bravo
+;; Comment [1]
+charlie delta
+echo foxtrot")))
+
+(ert-deftest evil-cp-substitute-test ()
+  (ert-info ("Keep balance when substituting on opening paren")
+    (evil-cp-test-buffer
+      "alpha [(]bravo charlie)"
+      ("s" "new text ")
+      "alpha (new text []bravo charlie)"))
+  (ert-info ("Keep balance when substituting on closing paren")
+    (evil-cp-test-buffer
+      "alpha (bravo charlie[)]"
+      ("s" " new text")
+      "alpha (bravo charlie new text[])")))
+
+(ert-deftest evil-cp-insert-at-end-of-form-test ()
+  (ert-info ("Can insert at the end of a form")
+    (evil-cp-test-buffer
+      "alpha (b[r]avo (charlie delta) echo) foxtrot"
+      (evil-cp-set-additional-bindings)
+      ("\M-a" " new text")
+      "alpha (bravo (charlie delta) echo new text[]) foxtrot")))
+
+(ert-deftest evil-cp-insert-at-beginning-of-form-test ()
+  (ert-info ("Can insert at the beginning of a form")
+    (evil-cp-test-buffer
+      "alpha (bravo (charlie delta) e[c]ho) foxtrot"
+      (evil-cp-set-additional-bindings)
+      ("\M-i" "new text") ;; when evil-cleverparens-use-regular-insert is non-nil
+      "alpha (new text[] bravo (charlie delta) echo) foxtrot")))
+
+(ert-deftest evil-cp-copy-paste-form-test ()
+  (ert-info ("Can copy and paste current form")
+    (evil-cp-test-buffer
+      "alpha (bravo (charlie [d]elta) echo) foxtrot"
+      (evil-cp-set-additional-bindings)
+      ("\M-w")
+      "alpha (bravo (charlie delta)\n(charlie [d]elta) echo) foxtrot"))
+  (ert-info ("Can copy and paste top-level form")
+    (evil-cp-test-buffer
+      "alpha (bravo (charlie [d]elta) echo) foxtrot"
+      (evil-cp-set-additional-bindings)
+      ("\C-u" "\M-w")
+      "alpha (bravo (charlie delta) echo) foxtrot
+(bravo (charlie [d]elta) echo)"))
+  (ert-info ("Can copy and paste current line if not in a form")
+    (evil-cp-test-buffer
+      "alpha (bravo (charlie delta) echo) [f]oxtrot"
+      (evil-cp-set-additional-bindings)
+      ("\M-w")
+      "alpha (bravo (charlie delta) echo) foxtrot
+alpha (bravo (charlie delta) echo) foxtrot")))
+
 (provide 'evil-cleverparens-tests)
 
 ;;; evil-cleverparens-tests.el ends here

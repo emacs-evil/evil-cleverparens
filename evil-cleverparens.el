@@ -1293,7 +1293,7 @@ thing from the beginning of of THIS-BOUNDS."
 or a comment."
   (save-excursion
     (evil-first-non-blank)
-    (looking-at-p sp-comment-char)))
+    (and sp-comment-char (looking-at-p sp-comment-char))))
 
 (defun evil-cp--comment-block-bounds (&optional pos)
   "Gets the bounds for a comment block (i.e. a group of lines
@@ -1476,7 +1476,7 @@ sexp regardless of what level the point is currently at."
                         (evil-cp--looking-at-any-opening-p))
                 (insert " ")
                 (cl-incf offset))))
-          (backward-char offset)))
+          (backward-char (if prefixp (1+ offset) offset))))
     (when (not (eobp))
       (let* ((col-pos (current-column))
              (end     (line-end-position))
