@@ -1602,9 +1602,8 @@ entering insert-state."
 (evil-define-command evil-cp-yank-enclosing (count &optional register)
   "Copies the enclosing form to kill-ring. With COUNT, yanks the
 nth form upwards instead. When called with a raw prefix argument,
-yanks the top-level form and deletes the leftover whitespace,
-while adding a yank-handler that inserts two newlines at the end
-and beginning of the copied top-level form."
+yanks the top-level form, while adding a yank-handler that inserts
+two newlines at the end and beginning of the copied top-level form."
   (interactive "<c><x>")
   (when (evil-cp--inside-any-form-p)
     (save-excursion

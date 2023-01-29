@@ -620,6 +620,90 @@ alpha (bravo (charlie delta) echo) foxtrot")))
       ("\M-c" "echo")
       "echo[] (delta)")))
 
+(ert-deftest evil-cp-yank-enclosing-test ()
+  (ert-info ("Can yank enclosing form")
+    (evil-cp-test-buffer
+      "(alpha (b[r]avo charlie) delta)"
+      (evil-cp-set-additional-bindings)
+      ("\M-Y" "o" [escape] "p")
+      "(alpha (bravo charlie) delta)\n(bravo charlie[)]"))
+  (ert-info ("Can yank enclosing forms with count")
+    (evil-cp-test-buffer
+      "(alpha (bravo (charlie [d]elta) echo) foxtrot)"
+      (evil-cp-set-additional-bindings)
+      ("2\M-Y" "o" [escape] "p")
+      "(alpha (bravo (charlie delta) echo) foxtrot)\n(bravo (charlie delta) echo[)]"))
+  (ert-info ("Can yank top-level form with universal arg")
+    (evil-cp-test-buffer
+      "(alpha)
+
+(bravo (charlie (delta [e]cho) foxtrot) golf)
+
+(hotel)"
+      (evil-cp-set-additional-bindings)
+      ("\C-u\M-Y" "jp")
+      "(alpha)
+
+(bravo (charlie (delta echo) foxtrot) golf)
+
+(bravo (charlie (delta echo) foxtrot) golf)
+
+(hotel)")))
+
+(ert-deftest evil-cp-delete-enclosing-test ()
+  (ert-info ("Can delete enclosing form")
+    (evil-cp-test-buffer
+      "(alpha (b[r]avo charlie) delta)"
+      (evil-cp-set-additional-bindings)
+      ("\M-D")
+      "(alpha[ ]delta)"))
+  (ert-info ("Can delete enclosing forms with count")
+    (evil-cp-test-buffer
+      "(alpha (bravo (charlie [d]elta) echo) foxtrot)"
+      (evil-cp-set-additional-bindings)
+      ("2\M-D")
+      "(alpha[ ]foxtrot)"))
+  (ert-info ("Can delete top-level form with universal arg")
+    (evil-cp-test-buffer
+      "(alpha)
+
+(bravo (charlie (delta [e]cho) foxtrot) golf)
+
+(hotel)"
+      (evil-cp-set-additional-bindings)
+      ("\C-u\M-D")
+      "(alpha)
+[]
+(hotel)")))
+
+(ert-deftest evil-cp-change-enclosing-test ()
+  (ert-info ("Can change enclosing form")
+    (evil-cp-test-buffer
+      "(alpha (b[r]avo charlie) delta)"
+      (evil-cp-set-additional-bindings)
+      ("\M-C" " echo")
+      "(alpha echo[] delta)"))
+  (ert-info ("Can change enclosing forms with count")
+    (evil-cp-test-buffer
+      "(alpha (bravo (charlie [d]elta) echo) foxtrot)"
+      (evil-cp-set-additional-bindings)
+      ("2\M-C" " golf")
+      "(alpha golf[] foxtrot)"))
+  (ert-info ("Can change top-level form with universal arg")
+    (evil-cp-test-buffer
+      "(alpha)
+
+(bravo (charlie (delta [e]cho) foxtrot) golf)
+
+(hotel)"
+      (evil-cp-set-additional-bindings)
+      ("\C-u\M-C" "india")
+      "(alpha)
+
+india[]
+
+(hotel)")))
+
 (provide 'evil-cleverparens-tests)
 
 ;;; evil-cleverparens-tests.el ends here
