@@ -542,6 +542,46 @@ echo foxtrot")))
       "alpha (bravo (charlie delta) echo) foxtrot
 alpha (bravo (charlie delta) echo) foxtrot")))
 
+(ert-deftest evil-cp-open-below-form-test ()
+  (ert-info ("Can open below a form")
+    (evil-cp-test-buffer
+      "(alpha (bravo [c]harlie) delta)"
+      (evil-cp-set-additional-bindings)
+      ("\M-o")
+      "(alpha (bravo charlie)\n[]delta)"))
+  (ert-info ("Can open below a top-level form")
+    (evil-cp-test-buffer
+      "(alpha [b]ravo)\n\n(charlie delta)"
+      (evil-cp-set-additional-bindings)
+      ("\M-o" "echo")
+      "(alpha bravo)\n\necho[]\n\n(charlie delta)"))
+  (ert-info ("Can open between top-level forms")
+    (evil-cp-test-buffer
+      "(alpha bravo)\n[]\n(charlie delta)"
+      (evil-cp-set-additional-bindings)
+      ("\M-o" "echo")
+      "(alpha bravo)\n\necho[]\n\n(charlie delta)")))
+
+(ert-deftest evil-cp-open-above-form-test ()
+  (ert-info ("Can open above a form")
+    (evil-cp-test-buffer
+      "(alpha (bravo [c]harlie) delta)"
+      (evil-cp-set-additional-bindings)
+      ("\M-O")
+      "(alpha []\n(bravo charlie) delta)"))
+  (ert-info ("Can open below a top-level form")
+    (evil-cp-test-buffer
+      "(alpha bravo)\n\n(charlie [d]elta)"
+      (evil-cp-set-additional-bindings)
+      ("\M-O" "echo")
+      "(alpha bravo)\n\necho[]\n\n(charlie delta)"))
+  (ert-info ("Can open between top-level forms")
+    (evil-cp-test-buffer
+      "(alpha bravo)\n[]\n(charlie delta)"
+      (evil-cp-set-additional-bindings)
+      ("\M-O" "echo")
+      "(alpha bravo)\necho[]\n\n(charlie delta)")))
+
 (provide 'evil-cleverparens-tests)
 
 ;;; evil-cleverparens-tests.el ends here
