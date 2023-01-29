@@ -704,6 +704,176 @@ india[]
 
 (hotel)")))
 
+(ert-deftest evil-cp-raise-form-test ()
+  (ert-info ("Can raise a form")
+    (evil-cp-test-buffer
+      "(alpha (bravo (charlie [d]elta) echo) foxtrot)"
+      (evil-cp-set-additional-bindings)
+      ("\M-R")
+      "(alpha (charlie [d]elta) foxtrot)")))
+
+(ert-deftest evil-cp-wrap-next-round-test ()
+  (ert-info ("Can wrap next sexp with parens")
+    (evil-cp-test-buffer
+      "alpha[ ]bravo charlie"
+      (evil-cp-set-additional-bindings)
+      ("\M-(")
+      "alpha([ ]bravo) charlie")
+    (evil-cp-test-buffer
+      "alpha [b]ravo charlie"
+      (evil-cp-set-additional-bindings)
+      ("\M-(")
+      "alpha ([b]ravo) charlie")
+    (evil-cp-test-buffer
+      "alpha brav[o] charlie"
+      (evil-cp-set-additional-bindings)
+      ("\M-(")
+      "alpha (brav[o]) charlie")
+    (evil-cp-test-buffer
+      "alpha (bravo [c]harlie delta) echo"
+      (evil-cp-set-additional-bindings)
+      ("\C-u\M-(")
+      "alpha ([(]bravo charlie delta)) echo")))
+
+(ert-deftest evil-cp-wrap-previous-round-test ()
+  (ert-info ("Can wrap previous sexp with parens")
+    (evil-cp-test-buffer
+      "alpha bravo[ ]charlie"
+      (evil-cp-set-additional-bindings)
+      ("\M-)")
+      "alpha (bravo[)] charlie")
+    (evil-cp-test-buffer
+      "alpha brav[o] charlie"
+      (evil-cp-set-additional-bindings)
+      ("\M-)")
+      "alpha (brav[o]) charlie")
+    (evil-cp-test-buffer
+      "alpha [b]ravo charlie"
+      (evil-cp-set-additional-bindings)
+      ("\M-)")
+      "(alpha [)]bravo charlie") ;; TODO surely not desired?
+    (evil-cp-test-buffer
+      "alpha (bravo [c]harlie delta) echo"
+      (evil-cp-set-additional-bindings)
+      ("\C-u\M-)")
+      "alpha ((bravo charlie delta)[)] echo"))) ;; TODO inconsistent cursor with wrap-next-round
+
+(ert-deftest evil-cp-wrap-next-square-test ()
+  (ert-info ("Can wrap next sexp with square brackets")
+    (evil-test-buffer
+      :point-start "«"
+      :point-end "»"
+      "alpha« »bravo charlie"
+      (evil-cleverparens-mode t)
+      (evil-cp-set-additional-bindings)
+      ("\M-[")
+      "alpha[« »bravo] charlie")
+    (evil-test-buffer
+      :point-start "«"
+      :point-end "»"
+      "alpha «b»ravo charlie"
+      (evil-cleverparens-mode t)
+      (evil-cp-set-additional-bindings)
+      ("\M-[")
+      "alpha [«b»ravo] charlie")
+    (evil-test-buffer
+      :point-start "«"
+      :point-end "»"
+      "alpha brav«o» charlie"
+      (evil-cleverparens-mode t)
+      (evil-cp-set-additional-bindings)
+      ("\M-[")
+      "alpha [brav«o»] charlie")
+    (evil-test-buffer
+      :point-start "«"
+      :point-end "»"
+      "alpha [bravo «c»harlie delta] echo"
+      (evil-cleverparens-mode t)
+      (evil-cp-set-additional-bindings)
+      ("\C-u\M-[")
+      "alpha [«[»bravo charlie delta]] echo")))
+
+(ert-deftest evil-cp-wrap-previous-square-test ()
+  (ert-info ("Can wrap next sexp with square brackets")
+    (evil-test-buffer
+      :point-start "«"
+      :point-end "»"
+      "alpha bravo« »charlie"
+      (evil-cleverparens-mode t)
+      (evil-cp-set-additional-bindings)
+      ("\M-]")
+      "alpha [bravo«]» charlie")
+    (evil-test-buffer
+      :point-start "«"
+      :point-end "»"
+      "alpha brav«o» charlie"
+      (evil-cleverparens-mode t)
+      (evil-cp-set-additional-bindings)
+      ("\M-]")
+      "alpha [brav«o»] charlie")
+    (evil-test-buffer
+      :point-start "«"
+      :point-end "»"
+      "alpha «b»ravo charlie"
+      (evil-cleverparens-mode t)
+      (evil-cp-set-additional-bindings)
+      ("\M-]")
+      "[alpha «]»bravo charlie") ;; TODO surely not desired?
+    (evil-test-buffer
+      :point-start "«"
+      :point-end "»"
+      "alpha [bravo «c»harlie delta] echo"
+      (evil-cleverparens-mode t)
+      (evil-cp-set-additional-bindings)
+      ("\C-u\M-]")
+      "alpha [[bravo charlie delta]«]» echo"))) ;; TODO inconsistent cursor with wrap-next-square
+
+(ert-deftest evil-cp-wrap-next-curly-test ()
+  (ert-info ("Can wrap next sexp with curly braces")
+    (evil-cp-test-buffer
+      "alpha[ ]bravo charlie"
+      (evil-cp-set-additional-bindings)
+      ("\M-{")
+      "alpha{[ ]bravo} charlie")
+    (evil-cp-test-buffer
+      "alpha [b]ravo charlie"
+      (evil-cp-set-additional-bindings)
+      ("\M-{")
+      "alpha {[b]ravo} charlie")
+    (evil-cp-test-buffer
+      "alpha brav[o] charlie"
+      (evil-cp-set-additional-bindings)
+      ("\M-{")
+      "alpha {brav[o]} charlie")
+    (evil-cp-test-buffer
+      "alpha {bravo [c]harlie delta} echo"
+      (evil-cp-set-additional-bindings)
+      ("\C-u\M-{")
+      "alpha {[{]bravo charlie delta}} echo")))
+
+(ert-deftest evil-cp-wrap-previous-curly-test ()
+  (ert-info ("Can wrap previous sexp with curly braces")
+    (evil-cp-test-buffer
+      "alpha bravo[ ]charlie"
+      (evil-cp-set-additional-bindings)
+      ("\M-}")
+      "alpha {bravo[}] charlie")
+    (evil-cp-test-buffer
+      "alpha brav[o] charlie"
+      (evil-cp-set-additional-bindings)
+      ("\M-}")
+      "alpha {brav[o]} charlie")
+    (evil-cp-test-buffer
+      "alpha [b]ravo charlie"
+      (evil-cp-set-additional-bindings)
+      ("\M-}")
+      "{alpha [}]bravo charlie") ;; TODO surely not desired?
+    (evil-cp-test-buffer
+      "alpha {bravo [c]harlie delta} echo"
+      (evil-cp-set-additional-bindings)
+      ("\C-u\M-}")
+      "alpha {{bravo charlie delta}[}] echo"))) ;; TODO inconsistent cursor with wrap-next-curly
+
 (provide 'evil-cleverparens-tests)
 
 ;;; evil-cleverparens-tests.el ends here
