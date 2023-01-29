@@ -1906,7 +1906,7 @@ to true."
   (interactive "p")
   (cond
    ((or (evil-visual-state-p)
-        (looking-at-p "[\n\t ]+")
+        (looking-at-p ".[\n\t ]+")
         (bobp)
         (eobp)
         (evil-cp--point-in-string-or-comment)
