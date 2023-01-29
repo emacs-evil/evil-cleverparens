@@ -582,6 +582,44 @@ alpha (bravo (charlie delta) echo) foxtrot")))
       ("\M-O" "echo")
       "(alpha bravo)\necho[]\n\n(charlie delta)")))
 
+(ert-deftest evil-cp-yank-sexp-test ()
+  (ert-info ("Can yank a sexp")
+    (evil-cp-test-buffer
+      "(alpha b[r]avo charlie)"
+      (evil-cp-set-additional-bindings)
+      ("\M-y" "o" [escape] "p")
+      "(alpha bravo charlie)\nrav[o]")
+    (evil-cp-test-buffer
+      "(alpha bravo charlie[)] (delta)"
+      (evil-cp-set-additional-bindings)
+      ("\M-y" "$p")
+      "(alpha bravo charlie) (delta)(alpha bravo charlie[)]")))
+
+(ert-deftest evil-cp-delete-sexp-test ()
+  (ert-info ("Can delete a sexp")
+    (evil-cp-test-buffer
+      "(alpha b[r]avo charlie)"
+      (evil-cp-set-additional-bindings)
+      ("\M-d")
+      "(alpha b[ ]charlie)"
+      ("\M-d")
+      "(alpha b[)]"
+      ("\M-d")
+      "[]")))
+
+(ert-deftest evil-cp-change-sexp-test ()
+  (ert-info ("Can change a sexp")
+    (evil-cp-test-buffer
+      "(alpha b[r]avo charlie)"
+      (evil-cp-set-additional-bindings)
+      ("\M-c" "eta")
+      "(alpha beta[] charlie)")
+    (evil-cp-test-buffer
+      "(alpha bravo charlie[)] (delta)"
+      (evil-cp-set-additional-bindings)
+      ("\M-c" "echo")
+      "echo[] (delta)")))
+
 (provide 'evil-cleverparens-tests)
 
 ;;; evil-cleverparens-tests.el ends here
