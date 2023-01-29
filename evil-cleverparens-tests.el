@@ -874,6 +874,46 @@ india[]
       ("\C-u\M-}")
       "alpha {{bravo charlie delta}[}] echo"))) ;; TODO inconsistent cursor with wrap-next-curly
 
+(ert-deftest evil-cp-insert-test ()
+  (ert-info ("Inserts a space when helpful")
+    (evil-cp-test-buffer
+      "alpha ([b]ravo charlie) delta"
+      ("i" "echo")
+      "alpha (echo[] bravo charlie) delta"))
+  (ert-info ("Inserts no space when it would be unhelpful")
+    (evil-cp-test-buffer
+      "alpha ([)] delta"
+      ("i" "echo")
+      "alpha (echo[]) delta")
+    (evil-cp-test-buffer
+      "alpha ([ ]bravo charlie) delta"
+      ("i" "echo")
+      "alpha (echo[] bravo charlie) delta")
+    (evil-cp-test-buffer
+      "alpha ([b]ravo charlie) delta"
+      ("i" [escape])
+      "alpha [(]bravo charlie) delta")))
+
+(ert-deftest evil-cp-append-test ()
+  (ert-info ("Inserts a space when helpful")
+    (evil-cp-test-buffer
+      "alpha [(]bravo charlie) delta"
+      ("a" "echo")
+      "alpha (echo[] bravo charlie) delta"))
+  (ert-info ("Inserts no space when it would be unhelpful")
+    (evil-cp-test-buffer
+      "alpha [(]) delta"
+      ("a" "echo")
+      "alpha (echo[]) delta")
+    (evil-cp-test-buffer
+      "alpha [(] bravo charlie) delta"
+      ("a" "echo")
+      "alpha (echo[] bravo charlie) delta")
+    (evil-cp-test-buffer
+      "alpha [(]bravo charlie) delta"
+      ("a" [escape])
+      "alpha [(]bravo charlie) delta")))
+
 (provide 'evil-cleverparens-tests)
 
 ;;; evil-cleverparens-tests.el ends here
