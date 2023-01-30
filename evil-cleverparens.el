@@ -654,7 +654,6 @@ kill-ring is determined by the
              (save-excursion
                (evil-cp--backward-up-list)
                (indent-sexp)))
-           (evil-cp-first-non-blank-non-opening)
            (if (evil-cp--looking-at-any-closing-p)
                (when (save-excursion
                        (forward-line -1)
@@ -665,7 +664,18 @@ kill-ring is determined by the
              (join-line 1)))
 
           (t (evil-cp-yank beg end type register yank-handler)
-             (evil-cp--delete-characters beg end)))))
+             (evil-cp--delete-characters beg end))))
+
+  (when (and (eq type 'line)
+             (called-interactively-p 'any))
+    (evil-cp-first-non-blank-non-opening)
+    (when (and (not evil-start-of-line)
+               evil-operator-start-col
+               ;; Special exceptions to ever saving column:
+               (not (memq evil-this-motion '(evil-forward-word-begin
+                                             evil-forward-WORD-begin
+                                             evil-cp-forward-symbol-begin))))
+      (move-to-column evil-operator-start-col))))
 
 (evil-define-operator evil-cp-delete-line (beg end type register yank-handler)
   "Kills the balanced expressions on the line until the eol."

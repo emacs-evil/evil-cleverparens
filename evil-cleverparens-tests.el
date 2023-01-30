@@ -152,9 +152,9 @@ golf foxtrot deltahotel india"))
 (ert-deftest evil-cp-delete-test ()
   (ert-info ("Can delete unbalanced line")
     (evil-cp-test-buffer
-      "alpha (b[r]avo\ncharlie) delta\necho"
+      "alpha (bra[v]o\ncharlie) delta\necho"
       ("dd")
-      "(charlie) delta\necho"))
+      "(charlie) [d]elta\necho"))
   (ert-info ("Can delete unbalanced region")
     (evil-cp-test-buffer
       "alpha [b]ravo (charlie delta) echo"
@@ -163,7 +163,14 @@ golf foxtrot deltahotel india"))
     (evil-cp-test-buffer
       "alpha [b]ravo (charlie delta) echo"
       ("dfe")
-      "alpha [ ]echo"))) ;; TODO is this desired?
+      "alpha [ ]echo")) ;; TODO is this desired?
+  (ert-info ("Deleting populates registers correctly")
+    (evil-cp-test-buffer
+      "[a]lpha bravo charlie delta echo"
+      ("dw...")
+      "[e]cho"
+      ("o" [escape] "\"4p" "\"3p" "\"2p" "\"1p")
+      "alpha bravo charlie delta[ ]")))
 
 (ert-deftest evil-cp-delete-line-test ()
   (ert-info ("Can delete rest of balanced line")
