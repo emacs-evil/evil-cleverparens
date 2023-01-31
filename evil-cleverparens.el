@@ -292,7 +292,7 @@ buffer if BACKP is nil and at the beginning if it is true."
                    t)
                ((scan-error) nil))))
     (when backp (goto-char (point-min)))
-    (apply #'insert (nreverse closing))
+    (apply #'insert (if backp closing (nreverse closing)))
     ;; see above
     (when backp (delete-char 1))))
 
