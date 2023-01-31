@@ -376,7 +376,7 @@ for temporarily moving the point to before proceeding.
 balanced parentheses."
   (let ((region (evil-yank-rectangle beg end)))
     (with-temp-buffer
-      (insert region)
+      (insert (or region ""))
       (sp-region-ok-p (point-min) (point-max)))))
 
 (defun evil-cp--sp-obj-bounds (thing)
