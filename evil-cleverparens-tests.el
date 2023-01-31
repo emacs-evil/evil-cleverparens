@@ -137,6 +137,17 @@ golf foxtrot deltahotel india"))
       "al[p]ha (bravo\ncharlie)\ndelta\nalpha \necho"
       ("yyjjp"))))
 
+(ert-deftest evil-cp--toggle-balanced-yank-test ()
+  (ert-info ("Can balance parens")
+    (let ((evil-cleverparens-complete-parens-in-yanked-region t))
+      (evil-test-buffer
+        :point-start "«"
+        :point-end "»"
+        "alpha [{bravo\n«c»harlie}]"
+        (evil-cleverparens-mode t)
+        ("yyp")
+        "alpha [{bravo\ncharlie}]\n«[»{charlie}]"))))
+
 (ert-deftest evil-cp-yank-line-test ()
   (ert-info ("Can yank rest of balanced line")
     (evil-cp-test-buffer
