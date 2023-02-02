@@ -170,7 +170,7 @@ This is a feature copied from `evil-smartparens'."
 location of point, which also works for strings. Unlike
 `sp-splice-sexp', this one doesn't perform clean-up for empty
 forms."
-  (evil-cp--guard-point
+  (evil-cp--guard-point-inc-string
    (-when-let (ok (sp-get-enclosing-sexp 1))
      (if (equal ";" (sp-get ok :prefix))
          (sp-get ok
