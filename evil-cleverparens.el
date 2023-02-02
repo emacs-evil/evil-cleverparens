@@ -654,7 +654,9 @@ kill-ring is determined by the
              (save-excursion
                (evil-cp--backward-up-list)
                (indent-sexp)))
-           (if (evil-cp--looking-at-any-closing-p)
+           (if (save-excursion
+                 (skip-chars-forward "\t ")
+                 (evil-cp--looking-at-any-closing-p))
                (when (save-excursion
                        (forward-line -1)
                        (not (evil-cp--comment-block?)))
