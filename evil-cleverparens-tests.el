@@ -174,7 +174,11 @@ golf foxtrot deltahotel india"))
     (evil-cp-test-buffer
       "alpha (bra[v]o\ncharlie) delta\necho"
       ("dd")
-      "(charlie) [d]elta\necho"))
+      "(charlie) [d]elta\necho")
+    (evil-cp-test-buffer
+      "alpha (bravo\n[c]harlie)\ndelta"
+      ("dd")
+      "alpha (bravo)\n[d]elta"))
   (ert-info ("Can delete unbalanced region")
     (evil-cp-test-buffer
       "alpha [b]ravo (charlie delta) echo"
