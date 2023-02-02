@@ -42,6 +42,15 @@
       "a[\"]bc\"d"
       ("x")
       "a[b]cd"))
+  (ert-info ("Can splice parens inside double quotes")
+    (evil-cp-test-buffer
+      "a\"b[(]cd)e\"f"
+      ("x")
+      "a\"b[c]de\"f")
+    (evil-cp-test-buffer
+      "a\"b(cd[)]e\"f"
+      ("x")
+      "a\"bcd[e]\"f"))
   (ert-info ("Can splice curly braces")
     (evil-cp-test-buffer
       "a[{]bc}d"

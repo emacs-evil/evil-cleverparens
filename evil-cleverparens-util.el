@@ -74,6 +74,14 @@ question. Ignores parentheses inside strings."
     (and (sp--looking-at-p (evil-cp--get-opening-regexp))
          (not (evil-cp--inside-string-p)))))
 
+(defun evil-cp--looking-at-opening-anywhere-p (&optional pos)
+  "Predicate that returns true if point is looking at an opening
+parentheses as defined by smartparens for the major mode in
+question. Includes parentheses inside strings."
+  (save-excursion
+    (when pos (goto-char pos))
+    (sp--looking-at-p (evil-cp--get-opening-regexp))))
+
 (defun evil-cp--looking-at-closing-p (&optional pos)
   "Predicate that returns true if point is looking at an closing
 paren as defined by smartparens for the major mode in
@@ -143,6 +151,15 @@ sure that commands that are used to the Emacs view still work
 when the cursor in evil is on top of an opening parentheses or a
 string delimiter."
   `(if (evil-cp--looking-at-any-opening-p)
+       (save-excursion
+         (forward-char 1)
+         ,@body)
+     ,@body))
+
+(defmacro evil-cp--guard-point-inc-string (&rest body)
+  "Adjust cursor if on any opening and execute BODY.
+Just like `evil-cp--guard-point' but works inside strings."
+  `(if (evil-cp--looking-at-opening-anywhere-p)
        (save-excursion
          (forward-char 1)
          ,@body)
