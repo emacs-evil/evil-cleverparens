@@ -357,7 +357,18 @@ golf foxtrot deltahotel india"))
       ("W")
       "(alpha (bravo [(]charlie delta) echo) foxtrot)"
       ("W")
-      "(alpha (bravo ([c]harlie delta) echo) foxtrot)"))))
+      "(alpha (bravo ([c]harlie delta) echo) foxtrot)")))
+  (ert-info ("Can skip sexp prefix when moving forward")
+    (let (sp-sexp-prefix)
+      (evil-test-buffer ;; As we need to enable evil-cp later anyway
+        "(alpha (b[r]avo x(charlie delta) echo) foxtrot)"
+        (emacs-lisp-mode)
+        (evil-cleverparens-mode t)
+        (setq sp-sexp-prefix '((emacs-lisp-mode regexp "x")))
+        ("W")
+        "(alpha (bravo x([c]harlie delta) echo) foxtrot)"
+        ("B")
+        "(alpha ([b]ravo x(charlie delta) echo) foxtrot)"))))
 
 (ert-deftest evil-cp-forward-symbol-end-test ()
   (ert-info ("Can move forward to the end of the next symbol")

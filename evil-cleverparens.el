@@ -913,6 +913,26 @@ closing paren."
     (backward-char)))
 
 
+(defun evil-cp--strict-forward-symbol (&optional count)
+  "Move forward COUNT symbols.
+Like `forward-symbol' but stricter.  Skips sexp prefixes."
+  (let ((mmode-prefix (cdr (assoc major-mode sp-sexp-prefix))))
+    (cond ((< 0 count)
+           (forward-symbol 1)
+           (if (and (eq (car mmode-prefix) 'regexp)
+                    (looking-at-p (evil-cp--get-opening-regexp))
+                    (looking-back (cadr mmode-prefix) 1))
+               (evil-cp--strict-forward-symbol count)
+             (evil-cp--strict-forward-symbol (1- count))))
+
+          ((> 0 count)
+           (forward-symbol -1)
+           (if (and (eq (car mmode-prefix) 'regexp)
+                    (looking-at-p (string-join (list (cadr mmode-prefix)
+                                                     (evil-cp--get-opening-regexp)))))
+               (evil-cp--strict-forward-symbol count)
+             (evil-cp--strict-forward-symbol (1+ count)))))))
+
 (defun forward-evil-cp-symbol (&optional count)
   "Move forward COUNT \"WORDS\".
 Moves point COUNT WORDS forward or (- COUNT) WORDS backward if
@@ -924,7 +944,7 @@ WORD is a sequence of non-whitespace characters
    count
    #'(lambda (&optional cnt)
        (let ((pnt (point)))
-         (forward-symbol cnt)
+         (evil-cp--strict-forward-symbol cnt)
          (if (= pnt (point)) cnt 0)))
    #'forward-evil-empty-line))
 
