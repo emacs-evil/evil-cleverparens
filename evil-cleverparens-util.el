@@ -80,7 +80,8 @@ parentheses as defined by smartparens for the major mode in
 question. Includes parentheses inside strings."
   (save-excursion
     (when pos (goto-char pos))
-    (sp--looking-at-p (evil-cp--get-opening-regexp))))
+    (and (sp--looking-at-p (evil-cp--get-opening-regexp))
+         (not (evil-cp--looking-at-string-closing-p)))))
 
 (defun evil-cp--looking-at-closing-p (&optional pos)
   "Predicate that returns true if point is looking at an closing

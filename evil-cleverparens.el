@@ -648,7 +648,9 @@ kill-ring is determined by the
                  (save-excursion  ; skip preceding whitespace
                    (beginning-of-line)
                    (sp-forward-whitespace t)))
-              (1- end)))
+              (if (save-excursion (goto-char end) (eobp))
+                  end
+                (1- end))))
            (when (and evil-cleverparens-indent-afterwards
                       (evil-cp--inside-any-form-p))
              (save-excursion
