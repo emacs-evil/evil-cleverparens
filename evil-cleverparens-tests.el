@@ -27,6 +27,11 @@
       "a[b]c"
       ("x")
       "a[c]"))
+  (ert-info ("Can delete char in parens")
+    (evil-cp-test-buffer
+      "([x])"
+      ("x")
+      "()"))
   (ert-info ("Can splice parens")
     (evil-cp-test-buffer
       "a[(]bc)d"
@@ -41,7 +46,11 @@
     (evil-cp-test-buffer
       "a[\"]bc\"d"
       ("x")
-      "a[b]cd"))
+      "a[b]cd")
+    (evil-cp-test-buffer
+      "\"[\"]"
+      ("x")
+      ""))
   (ert-info ("Can splice parens inside double quotes")
     (evil-cp-test-buffer
       "a\"b[(]cd)e\"f"
@@ -170,6 +179,16 @@ golf foxtrot deltahotel india"))
       "alpha bravo (charlie\ndelta) echo\nfoxtrot bravo (charlie\ndelta)")))
 
 (ert-deftest evil-cp-delete-test ()
+  (ert-info ("Can delete balanced line")
+    (evil-cp-test-buffer
+      "\"[a]lpha\" 'bravo"
+      ("dd")
+      "")
+    (evil-cp-test-buffer
+    "[]
+"
+    ("dd")
+    ""))
   (ert-info ("Can delete unbalanced line")
     (evil-cp-test-buffer
       "alpha (bra[v]o\ncharlie) delta\necho"
@@ -194,7 +213,32 @@ golf foxtrot deltahotel india"))
       ("dw...")
       "[e]cho"
       ("o" [escape] "\"4p" "\"3p" "\"2p" "\"1p")
-      "alpha bravo charlie delta[ ]")))
+      "alpha bravo charlie delta[ ]"))
+  (ert-info ("Can delete word")
+    (evil-cp-test-buffer
+      "([T]his)"
+      ("dw")
+      "()"))
+  (ert-info ("Can delete word with count")
+    (evil-cp-test-buffer
+      "([T]his)"
+      ("2dw")
+      "()"))
+  (ert-info ("Can delete WORD")
+    (evil-cp-test-buffer
+      "([T]his)"
+      ("dW")
+      "()"))
+  (ert-info ("Can delete WORD with count")
+    (evil-cp-test-buffer
+      "([T]his)"
+      ("2dW")
+      "()"))
+  (ert-info ("Can delete 2 WORDs with count")
+    (evil-cp-test-buffer
+      "([T]his that)"
+      ("2dW")
+      "()")))
 
 (ert-deftest evil-cp-delete-line-test ()
   (ert-info ("Can delete rest of balanced line")
@@ -207,6 +251,38 @@ golf foxtrot deltahotel india"))
       "alpha [b]ravo (charlie\ndelta) echo\nfoxtrot"
       ("D")
       ("alpha [ ]echo\nfoxtrot"))) ;; TODO is this desired?
+  (ert-info ("Can delete entire form spanning more lines")
+    (evil-cp-test-buffer
+      "[(]let [foo (bar baz)
+           qux 1
+           quux (+ 1 2)]
+       (dwim foo qux quux))"
+      ("D")
+      ""))
+  (ert-info ("Preserves delimeters when inside them")
+    (evil-cp-test-buffer
+      "(foo \"[b]ar baz\"
+           quux)"
+      ("D")
+      "(foo \"\"
+           quux)")
+    (evil-cp-test-buffer
+      "(alpha {bravo[ ]charlie}
+           delta)"
+      ("D")
+      "(alpha {bravo}
+           delta)")
+    (evil-cp-test-buffer
+      "(alpha ${bravo[ ]charlie}
+           delta)"
+      ("D")
+      "(alpha ${bravo}
+           delta)"))
+  (ert-info ("Preserves rest of line outside the current form")
+    (evil-cp-test-buffer
+      "([f]oo bar)     ; Important comment"
+      ("D")
+      "([)]     ; Important comment"))
   (ert-info ("Can delete rest of unbalanced line in visual state")
     (evil-cp-test-buffer
       "alpha <brav[o]> (charlie\ndelta) echo\nfoxtrot"
@@ -535,6 +611,11 @@ charlie delta
 echo foxtrot")))
 
 (ert-deftest evil-cp-substitute-test ()
+  (ert-info ("Can substitute with nothing")
+    (evil-cp-test-buffer
+      "([x])"
+      ("s")
+      "()"))
   (ert-info ("Keep balance when substituting on opening paren")
     (evil-cp-test-buffer
       "alpha [(]bravo charlie)"
