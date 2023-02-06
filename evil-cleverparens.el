@@ -681,6 +681,25 @@ kill-ring is determined by the
                                              evil-cp-forward-symbol-begin))))
       (move-to-column evil-operator-start-col))))
 
+(defun evil-cp--act-until-closing (beg action)
+  "Do ACTION on all balanced expressions, starting at BEG.
+Stop ACTION when the first unbalanced closing delimeter is reached."
+  (goto-char beg)
+  (let ((endp nil))
+    (while (not endp)
+      (cond
+       ((evil-cp--looking-at-any-opening-p)
+        (let ((other-end (evil-cp--matching-paren-pos)))
+          ;; matching paren is in the range of the command
+          (let ((char-count
+                 (evil-cp--guard-point
+                  (sp-get (sp-get-enclosing-sexp)
+                    (- :end :beg)))))
+            (funcall action char-count))))
+       ((or (eolp) (evil-cp--looking-at-any-closing-p))
+        (setq endp t))
+       (t (funcall action 1))))))
+
 (evil-define-operator evil-cp-delete-line (beg end type register yank-handler)
   "Kills the balanced expressions on the line until the eol."
   :motion nil
@@ -735,23 +754,9 @@ kill-ring is determined by the
          (save-excursion
            (when (paredit-in-char-p) (backward-char 2))
            (let* ((beg (point))
-                  (eol (line-end-position))
-                  (end-of-list-p (paredit-forward-sexps-to-kill beg eol)))
-             (when end-of-list-p (up-list) (backward-char))
-             (let ((end (cond
-                         (kill-whole-line
-                          (or (save-excursion
-                                (paredit-skip-whitespace t)
-                                (and (not (eq (char-after) ?\; ))
-                                     (point)))
-                              (line-end-position)))
-                         ((and (not end-of-list-p)
-                               (eq (line-end-position) eol))
-                          eol)
-                         (t
-                          (point)))))
-               (evil-yank-characters beg end register)
-               (delete-region beg end)))))))
+                  (end (progn (evil-cp--act-until-closing beg #'forward-char) (point))))
+             (evil-yank-characters beg end register)
+             (evil-cp--act-until-closing beg #'delete-char))))))
 
 (evil-define-operator evil-cp-change (beg end type register yank-handler delete-func)
   "Call `evil-change' while keeping parentheses balanced."
