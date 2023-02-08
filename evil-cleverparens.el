@@ -585,7 +585,8 @@ respecting parentheses."
 (defun evil-cp--delete-characters (beg end)
   "Deletes everything except unbalanced parentheses / string
 delimiters in the region defined by BEG and END."
-  (let ((chars-left (- end beg)))
+  (let ((chars-left (- end beg))
+        (end (set-marker (make-marker) end)))
     (goto-char beg)
     (while (> chars-left 0)
       (cond
@@ -614,7 +615,8 @@ delimiters in the region defined by BEG and END."
         (cl-decf chars-left))
        (t
         (delete-char 1)
-        (cl-decf chars-left))))))
+        (cl-decf chars-left))))
+    (set-marker end nil)))
 
 (defun evil-cp-first-non-blank-non-opening ()
   "Like `evil-first-non-blank' but also skips opening parentheses
@@ -625,65 +627,9 @@ and string delimiters."
              (<= (point) (line-end-position)))
     (forward-char)))
 
-(evil-define-operator evil-cp-delete (beg end type register yank-handler)
-  "A version of `evil-delete' that attempts to leave the region
-it's acting on with balanced parentheses. The behavior of
-kill-ring is determined by the
-`evil-cleverparens-complete-parens-in-yanked-region' variable."
-  :move-point nil
-  (interactive "<R><x><y>")
-  (let ((safep (evil-cp-region-ok-p beg end)))
-    (cond ((or (= beg end)
-               (evil-cp--override)
-               (and (eq type 'block) (evil-cp--balanced-block-p beg end))
-               (and safep (not (eq type 'block))))
-           (evil-delete beg end type register yank-handler))
-
-          ((eq type 'line)
-           (evil-cp-yank beg end type register yank-handler)
-           (goto-char beg)
-           (save-excursion
-             (evil-cp--delete-characters
-              (+ beg
-                 (save-excursion  ; skip preceding whitespace
-                   (beginning-of-line)
-                   (sp-forward-whitespace t)))
-              (if (save-excursion (goto-char end) (eobp))
-                  end
-                (1- end))))
-           (when (and evil-cleverparens-indent-afterwards
-                      (evil-cp--inside-any-form-p))
-             (save-excursion
-               (evil-cp--backward-up-list)
-               (indent-sexp)))
-           (if (save-excursion
-                 (skip-chars-forward "\t ")
-                 (evil-cp--looking-at-any-closing-p))
-               (when (save-excursion
-                       (forward-line -1)
-                       (not (evil-cp--comment-block?)))
-                 (forward-line -1)
-                 (join-line 1)
-                 (forward-line 1))
-             (join-line 1)))
-
-          (t (evil-cp-yank beg end type register yank-handler)
-             (evil-cp--delete-characters beg end))))
-
-  (when (and (eq type 'line)
-             (called-interactively-p 'any))
-    (evil-cp-first-non-blank-non-opening)
-    (when (and (not evil-start-of-line)
-               evil-operator-start-col
-               ;; Special exceptions to ever saving column:
-               (not (memq evil-this-motion '(evil-forward-word-begin
-                                             evil-forward-WORD-begin
-                                             evil-cp-forward-symbol-begin))))
-      (move-to-column evil-operator-start-col))))
-
 (defun evil-cp--act-until-closing (beg action)
   "Do ACTION on all balanced expressions, starting at BEG.
-Stop ACTION when the first unbalanced closing delimeter is reached."
+Stop ACTION when the first unbalanced closing delimeter or eol is reached."
   (goto-char beg)
   (let ((endp nil))
     (while (not endp)
@@ -705,6 +651,7 @@ Stop ACTION when the first unbalanced closing delimeter is reached."
   :motion nil
   :keep-visual t
   :move-point nil
+  ;; TODO this could take a count, like `evil-delete-line'
   (interactive "<R><x>")
   (cond ((evil-visual-state-p)
          ;; Not sure what this should do in visual-state
@@ -757,6 +704,65 @@ Stop ACTION when the first unbalanced closing delimeter is reached."
                   (end (progn (evil-cp--act-until-closing beg #'forward-char) (point))))
              (evil-yank-characters beg end register)
              (evil-cp--act-until-closing beg #'delete-char))))))
+
+(evil-define-operator evil-cp-delete (beg end type register yank-handler)
+  "A version of `evil-delete' that attempts to leave the region
+it's acting on with balanced parentheses. The behavior of
+kill-ring is determined by the
+`evil-cleverparens-complete-parens-in-yanked-region' variable."
+  :move-point nil
+  (interactive "<R><x><y>")
+  (let ((safep (evil-cp-region-ok-p beg end)))
+    (cond ((or (= beg end)
+               (evil-cp--override)
+               (and (eq type 'block) (evil-cp--balanced-block-p beg end))
+               (and safep (not (eq type 'block))))
+           (evil-delete beg end type register yank-handler))
+
+          ((eq type 'line)
+           (evil-cp-yank beg end type register yank-handler)
+           (goto-char beg)
+           (save-excursion
+             (evil-cp--delete-characters
+              (+ beg
+                 (save-excursion  ; skip preceding whitespace
+                   (beginning-of-line)
+                   (sp-forward-whitespace t)))
+              (if (save-excursion (goto-char end) (eobp))
+                  end
+                (1- end))))
+           (when (and evil-cleverparens-indent-afterwards
+                      (evil-cp--inside-any-form-p))
+             (save-excursion
+               (evil-cp--backward-up-list)
+               (indent-sexp)))
+           (if (save-excursion
+                 (skip-chars-forward "\t ")
+                 (evil-cp--looking-at-any-closing-p))
+               (when (save-excursion
+                       (forward-line -1)
+                       (not (evil-cp--comment-block?)))
+                 (forward-line -1)
+                 (join-line 1)
+                 (forward-line 1))
+             (join-line 1)))
+
+          ((eq 'evil-end-of-line evil-this-motion)
+           (evil-cp-delete-line beg end type register yank-handler))
+
+          (t (evil-cp-yank beg end type register yank-handler)
+             (evil-cp--delete-characters beg end))))
+
+  (when (and (eq type 'line)
+             (called-interactively-p 'any))
+    (evil-cp-first-non-blank-non-opening)
+    (when (and (not evil-start-of-line)
+               evil-operator-start-col
+               ;; Special exceptions to ever saving column:
+               (not (memq evil-this-motion '(evil-forward-word-begin
+                                             evil-forward-WORD-begin
+                                             evil-cp-forward-symbol-begin))))
+      (move-to-column evil-operator-start-col))))
 
 (evil-define-operator evil-cp-change (beg end type register yank-handler delete-func)
   "Call `evil-change' while keeping parentheses balanced."
