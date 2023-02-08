@@ -185,6 +185,10 @@ golf foxtrot deltahotel india"))
       ("dd")
       "")
     (evil-cp-test-buffer
+      "\"\"[]"
+      ("dd")
+      "")
+    (evil-cp-test-buffer
     "[]
 "
     ("dd")
@@ -206,7 +210,7 @@ golf foxtrot deltahotel india"))
     (evil-cp-test-buffer
       "alpha [b]ravo (charlie delta) echo"
       ("dfe")
-      "alpha [ ]echo")) ;; TODO is this desired?
+      "alpha ([ ]delta) echo"))
   (ert-info ("Deleting populates registers correctly")
     (evil-cp-test-buffer
       "[a]lpha bravo charlie delta echo"
@@ -238,14 +242,43 @@ golf foxtrot deltahotel india"))
     (evil-cp-test-buffer
       "([T]his that)"
       ("2dW")
-      "()")))
+      "()"))
+  (ert-info ("Can delete word backward")
+    (evil-cp-test-buffer
+      "(f[o]o)"
+      ("db")
+      "(oo)"))
+  (ert-info ("Can delete WORD backward")
+    (evil-cp-test-buffer
+      "(fo[o])"
+      ("dB")
+      "(o)"))
+  (ert-info ("Can delete backward to bol")
+    ;; These look the same, but in the past, gave different results
+    (evil-cp-test-buffer
+      "(foo (bar[ ]baz))"
+      ("d^")
+      "(( baz))")
+    (evil-cp-test-buffer
+      "(alpha (bravo[ ]charlie))"
+      ("d^")
+      "(( charlie))")))
+
+
+;; (alpha[ ]bravo) charlie
+;; charlie (bravo[ ]alpha)
+;; should d$ on l1 correspond with d^ on l2?
 
 (ert-deftest evil-cp-delete-line-test ()
   (ert-info ("Can delete rest of balanced line")
     (evil-cp-test-buffer
       "alpha [b]ravo (charlie) delta\necho"
       ("D")
-      "alpha[ ]\necho"))
+      "alpha[ ]\necho")
+    (evil-cp-test-buffer
+      "(alpha [b]ravo (charlie)\ndelta)"
+      ("D")
+      "(alpha[ ]\ndelta)"))
   (ert-info ("Can delete rest of unbalanced line")
     (evil-cp-test-buffer
       "alpha [b]ravo (charlie\ndelta) echo\nfoxtrot"
@@ -303,7 +336,7 @@ golf foxtrot deltahotel india"))
     (evil-cp-test-buffer
       "alpha [b]ravo (charlie delta) echo"
       ("cfe" "zulu")
-      "alpha zulu echo"))) ;; TODO is this desired? (c.f. delete)
+      "alpha (zulu[] delta) echo")))
 
 (ert-deftest evil-cp-change-line-test ()
   (ert-info ("Can change rest of balanced line")
@@ -337,7 +370,7 @@ golf foxtrot deltahotel india"))
     (evil-cp-test-buffer
       "alpha [b]ravo (charlie\ndelta) echo\nfoxtrot"
       ("S" "zulu")
-      "zuluecho\nfoxtrot"))) ;; TODO why is the proceeding space missing?
+      "(zulu[]\ndelta) echo\nfoxtrot")))
 
 (ert-deftest evil-cp-end-of-defun-test ()
   (ert-info ("Can move to end of defun")
