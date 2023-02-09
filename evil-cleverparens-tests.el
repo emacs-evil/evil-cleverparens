@@ -69,7 +69,12 @@
     (evil-cp-test-buffer
       "a[(]bc)d"
       ("2x$p")
-      "acd([b]")))
+      "acd([b]"))
+  (ert-info ("Can delete in visual state")
+    (evil-cp-test-buffer
+      "f[o]o"
+      ("vlx")
+      "f")))
 
 (ert-deftest evil-cp-delete-char-or-splice-backwards-test ()
   (ert-info ("Can delete a normal character")
@@ -101,7 +106,12 @@
     (evil-cp-test-buffer
       "a([b]c)d"
       ("2X$p")
-      "bcda[(]")))
+      "bcda[(]"))
+  (ert-info ("Can delete in visual state")
+    (evil-cp-test-buffer
+      "f[o]o"
+      ("vlX")
+      "f")))
 
 (ert-deftest evil-cp-delete-backward-word-test ()
   (ert-info ("Can delete a word backwards, just like evil")
@@ -192,7 +202,12 @@ golf foxtrot deltahotel india"))
     "[]
 "
     ("dd")
-    ""))
+    "")
+    (evil-cp-test-buffer
+      "fo[o]
+"
+      ("jdd")
+      "foo"))
   (ert-info ("Can delete unbalanced line")
     (evil-cp-test-buffer
       "alpha (bra[v]o\ncharlie) delta\necho"
@@ -255,6 +270,7 @@ golf foxtrot deltahotel india"))
       "(o)"))
   (ert-info ("Can delete backward to bol")
     ;; These look the same, but in the past, gave different results
+    ;; TODO - should this stop at the opening paren?
     (evil-cp-test-buffer
       "(foo (bar[ ]baz))"
       ("d^")
@@ -283,7 +299,20 @@ golf foxtrot deltahotel india"))
     (evil-cp-test-buffer
       "alpha [b]ravo (charlie\ndelta) echo\nfoxtrot"
       ("D")
-      ("alpha [ ]echo\nfoxtrot"))) ;; TODO is this desired?
+      ("alpha [ ]echo\nfoxtrot")) ;; TODO is this desired?
+    (evil-cp-test-buffer
+      "(Test [ ]        )"
+      ("D")
+      "(Test )"))
+  (ert-info ("Can delete one-line comments")
+    (evil-cp-test-buffer
+      "([+] ;;This is a comment
+1
+1)"
+      ("D")
+      "(
+1
+1)"))
   (ert-info ("Can delete entire form spanning more lines")
     (evil-cp-test-buffer
       "[(]let [foo (bar baz)
@@ -336,7 +365,30 @@ golf foxtrot deltahotel india"))
     (evil-cp-test-buffer
       "alpha [b]ravo (charlie delta) echo"
       ("cfe" "zulu")
-      "alpha (zulu[] delta) echo")))
+      "alpha (zulu[] delta) echo"))
+  (ert-info ("Preserves indent")
+    (evil-test-buffer ;; As we need to enable evil-cp later anyway
+     "
+(let ((foo \"bar\"))
+  ([c]oncat foo \"baz\"))"
+     (emacs-lisp-mode)
+     (evil-cleverparens-mode t)
+     ("cc")
+     "
+(let ((foo \"bar\"))
+  )")
+    (evil-test-buffer ;; As we need to enable evil-cp later anyway
+     "
+(let ((foo \"bar\"))
+  ([l]et ((asdf \"ghkj\"))
+    (concat foo asdf)))"
+     (emacs-lisp-mode)
+     (evil-cleverparens-mode t)
+     ("cc" "alpha")
+     "
+(let ((foo \"bar\"))
+  (alpha[]
+    (concat foo asdf)))")))
 
 (ert-deftest evil-cp-change-line-test ()
   (ert-info ("Can change rest of balanced line")
