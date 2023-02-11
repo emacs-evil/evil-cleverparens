@@ -2106,7 +2106,7 @@ in question."
   (let ((keys (if evil-cleverparens-swap-move-by-word-and-symbol
                   evil-cp-swapped-movement-keys
                 evil-cp-regular-movement-keys)))
-    (evil-cp--populate-mode-bindings-for-state keys 'normal t)))
+    (evil-cp--populate-mode-bindings-for-state keys 'motion t)))
 
 (defun evil-cp--enable-regular-bindings ()
   "Enables the regular evil-cleverparens bindings based on
