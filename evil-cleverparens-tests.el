@@ -352,6 +352,11 @@ golf foxtrot deltahotel india"))
       "[d]elta) echo\nfoxtrot"))) ;; TODO surely not desired?
 
 (ert-deftest evil-cp-change-test ()
+  (ert-info ("Can change up to end of symbol")
+    (evil-cp-test-buffer
+      "(((alpha b[r]avo-charlie)))"
+      ("cE" "eta-gamma")
+      "(((alpha beta-gamma[])))"))
   (ert-info ("Can change unbalanced line")
     (evil-cp-test-buffer
       "alpha (b[r]avo\ncharlie) delta\necho"
