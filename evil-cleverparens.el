@@ -2174,7 +2174,9 @@ true."
   (define-key evil-outer-text-objects-map "c" #'evil-cp-a-comment)
   (define-key evil-inner-text-objects-map "c" #'evil-cp-inner-comment)
   (define-key evil-outer-text-objects-map "d" #'evil-cp-a-defun)
-  (define-key evil-inner-text-objects-map "d" #'evil-cp-inner-defun))
+  (define-key evil-inner-text-objects-map "d" #'evil-cp-inner-defun)
+  (define-key evil-outer-text-objects-map "W" #'evil-cp-a-WORD)
+  (define-key evil-inner-text-objects-map "W" #'evil-cp-inner-WORD))
 
 (defun evil-cp--enable-surround-operators ()
   "Enables the use of `evil-cp-delete' and `evil-cp-change' with

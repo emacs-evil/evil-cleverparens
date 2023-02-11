@@ -24,6 +24,21 @@
 (require 'smartparens)
 (require 'evil-cleverparens-util)
 
+
+;;;###autoload (autoload 'evil-cp-a-WORD "evil-cleverparens-text-objects" nil t)
+(evil-define-text-object evil-cp-a-WORD (count &optional beg end type)
+  "Select a symbol"
+  (evil-select-an-object (if evil-cleverparens-swap-move-by-word-and-symbol
+                             'evil-word 'evil-symbol)
+                         beg end type count))
+
+;;;###autoload (autoload 'evil-cp-inner-WORD "evil-cleverparens-text-objects" nil t)
+(evil-define-text-object evil-cp-inner-WORD (count &optional beg end type)
+  "Select inner symbol"
+  (evil-select-inner-object (if evil-cleverparens-swap-move-by-word-and-symbol
+                                'evil-word 'evil-symbol)
+                            beg end type count))
+
 ;;;###autoload (autoload 'evil-cp-a-form "evil-cleverparens-text-objects" nil t)
 (evil-define-text-object evil-cp-a-form (count &optional beg end type)
   "Smartparens sexp object."
