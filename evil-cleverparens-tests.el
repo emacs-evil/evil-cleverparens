@@ -357,6 +357,16 @@ golf foxtrot deltahotel india"))
       "(((alpha b[r]avo-charlie)))"
       ("cE" "eta-gamma")
       "(((alpha beta-gamma[])))"))
+  (ert-info ("Can change inner symbol")
+    (evil-cp-test-buffer
+      "(((alpha b[r]avo-charlie)))"
+      ("ciW" "beta-gamma")
+      "(((alpha beta-gamma[])))"))
+  (ert-info ("Can change a symbol")
+    (evil-cp-test-buffer
+      "(((alpha b[r]avo-charlie)))"
+      ("caW" "-beta")
+      "(((alpha-beta[])))"))
   (ert-info ("Can change unbalanced line")
     (evil-cp-test-buffer
       "alpha (b[r]avo\ncharlie) delta\necho"
