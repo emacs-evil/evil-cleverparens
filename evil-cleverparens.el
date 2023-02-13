@@ -676,6 +676,10 @@ Stop ACTION when the first unbalanced closing delimeter or eol is reached."
            (evil-yank-characters beg end register)
            (delete-region beg end)))
 
+        ((and (evil-cp--looking-at-any-closing-p)
+              (evil-cp--looking-at-empty-form))
+         (evil-cp-delete-enclosing 1))
+
         ((save-excursion (paredit-skip-whitespace t (line-end-position))
                          (or (eolp) (eq (char-after) ?\; )))
          (when (paredit-in-char-p) (backward-char))
@@ -746,9 +750,6 @@ kill-ring is determined by the
                  (join-line 1)
                  (forward-line 1))
              (join-line 1)))
-
-          ((eq 'evil-end-of-line evil-this-motion)
-           (evil-cp-delete-line beg end type register yank-handler))
 
           (t (evil-cp-yank beg end type register yank-handler)
              (evil-cp--delete-characters beg end))))
