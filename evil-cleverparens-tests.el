@@ -74,7 +74,12 @@
     (evil-cp-test-buffer
       "f[o]o"
       ("vlx")
-      "f")))
+      "f"))
+  (ert-info ("Can transpose chars")
+    (evil-cp-test-buffer
+      "([o]fo)"
+      ("xp")
+      "(f[o]o)")))
 
 (ert-deftest evil-cp-delete-char-or-splice-backwards-test ()
   (ert-info ("Can delete a normal character")
@@ -304,6 +309,11 @@ golf foxtrot deltahotel india"))
       "(Test [ ]        )"
       ("D")
       "(Test )"))
+  (ert-info ("Can delete empty form on closing delimiter")
+    (evil-cp-test-buffer
+      "(alpha ([)] bravo)"
+      ("D")
+      "(alpha[ ]bravo)"))
   (ert-info ("Can delete one-line comments")
     (evil-cp-test-buffer
       "([+] ;;This is a comment
@@ -352,6 +362,11 @@ golf foxtrot deltahotel india"))
       "[d]elta) echo\nfoxtrot"))) ;; TODO surely not desired?
 
 (ert-deftest evil-cp-change-test ()
+  (ert-info ("Can change word and keep spacing")
+    (evil-cp-test-buffer
+      "alpha [b]ravo charlie"
+      ("cw" "delta")
+      "alpha delta[] charlie"))
   (ert-info ("Can change up to end of symbol")
     (evil-cp-test-buffer
       "(((alpha b[r]avo-charlie)))"
