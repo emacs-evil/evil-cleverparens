@@ -627,13 +627,15 @@ and string delimiters."
              (<= (point) (line-end-position)))
     (forward-char)))
 
-(defun evil-cp--act-until-closing (beg action)
+(defun evil-cp--act-until-closing (beg end action)
   "Do ACTION on all balanced expressions, starting at BEG.
 Stop ACTION when the first unbalanced closing delimeter or eol is reached."
   (goto-char beg)
-  (let ((endp nil))
+  (let ((endp nil)
+        (end (set-marker (make-marker) end)))
     (while (not endp)
       (cond
+       ((<= end (point)) (setq endp t))
        ((evil-cp--looking-at-any-opening-p)
         (let ((other-end (evil-cp--matching-paren-pos)))
           ;; matching paren is in the range of the command
@@ -642,9 +644,10 @@ Stop ACTION when the first unbalanced closing delimeter or eol is reached."
                   (sp-get (sp-get-enclosing-sexp)
                     (- :end :beg)))))
             (funcall action char-count))))
-       ((or (eolp) (evil-cp--looking-at-any-closing-p))
+       ((evil-cp--looking-at-any-closing-p)
         (setq endp t))
-       (t (funcall action 1))))))
+       (t (funcall action 1))))
+    (set-marker end nil)))
 
 (evil-define-operator evil-cp-delete-line (beg end type register yank-handler)
   "Kills the balanced expressions on the line until the eol."
@@ -653,12 +656,18 @@ Stop ACTION when the first unbalanced closing delimeter or eol is reached."
   :move-point nil
   ;; TODO this could take a count, like `evil-delete-line'
   (interactive "<R><x>")
-  (cond ((evil-visual-state-p)
-         ;; Not sure what this should do in visual-state
-         (let ((safep (sp-region-ok-p beg end)))
-           (if (not safep)
-               (evil-cp--fail)
-             (evil-delete-line beg end type register yank-handler))))
+  (when (and (evil-visual-state-p) (eq type 'inclusive))
+    (let ((range (evil-expand
+                  beg end
+                  (if (and evil-respect-visual-line-mode visual-line-mode)
+                      'screen-line 'line))))
+      (setq beg (car range)
+            end (cadr range)
+            type (evil-type range))))
+  (unless beg (setq beg (point)))
+  (unless end (setq end (line-end-position)))
+  (cond ((evil-cp-region-ok-p beg end)
+         (evil-delete-line beg end type register yank-handler))
 
         ((paredit-in-string-p)
          (save-excursion
@@ -675,6 +684,11 @@ Stop ACTION when the first unbalanced closing delimeter or eol is reached."
                (end (line-end-position)))
            (evil-yank-characters beg end register)
            (delete-region beg end)))
+
+        ((evil-visual-state-p)
+         (progn (evil-force-normal-state)
+                (goto-char beg)
+                (evil-cp-delete-line beg end type register yank-handler)))
 
         ((and (evil-cp--looking-at-any-closing-p)
               (evil-cp--looking-at-empty-form))
@@ -705,9 +719,9 @@ Stop ACTION when the first unbalanced closing delimeter or eol is reached."
          (save-excursion
            (when (paredit-in-char-p) (backward-char 2))
            (let* ((beg (point))
-                  (end (progn (evil-cp--act-until-closing beg #'forward-char) (point))))
+                  (end (progn (evil-cp--act-until-closing beg end #'forward-char) (point))))
              (evil-yank-characters beg end register)
-             (evil-cp--act-until-closing beg #'delete-char))))))
+             (evil-cp--act-until-closing beg end #'delete-char))))))
 
 (evil-define-operator evil-cp-delete (beg end type register yank-handler)
   "A version of `evil-delete' that attempts to leave the region

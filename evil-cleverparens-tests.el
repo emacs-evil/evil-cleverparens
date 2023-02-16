@@ -359,7 +359,7 @@ golf foxtrot deltahotel india"))
     (evil-cp-test-buffer
       "alpha <brav[o]> (charlie\ndelta) echo\nfoxtrot"
       ("D")
-      "[d]elta) echo\nfoxtrot"))) ;; TODO surely not desired?
+      "[ ]echo\nfoxtrot")))
 
 (ert-deftest evil-cp-change-test ()
   (ert-info ("Can change word and keep spacing")
@@ -440,7 +440,7 @@ golf foxtrot deltahotel india"))
     (evil-cp-test-buffer
       "alpha <brav[o]> (charlie\ndelta) echo\nfoxtrot"
       ("C" "zulu")
-      "zuludelta) echo\nfoxtrot"))) ;; TODO surely not desired?
+      "zulu echo\nfoxtrot")))
 
 (ert-deftest evil-cp-change-whole-line-test ()
   (ert-info ("Can change whole line when balanced")
