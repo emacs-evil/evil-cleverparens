@@ -304,7 +304,7 @@ golf foxtrot deltahotel india"))
     (evil-cp-test-buffer
       "alpha [b]ravo (charlie\ndelta) echo\nfoxtrot"
       ("D")
-      ("alpha [ ]echo\nfoxtrot")) ;; TODO is this desired?
+      "alpha [ ]echo\nfoxtrot") ;; TODO is this desired?
     (evil-cp-test-buffer
       "(Test [ ]        )"
       ("D")
@@ -430,7 +430,7 @@ golf foxtrot deltahotel india"))
     (evil-cp-test-buffer
       "alpha [b]ravo (charlie\ndelta) echo\nfoxtrot"
       ("C" "zulu")
-      ("alpha zulu echo\nfoxtrot")))
+      "alpha zulu echo\nfoxtrot"))
   (ert-info ("Changes whole line when balanced line in visual state")
     (evil-cp-test-buffer
       "alpha <brav[o]> (charlie delta)\necho"
