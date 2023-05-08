@@ -1136,7 +1136,7 @@ sexp inside it. Should not be called in an empty list."
 
 (evil-define-command evil-cp-< (count)
   "Slurping/barfing operation that acts differently based on the
-points location in the form.
+point's location in the form.
 
 When point is on the opening delimiter of the form boundary, it
 will slurp the next element backwards while maintaining the
@@ -1208,7 +1208,8 @@ regular forward-slurp."
         (when (not (or (evil-cp--looking-at-empty-form)
                        (evil-cp--singleton-list-p)))
           (forward-char)
-          (sp-backward-barf-sexp)
+          (let (sp-barf-move-point-with-delimiter) ; It's not helpful here
+            (sp-backward-barf-sexp))
           (sp-forward-sexp)
           (evil-cp-next-opening)))
        (t
