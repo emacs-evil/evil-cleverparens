@@ -835,6 +835,7 @@ kill-ring is determined by the
   "Motion for moving forward by a sexp via `sp-forward-sexp'."
   :type exclusive
   (let ((count (or count 1)))
+    (when (evil-eolp) (forward-char))
     (sp-forward-sexp count)))
 
 (evil-define-motion evil-cp-backward-sexp (count)

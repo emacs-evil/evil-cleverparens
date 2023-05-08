@@ -454,6 +454,19 @@ golf foxtrot deltahotel india"))
       ("S" "zulu")
       "(zulu[]\ndelta) echo\nfoxtrot")))
 
+(ert-deftest evil-cp-forward-sexp-test ()
+  (ert-info ("Can move past eol")
+    (let (evil-move-beyond-eol)
+      (evil-test-buffer ;; As we need to enable evil-cp later anyway
+       "([(]alpha bravo)\n(charlie delta))"
+       (evil-cleverparens-mode t)
+       (evil-cp-set-additional-movement-keys)
+       (setq evil-move-beyond-eol nil) ;; Should be nil anyway.
+       ("L")
+       "((alpha bravo[)]\n(charlie delta))"
+       ("L")
+       "((alpha bravo)\n(charlie delta)[)]"))))
+
 (ert-deftest evil-cp-end-of-defun-test ()
   (ert-info ("Can move to end of defun")
     (evil-test-buffer ;; As we need to enable evil-cp later anyway
