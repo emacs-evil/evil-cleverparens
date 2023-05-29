@@ -890,7 +890,7 @@ level sexp)."
   :move-point nil
   :type inclusive
   (let ((count (or count 1)))
-    (dotimes (i count)
+    (dotimes (_ count)
       (evil-cp--paren-navigation-helper :next :opening))))
 
 (evil-define-motion evil-cp-previous-opening (count)
@@ -898,7 +898,7 @@ level sexp)."
   :move-point nil
   :type inclusive
   (let ((count (or count 1)))
-    (dotimes (i count)
+    (dotimes (_ count)
       (evil-cp--paren-navigation-helper :previous :opening))))
 
 (evil-define-motion evil-cp-next-closing (count)
@@ -906,7 +906,7 @@ level sexp)."
   :move-point nil
   :type inclusive
   (let ((count (or count 1)))
-    (dotimes (i count)
+    (dotimes (_ count)
       (evil-cp--paren-navigation-helper :next :closing))))
 
 (evil-define-motion evil-cp-previous-closing (count)
@@ -914,7 +914,7 @@ level sexp)."
   :move-point nil
   :type inclusive
   (let ((count (or count 1)))
-    (dotimes (i count)
+    (dotimes (_ count)
       (evil-cp--paren-navigation-helper :previous :closing))))
 
 (evil-define-motion evil-cp-backward-up-sexp (count)
@@ -926,7 +926,7 @@ evil-motion."
   (let ((count (or count 1)))
     ;; for some reason calling `sp-backward-up-sexp' with a large `count'
     ;; doesn't move the point at all
-    (dotimes (i count)
+    (dotimes (_ count)
       (sp-backward-up-sexp))))
 
 (evil-define-motion evil-cp-up-sexp (count)
@@ -935,12 +935,12 @@ The same as `sp-up-sexp', but leaves the point on top of the
 closing paren."
   :move-point nil
   :type inclusive
-  (let ((count (or count 1)))
+  (let ((count (or count 1))
+        success)
     (when (evil-cp--looking-at-closing-p) (forward-char))
-    (dotimes (i count)
-      (sp-up-sexp))
-    (backward-char)))
-
+    (dotimes (_ count)
+      (and (sp-up-sexp) (setq success t)))
+    (and success (backward-char))))
 
 (defun evil-cp--strict-forward-symbol (&optional count)
   "Move forward COUNT symbols.
