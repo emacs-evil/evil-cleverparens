@@ -47,14 +47,14 @@
     (when pos (goto-char pos))
     (looking-at-p evil-cp--ws-regexp)))
 
-(defun evil-cp--looking-at-escaped-p (&optional pos)
+(defun evil-cp--looking-at-escape-p (&optional pos)
   (save-excursion
     (when pos (goto-char pos))
-    (or
-     (looking-at-p "\\\\")
-     (progn
-       (goto-char (- (point) 1))
-       (looking-at-p "\\\\")))))
+    (looking-at-p (regexp-quote (or sp-escape-char "\\")))))
+
+(defun evil-cp--looking-at-escaped-p (&optional pos)
+  (or (evil-cp--looking-at-escape-p pos)
+      (evil-cp--looking-at-escape-p (1- (or pos (point))))))
 
 (defun evil-cp--pair-for (pair pairs)
   (cond

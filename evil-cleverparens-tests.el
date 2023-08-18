@@ -283,8 +283,21 @@ golf foxtrot deltahotel india"))
     (evil-cp-test-buffer
       "(alpha (bravo[ ]charlie))"
       ("d^")
-      "(( charlie))")))
-
+      "(( charlie))"))
+  (ert-info ("Can delete line containing escaped parens")
+    (evil-test-buffer ;; As we need to enable evil-cp later anyway
+      "(alpha\n(b[r]avo ?\\))\ncharlie)"
+      (emacs-lisp-mode)
+      (evil-cleverparens-mode t)
+      ("dd")
+      "(alpha\ncharlie)"))
+  (ert-info ("Can delete unbalanced line containing escaped parens")
+    (evil-test-buffer ;; As we need to enable evil-cp later anyway
+      "(alpha\n(b[r]avo ?\\)\ncharlie)\ndelta)"
+      (emacs-lisp-mode)
+      (evil-cleverparens-mode t)
+      ("dd")
+      "(alpha\n (charlie)\n delta)")))
 
 ;; (alpha[ ]bravo) charlie
 ;; charlie (bravo[ ]alpha)
@@ -668,6 +681,13 @@ golf foxtrot deltahotel india"))
       "alpha bravo (charlie [d]elta echo) foxtrot golf"
       (">")
       "alpha bravo (charlie [d]elta echo foxtrot) golf"))
+  (ert-info ("Can slurp escaped parens")
+    (evil-test-buffer ;; As we need to enable evil-cp later anyway
+      "(alpha[)] ?\\) bravo"
+      (emacs-lisp-mode)
+      (evil-cleverparens-mode t)
+      (">")
+      "(alpha ?\\)) bravo"))
   (ert-info ("Can barf backwards when on opening delimiter")
     (evil-cp-test-buffer
       "alpha bravo [(]charlie delta echo) foxtrot golf"
