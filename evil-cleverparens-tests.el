@@ -551,7 +551,15 @@ golf foxtrot deltahotel india"))
       "alpha[ ]bravo"
       (evil-cp-set-additional-movement-keys)
       (")")
-      "alpha[ ]bravo")))
+      "alpha[ ]bravo"))
+  (ert-info ("Move if on quote")
+    (evil-cp-test-buffer
+      "(alpha (bravo \"char[l]ie\" delta) echo)"
+      (evil-cp-set-additional-movement-keys)
+      (")")
+      "(alpha (bravo \"charlie[\"] delta) echo)"
+      (")")
+      "(alpha (bravo \"charlie\" delta[)] echo)")))
 
 (ert-deftest evil-cp-forward-symbol-begin-test ()
   (ert-info ("Can move forward to the beginning of the next symbol")
