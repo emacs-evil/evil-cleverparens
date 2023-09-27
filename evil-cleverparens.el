@@ -930,14 +930,14 @@ evil-motion."
       (sp-backward-up-sexp))))
 
 (evil-define-motion evil-cp-up-sexp (count)
-  "Motion for moving up to the previous level of parenteheses.
+  "Motion for moving up to the previous level of parentheses.
 The same as `sp-up-sexp', but leaves the point on top of the
 closing paren."
   :move-point nil
   :type inclusive
   (let ((count (or count 1))
         success)
-    (when (evil-cp--looking-at-closing-p) (forward-char))
+    (when (evil-cp--looking-at-any-closing-p) (forward-char))
     (dotimes (_ count)
       (and (sp-up-sexp) (setq success t)))
     (and success (backward-char))))
