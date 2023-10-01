@@ -597,17 +597,19 @@ delimiters in the region defined by BEG and END."
           (delete-char diff)
           (setq chars-left (- chars-left diff))))
        ((evil-cp--looking-at-any-opening-p)
-        (let ((other-end (evil-cp--matching-paren-pos)))
+        (let ((p (point))
+              (other-end (evil-cp--matching-paren-pos)))
           ;; matching paren is in the range of the command
-          (if (<= (point) other-end end)
-              (let ((char-count
-                     (evil-cp--guard-point
-                      (sp-get (sp-get-enclosing-sexp)
-                        (- :end :beg)))))
+          (if (<= p other-end end)
+              ;; 1+ makes the char-count inclusive
+              (let ((char-count (1+ (- other-end p))))
                 (delete-char char-count)
                 (setq chars-left (- chars-left char-count)))
             (forward-char)
             (cl-decf chars-left))))
+       ((and (evil-cp--looking-at-escape-p) (< 1 chars-left))
+        (delete-char 2)
+        (cl-decf chars-left 2))
        ((and (evil-cp--looking-at-any-closing-p) (= chars-left 1))
         (cl-decf chars-left))
        ((evil-cp--looking-at-any-closing-p)

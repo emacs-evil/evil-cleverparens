@@ -47,6 +47,15 @@
     (when pos (goto-char pos))
     (looking-at-p evil-cp--ws-regexp)))
 
+(defun evil-cp--looking-at-escape-p (&optional pos)
+  (save-excursion
+    (when pos (goto-char pos))
+    (looking-at-p (regexp-quote (or sp-escape-char "\\")))))
+
+(defun evil-cp--looking-at-escaped-p (&optional pos)
+  (or (evil-cp--looking-at-escape-p pos)
+      (evil-cp--looking-at-escape-p (1- (or pos (point))))))
+
 (defun evil-cp--pair-for (pair pairs)
   (cond
    ((not pairs)
@@ -72,6 +81,7 @@ question. Ignores parentheses inside strings."
   (save-excursion
     (when pos (goto-char pos))
     (and (sp--looking-at-p (evil-cp--get-opening-regexp))
+         (not (evil-cp--looking-at-escaped-p))
          (not (evil-cp--inside-string-p)))))
 
 (defun evil-cp--looking-at-opening-anywhere-p (&optional pos)
@@ -81,6 +91,7 @@ question. Includes parentheses inside strings."
   (save-excursion
     (when pos (goto-char pos))
     (and (sp--looking-at-p (evil-cp--get-opening-regexp))
+         (not (evil-cp--looking-at-escaped-p))
          (not (evil-cp--looking-at-string-closing-p)))))
 
 (defun evil-cp--looking-at-closing-p (&optional pos)
@@ -90,6 +101,7 @@ question. Ignores parentheses inside strings."
   (save-excursion
     (when pos (goto-char pos))
     (and (sp--looking-at-p (evil-cp--get-closing-regexp))
+         (not (evil-cp--looking-at-escaped-p))
          (not (evil-cp--inside-string-p)))))
 
 (defun evil-cp--looking-at-paren-p (&optional pos)
