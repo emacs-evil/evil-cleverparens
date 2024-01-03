@@ -2150,10 +2150,7 @@ in question."
       evil-cp-append-key 'evil-cp-append)
     (add-hook 'evil-insert-state-exit-hook
               'evil-cp-insert-exit-hook))
-  ;; If evil-snipe is not present or does not want to use s and S bindings,
-  ;; then we can use them. To take effect, evil-snipe must be loaded before us.
-  (when (and evil-cleverparens-use-s-and-S
-             (not (bound-and-true-p evil-snipe-auto-disable-substitute)))
+  (when evil-cleverparens-use-s-and-S
     (evil-define-key 'normal evil-cleverparens-mode-map
       "s" 'evil-cp-substitute
       "S" 'evil-cp-change-whole-line)))
