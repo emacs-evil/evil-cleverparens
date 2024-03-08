@@ -1166,7 +1166,8 @@ regular forward-barf."
        ((evil-cp--looking-at-any-closing-p)
         (when (not (sp-point-in-empty-sexp))
           (when (not (evil-cp--singleton-list-p))
-            (sp-forward-barf-sexp)
+            (let (sp-barf-move-point-with-delimiter) ; It's not helpful here
+              (sp-forward-barf-sexp))
             (sp-backward-sexp)
             (evil-cp-previous-closing))))
        ((evil-cp--singleton-list-p)
