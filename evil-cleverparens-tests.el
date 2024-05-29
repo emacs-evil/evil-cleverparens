@@ -853,24 +853,25 @@ alpha (bravo (charlie delta) echo) foxtrot")))
       "(alpha bravo)\n\necho[]\n\n(charlie delta)")))
 
 (ert-deftest evil-cp-open-above-form-test ()
-  (ert-info ("Can open above a form")
-    (evil-cp-test-buffer
-      "(alpha (bravo [c]harlie) delta)"
-      (evil-cp-set-additional-bindings)
-      ("\M-O")
-      "(alpha []\n(bravo charlie) delta)"))
-  (ert-info ("Can open below a top-level form")
-    (evil-cp-test-buffer
-      "(alpha bravo)\n\n(charlie [d]elta)"
-      (evil-cp-set-additional-bindings)
-      ("\M-O" "echo")
-      "(alpha bravo)\n\necho[]\n\n(charlie delta)"))
-  (ert-info ("Can open between top-level forms")
-    (evil-cp-test-buffer
-      "(alpha bravo)\n[]\n(charlie delta)"
-      (evil-cp-set-additional-bindings)
-      ("\M-O" "echo")
-      "(alpha bravo)\necho[]\n\n(charlie delta)")))
+  (let ((window-system t))
+    (ert-info ("Can open above a form")
+      (evil-cp-test-buffer
+        "(alpha (bravo [c]harlie) delta)"
+        (evil-cp-set-additional-bindings)
+        ("\M-O")
+        "(alpha []\n(bravo charlie) delta)"))
+    (ert-info ("Can open below a top-level form")
+      (evil-cp-test-buffer
+        "(alpha bravo)\n\n(charlie [d]elta)"
+        (evil-cp-set-additional-bindings)
+        ("\M-O" "echo")
+        "(alpha bravo)\n\necho[]\n\n(charlie delta)"))
+    (ert-info ("Can open between top-level forms")
+      (evil-cp-test-buffer
+        "(alpha bravo)\n[]\n(charlie delta)"
+        (evil-cp-set-additional-bindings)
+        ("\M-O" "echo")
+        "(alpha bravo)\necho[]\n\n(charlie delta)"))))
 
 (ert-deftest evil-cp-yank-sexp-test ()
   (ert-info ("Can yank a sexp")
@@ -1049,74 +1050,76 @@ india[]
       "alpha ((bravo charlie delta)[)] echo"))) ;; TODO inconsistent cursor with wrap-next-round
 
 (ert-deftest evil-cp-wrap-next-square-test ()
-  (ert-info ("Can wrap next sexp with square brackets")
-    (evil-test-buffer
-      :point-start "«"
-      :point-end "»"
-      "alpha« »bravo charlie"
-      (evil-cleverparens-mode t)
-      (evil-cp-set-additional-bindings)
-      ("\M-[")
-      "alpha[« »bravo] charlie")
-    (evil-test-buffer
-      :point-start "«"
-      :point-end "»"
-      "alpha «b»ravo charlie"
-      (evil-cleverparens-mode t)
-      (evil-cp-set-additional-bindings)
-      ("\M-[")
-      "alpha [«b»ravo] charlie")
-    (evil-test-buffer
-      :point-start "«"
-      :point-end "»"
-      "alpha brav«o» charlie"
-      (evil-cleverparens-mode t)
-      (evil-cp-set-additional-bindings)
-      ("\M-[")
-      "alpha [brav«o»] charlie")
-    (evil-test-buffer
-      :point-start "«"
-      :point-end "»"
-      "alpha [bravo «c»harlie delta] echo"
-      (evil-cleverparens-mode t)
-      (evil-cp-set-additional-bindings)
-      ("\C-u\M-[")
-      "alpha [«[»bravo charlie delta]] echo")))
+  (let ((window-system t))
+    (ert-info ("Can wrap next sexp with square brackets")
+      (evil-test-buffer
+        :point-start "«"
+        :point-end "»"
+        "alpha« »bravo charlie"
+        (evil-cleverparens-mode t)
+        (evil-cp-set-additional-bindings)
+        ("\M-[")
+        "alpha[« »bravo] charlie")
+      (evil-test-buffer
+        :point-start "«"
+        :point-end "»"
+        "alpha «b»ravo charlie"
+        (evil-cleverparens-mode t)
+        (evil-cp-set-additional-bindings)
+        ("\M-[")
+        "alpha [«b»ravo] charlie")
+      (evil-test-buffer
+        :point-start "«"
+        :point-end "»"
+        "alpha brav«o» charlie"
+        (evil-cleverparens-mode t)
+        (evil-cp-set-additional-bindings)
+        ("\M-[")
+        "alpha [brav«o»] charlie")
+      (evil-test-buffer
+        :point-start "«"
+        :point-end "»"
+        "alpha [bravo «c»harlie delta] echo"
+        (evil-cleverparens-mode t)
+        (evil-cp-set-additional-bindings)
+        ("\C-u\M-[")
+        "alpha [«[»bravo charlie delta]] echo"))))
 
 (ert-deftest evil-cp-wrap-previous-square-test ()
-  (ert-info ("Can wrap next sexp with square brackets")
-    (evil-test-buffer
-      :point-start "«"
-      :point-end "»"
-      "alpha bravo« »charlie"
-      (evil-cleverparens-mode t)
-      (evil-cp-set-additional-bindings)
-      ("\M-]")
-      "alpha [bravo«]» charlie")
-    (evil-test-buffer
-      :point-start "«"
-      :point-end "»"
-      "alpha brav«o» charlie"
-      (evil-cleverparens-mode t)
-      (evil-cp-set-additional-bindings)
-      ("\M-]")
-      "alpha [brav«o»] charlie")
-    (evil-test-buffer
-      :point-start "«"
-      :point-end "»"
-      "alpha «b»ravo charlie"
-      (evil-cleverparens-mode t)
-      (evil-cp-set-additional-bindings)
-      ("\M-]")
-      "[alpha «]»bravo charlie") ;; TODO surely not desired?
-    (evil-test-buffer
-      :point-start "«"
-      :point-end "»"
-      "alpha [bravo «c»harlie delta] echo"
-      (evil-cleverparens-mode t)
-      (evil-cp-set-additional-bindings)
-      ("\C-u\M-]")
-      "alpha [[bravo charlie delta]«]» echo"))) ;; TODO inconsistent cursor with wrap-next-square
+  (let ((window-system t))
+    (ert-info ("Can wrap next sexp with square brackets")
+      (evil-test-buffer
+        :point-start "«"
+        :point-end "»"
+        "alpha bravo« »charlie"
+        (evil-cleverparens-mode t)
+        (evil-cp-set-additional-bindings)
+        ("\M-]")
+        "alpha [bravo«]» charlie")
+      (evil-test-buffer
+        :point-start "«"
+        :point-end "»"
+        "alpha brav«o» charlie"
+        (evil-cleverparens-mode t)
+        (evil-cp-set-additional-bindings)
+        ("\M-]")
+        "alpha [brav«o»] charlie")
+      (evil-test-buffer
+        :point-start "«"
+        :point-end "»"
+        "alpha «b»ravo charlie"
+        (evil-cleverparens-mode t)
+        (evil-cp-set-additional-bindings)
+        ("\M-]")
+        "[alpha «]»bravo charlie") ;; TODO surely not desired?
+      (evil-test-buffer
+        :point-start "«"
+        :point-end "»"
+        "alpha [bravo «c»harlie delta] echo"
+        (evil-cleverparens-mode t)
+        (evil-cp-set-additional-bindings)
+        ("\C-u\M-]")
+        "alpha [[bravo charlie delta]«]» echo")))) ;; TODO inconsistent cursor with wrap-next-square
 
 (ert-deftest evil-cp-wrap-next-curly-test ()
   (ert-info ("Can wrap next sexp with curly braces")

@@ -2092,17 +2092,21 @@ and/or beginning."
     ("M-C" . evil-cp-change-enclosing)
     ("M-q" . sp-indent-defun)
     ("M-o" . evil-cp-open-below-form)
-    ("M-O" . evil-cp-open-above-form)
     ("M-v" . sp-convolute-sexp)
     ("M-(" . evil-cp-wrap-next-round)
     ("M-)" . evil-cp-wrap-previous-round)
-    ("M-[" . evil-cp-wrap-next-square)
-    ("M-]" . evil-cp-wrap-previous-square)
     ("M-{" . evil-cp-wrap-next-curly)
     ("M-}" . evil-cp-wrap-previous-curly))
   "Alist containing additional functionality for
   evil-cleverparens via a modifier key (using the meta-key by
   default). Only enabled in evil's normal mode.")
+
+(defvar evil-cp-additional-bindings-graphical
+  '(("M-[" . evil-cp-wrap-next-square)
+    ("M-]" . evil-cp-wrap-previous-square)
+    ("M-O" . evil-cp-open-above-form))
+  "As with evil-cp-additional-bindings but these bindings are not safe in some
+  terminals.")
 
 (defvar evil-cp-insert-key "i"
   "Key to use to switch to insert mode")
@@ -2181,7 +2185,12 @@ true."
   (evil-cp--populate-mode-bindings-for-state
    evil-cp-additional-bindings
    'normal
-   evil-cleverparens-use-additional-bindings))
+   evil-cleverparens-use-additional-bindings)
+  (when window-system
+    (evil-cp--populate-mode-bindings-for-state
+     evil-cp-additional-bindings-graphical
+     'normal
+     evil-cleverparens-use-additional-bindings)))
 
 (defun evil-cp--enable-C-w-delete ()
   (when evil-want-C-w-delete
