@@ -835,6 +835,7 @@ kill-ring is determined by the
 
 (evil-define-motion evil-cp-forward-sexp (count)
   "Motion for moving forward by a sexp via `sp-forward-sexp'."
+  :jump t
   :type exclusive
   (let ((count (or count 1)))
     (when (evil-eolp) (forward-char))
@@ -842,6 +843,7 @@ kill-ring is determined by the
 
 (evil-define-motion evil-cp-backward-sexp (count)
   "Motion for moving backwward by a sexp via `sp-backward-sexp'."
+  :jump t
   :type exclusive
   (let ((count (or count 1)))
     (sp-backward-sexp count)))
@@ -849,12 +851,14 @@ kill-ring is determined by the
 (evil-define-motion evil-cp-beginning-of-defun (count)
   "Motion for moving to the beginning of a defun (i.e. a top
 level sexp)."
+  :jump t
   :type inclusive
   (let ((count (or count 1)))
     (beginning-of-defun count)))
 
 (evil-define-motion evil-cp-end-of-defun (count)
   "Motion for moving to the end of a defun (i.e. a top level sexp)."
+  :jump t
   :type inclusive
   (let ((count (or count 1)))
     (if (evil-cp--looking-at-closing-p)
