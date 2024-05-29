@@ -16,7 +16,7 @@ The recommended way to install is via `elpa` from [MELPA](http://melpa.org/). Th
 
 `M-x` `package-install evil-cleverparens`
 
-`evil-cleverparens` uses functions from both `smartparens` and `paredit`. Neither one is required by default, but using one of them is highly recommended, as `evil-cleverparens` doesn't provide anything for the `insert-state`. If you are an user of `smartparens`, `smartparens-strict-mode` is also recommended.
+`evil-cleverparens` uses functions from both `smartparens` and `paredit`. Neither mode is required to be enabled by default, but using one of them is highly recommended, as `evil-cleverparens` doesn't provide anything for the `insert-state`. If you are a user of `smartparens`, `smartparens-strict-mode` is also recommended.
 
 To enable `evil-cleverparens` with your favorite lispy-mode use:
 
@@ -72,7 +72,7 @@ Part of embracing Lisp and structural editing is learning to love the parenthese
 To customize them see `evil-cleverparens-use-additional-movement-keys` to enable/disable them and `evil-cp-additional-movement-keys` for the keys.
 
 
-Besides parentheses, the other logical unit of structural movement are symbols. Unfortunately the regular Vim/evil movement keys (`w`, `W`, `b`, `B`, `ge` and `gE`) complect this idea by not making a distinction between symbols and delimiters. This distinction is made for you when using the `evil-cp-(forward|backward)-(word|symbol)-(begin|end)` commands, which happily skip past all parentheses and other delimiters.
+Besides parentheses, the other logical unit of structural movement is symbols. Unfortunately the regular Vim/evil movement keys (`w`, `W`, `b`, `B`, `ge` and `gE`) complect this idea by not making a distinction between symbols and delimiters. This distinction is made for you when using the `evil-cp-(forward|backward)-(word|symbol)-(begin|end)` commands, which happily skip past all parentheses and other delimiters.
 
 **TODO**: Moving by *word*'s by skipping delimiters doesn't work yet.
 
