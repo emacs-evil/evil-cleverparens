@@ -1234,13 +1234,13 @@ regular forward-slurp."
 (defun evil-cp--cant-forward-sexp-p ()
   (save-excursion
     (condition-case nil
-        (forward-sexp)
+        (prog1 nil (forward-sexp))
       (error t))))
 
 (defun evil-cp--cant-backward-sexp-p ()
   (save-excursion
     (condition-case nil
-        (backward-sexp)
+        (prog1 nil (backward-sexp))
       (error t))))
 
 (defun evil-cp--last-symbol-of-form-p ()
