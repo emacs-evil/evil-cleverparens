@@ -168,7 +168,12 @@ golf foxtrot deltahotel india"))
   (ert-info ("Can yank unbalanced line")
     (evil-cp-test-buffer
       "al[p]ha (bravo\ncharlie)\ndelta\nalpha \necho"
-      ("yyjjp"))))
+      ("yyjjp")))
+  (ert-info ("Can yank unbalanced string")
+    (evil-cp-test-buffer
+     "alpha '[b]ravo } charlie' delta"
+     ("yi'" "o" [escape] "p")
+     "bravo } charli[e]")))
 
 (ert-deftest evil-cp--toggle-balanced-yank-test ()
   (ert-info ("Can balance parens")

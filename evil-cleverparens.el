@@ -495,8 +495,10 @@ respecting parentheses."
      ((eq type 'block)
       (evil-cp--fail))
 
-     ;; balanced region, or override
-     ((or safep (evil-cp--override))
+     ;; balanced region, override, or inner string
+     ((or safep
+          (evil-cp--override)
+          (memq evil-this-motion '(evil-inner-double-quote evil-inner-single-quote)))
       (evil-yank beg end type register yank-handler))
 
      ;; unbalanced line, fill parens
