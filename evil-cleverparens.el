@@ -2178,6 +2178,15 @@ for normal, visual and operator states if
      state
      evil-cleverparens-use-additional-movement-keys)))
 
+(defun evil-cp--wrap-graphical-binding (binding-pair)
+  "Wraps a key binding in a `menu-item' with a filter so that it is only
+effective under graphical sessions."
+  (let ((key (car binding-pair))
+        (binding (cdr binding-pair)))
+    (cons key
+          `(menu-item "" ,binding :filter
+                      ,(lambda (binding) (if window-system binding))))))
+
 ;;;###autoload
 (defun evil-cp-set-additional-bindings ()
   "Sets the movement keys is `evil-cp-additional-bindings' for
@@ -2188,11 +2197,11 @@ true."
    evil-cp-additional-bindings
    'normal
    evil-cleverparens-use-additional-bindings)
-  (when window-system
-    (evil-cp--populate-mode-bindings-for-state
-     evil-cp-additional-bindings-graphical
-     'normal
-     evil-cleverparens-use-additional-bindings)))
+  (evil-cp--populate-mode-bindings-for-state
+   (mapcar #'evil-cp--wrap-graphical-binding
+           evil-cp-additional-bindings-graphical)
+   'normal
+   evil-cleverparens-use-additional-bindings))
 
 (defun evil-cp--enable-C-w-delete ()
   (when evil-want-C-w-delete
