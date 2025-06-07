@@ -876,7 +876,15 @@ alpha (bravo (charlie delta) echo) foxtrot")))
         "(alpha bravo)\n[]\n(charlie delta)"
         (evil-cp-set-additional-bindings)
         ("\M-O" "echo")
-        "(alpha bravo)\necho[]\n\n(charlie delta)"))))
+        "(alpha bravo)\necho[]\n\n(charlie delta)")))
+  (let ((window-system t))
+    (ert-info ("Is unavailable under terminal")
+      (evil-cp-test-buffer
+        "(alpha (bravo [c]harlie) delta)"
+        (evil-cp-set-additional-bindings)
+        (setq window-system nil)
+        ("\M-O") ;; same as "\M-o" since "\M-O" is unavailable
+        "(alpha (bravo charlie)\n[]delta)"))))
 
 (ert-deftest evil-cp-yank-sexp-test ()
   (ert-info ("Can yank a sexp")
@@ -1088,7 +1096,15 @@ india[]
         (evil-cleverparens-mode t)
         (evil-cp-set-additional-bindings)
         ("\C-u\M-[")
-        "alpha [«[»bravo charlie delta]] echo"))))
+        "alpha [«[»bravo charlie delta]] echo")))
+  (let ((window-system t))
+    (ert-info ("Is unavailable under terminal")
+      (evil-cp-test-buffer
+        "(alpha [b]ravo)"
+        (evil-cp-set-additional-bindings)
+        (setq window-system nil)
+        ("\M-[")
+        "(alpha [b]ravo)"))))
 
 (ert-deftest evil-cp-wrap-previous-square-test ()
   (let ((window-system t))
@@ -1124,7 +1140,15 @@ india[]
         (evil-cleverparens-mode t)
         (evil-cp-set-additional-bindings)
         ("\C-u\M-]")
-        "alpha [[bravo charlie delta]«]» echo")))) ;; TODO inconsistent cursor with wrap-next-square
+        "alpha [[bravo charlie delta]«]» echo"))) ;; TODO inconsistent cursor with wrap-next-square
+  (let ((window-system t))
+    (ert-info ("Is unavailable under terminal")
+      (evil-cp-test-buffer
+        "(alpha [b]ravo)"
+        (evil-cp-set-additional-bindings)
+        (setq window-system nil)
+        ("\M-]")
+        "(alpha [b]ravo)"))))
 
 (ert-deftest evil-cp-wrap-next-curly-test ()
   (ert-info ("Can wrap next sexp with curly braces")
